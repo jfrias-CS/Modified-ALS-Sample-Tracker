@@ -1,0 +1,18 @@
+table.sampletable tr td {
+  padding: .375rem 1rem;
+}
+
+table.sampletable tr th {
+  padding: .375rem 1rem;
+}
+
+table.sampletable tr:nth-child(even) {
+  background-color: hsl(221, 10%, calc(11%));
+}
+
+table.sampletable tr:hover {
+  color: #535bf2;
+  background-color: hsl(221, 14%, calc(20%));
+  cursor: pointer;
+  user-select: none;
+}
