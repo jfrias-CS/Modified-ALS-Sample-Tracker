@@ -1,54 +1,39 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { useParams } from "react-router-dom"
 import 'bulma/css/bulma.min.css';
 
 import './sampleTable.css'
-import { ScanTypeName, ParameterName, ScanType } from './scanTypes.ts'
 import { Guid } from './components/utils.ts'
 import { SampleConfiguration } from './sampleConfiguration.ts'
 import { SampleConfigurationContext } from './sampleConfigurationProvider.tsx'
+import AddSamples from './addSamples.tsx'
+import ImportSamples from './importSamples.tsx'
 
-function SampleTable() {
+
+const SampleTable: React.FC = () => {
+
+  const { setId } = useParams();
 
   const sampleSetContext = useContext(SampleConfigurationContext);
-
-  useEffect(() => {
-
-    console.log('Table component mounted');
-    const fetchData = async () => {
-      try {
-
-        const requestInfo: RequestInfo = new Request("http://backend.localhost/api/v3/datasets", {
-              method: "GET"
-          //    body: '{"foo": "bar"}',
-            });
-
-        // Ideally this should _not_ await.
-        const response = await fetch(requestInfo);
-        
-        const result = await response.json();
-        // TODO: Add a conversion loop in here to translate
-
-        const fakeStartData: SampleConfiguration[] = [];
-
-        sampleSetContext.instance.addOrReplace(fakeStartData);
-        sampleSetContext.refresh();
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
-    // Call fetchData when the component mounts
-    fetchData();
-    return () => {
-        console.log('Table component unmounted');
-    };
-  }, []);
+  const [sampleConfigurations, setSampleConfigurations] = useState<SampleConfiguration[]>([]);
 
 
   useEffect(() => {
-    console.log('Table says samples have changed');
-  }, [sampleSetContext.sampleConfigurations]);
+    console.log('sampleTable says setId, setsLoaded, scanTypesLoaded changed');
 
+    if (setId === undefined) { throw new Error("Set ID not defined"); }
+    const s = setId.trim()
+    if (!s) { throw new Error("Set ID is blank"); }
+
+    if (!sampleSetContext.setsLoaded) { console.log("sets not loaded"); return; }
+    if (!sampleSetContext.scanTypesLoaded) { console.log("scanTypes not loaded"); return; }
+
+    const thisSet = sampleSetContext.instance.setsById.get(s as Guid);
+
+    if (thisSet === undefined) { throw new Error("Set ID " + s + " does not exist in ConfigurationSet"); }
+
+    setSampleConfigurations(thisSet.all());
+  }, [setId, sampleSetContext.setsLoaded, sampleSetContext.scanTypesLoaded]);
 
   var headers = [
       (<th key="mm" scope="col">From Left Edge</th>),
@@ -57,8 +42,42 @@ function SampleTable() {
       (<th key="scantype" scope="col">Scan Type</th>)
   ];
 
+  const sampleCount = sampleConfigurations.length;
+
   return (
     <>
+      <h4 className="subtitle is-4">General Information</h4>
+
+
+      <h4 className="subtitle is-4">Samples</h4>
+
+      <nav className="level">
+        <div className="level-left">
+          <div className="level-item">
+            <div className="field has-addons">
+              <div className="control">
+                <input className="input" type="text" placeholder="Search" />
+              </div>
+            </div>
+          </div>
+          <div className="level-item">
+            <p className="subtitle is-5"><strong>{ sampleCount }</strong> samples</p>
+          </div>
+          <div className="level-item">
+            <ImportSamples />
+          </div>
+          <div className="level-item">
+            <AddSamples />
+          </div>
+        </div>
+
+        <div className="level-right">
+          <div className="level-item">
+            <a className="button is-success">Save Changes</a>
+          </div>
+        </div>
+      </nav>
+
       <table className="sampletable">
         <thead>
           <tr key="headers">
@@ -67,7 +86,7 @@ function SampleTable() {
         </thead>
         <tbody>
           {
-            sampleSetContext.sampleConfigurations.map((sample) => {
+            sampleConfigurations.map((sample) => {
               return (
                 <tr key={sample["name"]}>
                     <td>{ sample.mmFromLeftEdge.toString() + "mm" }</td>

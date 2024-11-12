@@ -1,10 +1,11 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, PropsWithChildren } from "react";
+import { Guid } from "./components/utils.tsx";
 import { ScanTypes, ScanType, getScanTypes } from './scanTypes.ts'
-import { SampleConfiguration, SampleConfigurationSet } from './sampleConfiguration.ts'
+import { SampleConfiguration, SampleConfigurationSet, SampleConfigurationSets } from './sampleConfiguration.ts'
 
-// This is a "context provider" React component for a SampleConfigurationSet instance.
+// This is a "context provider" React component for a SampleConfigurationSets instance.
 
-// It keeps its own internal instance of SampleConfigurationSet and
+// It keeps its own internal instance of SampleConfigurationSets and
 // exposes the necessary functions to manipulate it, plus the current full
 // contents of the set.
 // It's designed to be placed once in the DOM.
@@ -18,38 +19,74 @@ import { SampleConfiguration, SampleConfigurationSet } from './sampleConfigurati
 // If we're dealing with sample sets larger than, say, 1000, with dozens of parameters,
 // we might need to redesign.
 
+
+// These three interfaces define the records we expect to get from the server when fetching real data
+interface ConfigFromServer {
+  name: string,
+  id: string,
+  mmFromLeftEdge: string,
+  description: string,
+  scanType: string,
+  parameters: { [key: string]: string|null }
+}
+
+interface SetFromServer {
+  name: string,
+  description: string,
+  id: string,
+  configs: ConfigFromServer[]
+}
+
+interface SetsFromServer {
+  name: string,
+  proposalId: string,
+  sets: SetFromServer[]
+}
+
 interface SampleConfigurationInterface {
-  instance: SampleConfigurationSet;
-  sampleConfigurations: SampleConfiguration[];
+  instance: SampleConfigurationSets;
   scanTypes: ScanTypes;
-  refresh: () => void
+  setsLoaded: boolean;
+  scanTypesLoaded: boolean;
+  refresh: () => void;
+  ingestFromServer: (s: SetsFromServer) => void;
 }
 
 const SampleConfigurationContext = createContext<SampleConfigurationInterface>({
-                    instance: new SampleConfigurationSet({types:[],parameters:[]}), // Should never be reached
-                    sampleConfigurations: [],
+                    instance: new SampleConfigurationSets("empty", "0" as Guid, true), // Should never be reached
                     scanTypes: {types:[],parameters:[]},
-                    refresh: () => {}
+                    setsLoaded: false,
+                    scanTypesLoaded: false,
+                    refresh: () => {},
+                    ingestFromServer: () => {}
                   });
 
-const SampleConfigurationProvider = (props) => {
-  const [sampleConfigurationsObject, setSampleConfigurationsObject] = useState<SampleConfigurationSet>(new SampleConfigurationSet({types:[],parameters:[]}));
-  const [sampleConfigurations, setSampleConfigurations] = useState<SampleConfiguration[]>([]);
+const SampleConfigurationProvider: React.FC<PropsWithChildren> = (props) => {
+  const [sampleConfigurationsObject, setSampleConfigurationsObject] = useState<SampleConfigurationSets>(new SampleConfigurationSets("empty", "0" as Guid, true));
   const [scanTypes, setScanTypes] = useState<ScanTypes>({types:[],parameters:[]});
+  const [setsLoaded, setSetsLoaded] = useState<boolean>(false);
+  const [scanTypesLoaded, setScanTypesLoaded] = useState<boolean>(false);
 
   useEffect(() => {
-    console.log('SampleConfigurationContext component mounted');
+    console.log('SampleConfigurationProvider mounted');
     // My eventually by an asynchronous call.
     setScanTypes(getScanTypes());
-
+    setScanTypesLoaded(true);
     return () => {
-        console.log('SampleConfigurationContext component unmounted');
+        console.log('SampleConfigurationProvider unmounted');
     };
   }, []);
 
   function refreshSampleConfigurations() {
     console.log("Calling refreshSampleConfigurations");
-    setSampleConfigurations(sampleConfigurationsObject.all());
+  };
+
+  function ingestFromServer(s: SetsFromServer) {
+    console.log("Calling ingestFromServer");
+    const sets = new SampleConfigurationSets(s.name, s.proposalId as Guid, false);
+    sets.setScanTypes(scanTypes);
+    setSampleConfigurationsObject(sets);
+    setSetsLoaded(true);
   };
 
   useEffect(() => {
@@ -61,9 +98,11 @@ const SampleConfigurationProvider = (props) => {
   return (
     <SampleConfigurationContext.Provider value={{
         instance: sampleConfigurationsObject,
-        sampleConfigurations: sampleConfigurations,
         scanTypes: scanTypes,
-        refresh: refreshSampleConfigurations
+        setsLoaded: setsLoaded,
+        scanTypesLoaded: scanTypesLoaded,
+        refresh: refreshSampleConfigurations,
+        ingestFromServer: ingestFromServer
     }}>
     {props.children}
     </SampleConfigurationContext.Provider>

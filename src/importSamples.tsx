@@ -3,8 +3,9 @@ import 'bulma/css/bulma.min.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAngleDown, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
-import { ScanTypeName, ParameterName, ScanType } from './scanTypes.ts'
-import { Guid, SampleConfiguration } from './sampleConfiguration.ts'
+import { ScanTypeName, ScanParameterName, ScanType } from './scanTypes.ts'
+import { Guid } from './components/utils.ts'
+import { SampleConfiguration } from './sampleConfiguration.ts'
 import { SampleConfigurationContext } from './sampleConfigurationProvider.tsx'
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from './components/scanTypeAutocomplete.tsx'
 
@@ -96,8 +97,8 @@ function ImportSamples() {
       description: "This is the second sample.",
       scanType: "two_parameter_generic" as ScanTypeName,
       parameters: {
-        ["firstParam" as ParameterName]: "s1",
-        ["secondParam" as ParameterName]: "s2",
+        ["firstParam" as ScanParameterName]: "s1",
+        ["secondParam" as ScanParameterName]: "s2",
       }
     };
     sampleSetContext.instance.addOrReplace([newSet]);

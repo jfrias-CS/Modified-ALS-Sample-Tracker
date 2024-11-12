@@ -1,80 +1,52 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { useParams } from "react-router-dom"
 import 'bulma/css/bulma.min.css';
 
 import './barTable.css'
-import { ScanTypeName, ScanType } from './scanTypes.ts'
-import { Guid } from './components/utils.ts'
-import { SampleConfiguration } from './sampleConfiguration.ts'
+import { Guid } from './components/utils.tsx'
+import { SampleConfigurationSet } from './sampleConfiguration.ts'
 import { SampleConfigurationContext } from './sampleConfigurationProvider.tsx'
 
 function BarTable() {
 
+  const { proposalId } = useParams();
+
   const sampleSetContext = useContext(SampleConfigurationContext);
-
-  useEffect(() => {
-
-    console.log('Table component mounted');
-    const fetchData = async () => {
-      try {
-
-        const requestInfo: RequestInfo = new Request("http://backend.localhost/api/v3/datasets", {
-              method: "GET"
-          //    body: '{"foo": "bar"}',
-            });
-
-        // Ideally this should _not_ await.
-        const response = await fetch(requestInfo);
-        
-        const result = await response.json();
-        // TODO: Add a conversion loop in here to translate
-
-        const fakeStartData: SampleConfiguration[] = [
-        ];
-
-        sampleSetContext.instance.addOrReplace(fakeStartData);
-        sampleSetContext.refresh();
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
-    // Call fetchData when the component mounts
-    fetchData();
-    return () => {
-        console.log('Table component unmounted');
-    };
-  }, []);
+  const [bars, setBars] = useState<SampleConfigurationSet[]>([]);
 
 
   useEffect(() => {
-    console.log('Table says samples have changed');
-  }, [sampleSetContext.sampleConfigurations]);
+    console.log('barTable says setId, setsLoaded, scanTypesLoaded changed');
 
+    if (proposalId === undefined) { throw new Error("Project ID not defined"); }
+    const s = proposalId.trim()
+    if (!s) { throw new Error("Project ID is blank"); }
 
-  var headers = [
-      (<th key="mm" scope="col">From Left Edge</th>),
-      (<th key="name" scope="col">Name</th>),
-      (<th key="description" scope="col">Description</th>),
-      (<th key="scantype" scope="col">Scan Type</th>)
-  ];
+    if (!sampleSetContext.setsLoaded) { console.log("sets not loaded"); return; }
+    if (!sampleSetContext.scanTypesLoaded) { console.log("scanTypes not loaded"); return; }
+
+    setBars(sampleSetContext.instance.all());
+  }, [proposalId, sampleSetContext.setsLoaded, sampleSetContext.scanTypesLoaded]);
+
 
   return (
     <>
       <table className="bartable">
         <thead>
           <tr key="headers">
-            { headers }
+            <th key="name" scope="col">Name</th>
+            <th key="description" scope="col">Description</th>
+            <th key="samplecount" scope="col">Samples</th>
           </tr>
         </thead>
         <tbody>
           {
-            sampleSetContext.sampleConfigurations.map((sample) => {
+            bars.map((bar) => {
               return (
-                <tr key={sample["name"]}>
-                    <td>{ sample.mmFromLeftEdge.toString() + "mm" }</td>
-                    <th scope="row">{ sample.name }</th>
-                    <td>{ sample.description }</td>
-                    <td>{ sample.scanType }</td>
+                <tr key={bar["id"]}>
+                    <th scope="row">{ bar.name }</th>
+                    <td>{ bar.description }</td>
+                    <td>{ bar.configurationsById.size }</td>
                 </tr>);
             })
           }
