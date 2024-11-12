@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams } from "react-router-dom"
+import { useParams } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
-import { Guid } from '../components/utils.tsx'
-import { SampleConfigurationSet } from '../sampleConfiguration.ts'
-import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx'
-import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx'
-import './barTable.css'
+import { Guid } from '../components/utils.tsx';
+import { SampleConfigurationSet } from '../sampleConfiguration.ts';
+import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx';
+import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
+import './barTable.css';
 
 
 function BarTable() {

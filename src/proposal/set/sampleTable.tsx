@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams } from "react-router-dom"
+import { useParams } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
-import { Guid } from '../../components/utils.tsx'
-import { SampleConfiguration } from '../../sampleConfiguration.ts'
-import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx'
-import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx'
-import AddSamples from './addSamples.tsx'
-import ImportSamples from './importSamples.tsx'
-import './sampleTable.css'
+import { Guid } from '../../components/utils.tsx';
+import { SampleConfiguration } from '../../sampleConfiguration.ts';
+import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
+import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
+import AddSamples from './addSamples.tsx';
+import ImportSamples from './importSamples.tsx';
+import './sampleTable.css';
 
 
 const SampleTable: React.FC = () => {

@@ -1,4 +1,4 @@
-import { ScanTypes, ScanTypeName, ScanType } from './scanTypes.ts'
+import { ScanTypes, ScanTypeName, ScanType } from './scanTypes.ts';
 import { Guid, generateUniqueIds, generateUniqueNames } from "./components/utils.tsx";
 
 // Class definitions to represent sample configurations,

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
 import { Guid } from "./components/utils.tsx";
-import './homePage.css'
+import './homePage.css';
 
 
 const HomePage: React.FC = () => {

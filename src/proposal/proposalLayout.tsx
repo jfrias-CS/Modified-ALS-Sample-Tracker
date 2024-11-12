@@ -1,8 +1,8 @@
 import { useEffect, useContext, PropsWithChildren } from 'react';
-import { useParams, Outlet } from "react-router-dom"
+import { useParams, Outlet } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
-import { SampleConfigurationContext } from './../sampleConfigurationProvider.tsx'
+import { SampleConfigurationContext } from './../sampleConfigurationProvider.tsx';
 
 
 const ProposalLayout: React.FC<PropsWithChildren> = (props) => {

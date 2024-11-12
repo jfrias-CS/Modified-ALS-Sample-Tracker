@@ -1,13 +1,14 @@
-import React, { useState, useContext } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { useState, useContext } from 'react';
+import { useParams } from "react-router-dom";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAngleDown, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { ScanTypeName, ScanParameterName, ScanType } from '../../scanTypes.ts'
-import { Guid } from '../../components/utils.tsx'
-import { SampleConfiguration } from '../../sampleConfiguration.ts'
-import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx'
-import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx'
+import { ScanTypeName, ScanParameterName, ScanType } from '../../scanTypes.ts';
+import { Guid } from '../../components/utils.tsx';
+import { SampleConfigurationSet } from '../../sampleConfiguration.ts';
+import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
+import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
 
 
 function ImportSamples() {
