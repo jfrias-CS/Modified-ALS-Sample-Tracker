@@ -4,6 +4,13 @@ A browser application for quickly creating and submitting sets of sample metadat
 
 Design document <a href="https://github.com/als-computing/software_requirements/blob/main/docs/sample_metadata_input_app/index.md">can be found here.</a>
 
+To get started developing, check out this repo and `cd` into it, then:
+```
+npm install
+npm run dev
+```
+Open a browser and go to `http://localhost:5173/` to see the app running.
+
 # This app is based on the React + TypeScript + Vite template
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
