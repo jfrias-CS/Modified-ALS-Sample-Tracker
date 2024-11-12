@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import 'bulma/css/bulma.min.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { IconProp, SizeProp } from '@fortawesome/fontawesome-svg-core';
+import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { faExclamationTriangle, faSpinner, faQuestion, faCheck } from '@fortawesome/free-solid-svg-icons';
+import 'bulma/css/bulma.min.css';
 
 
 // Style to apply when an item is focused in the search results pulldown.

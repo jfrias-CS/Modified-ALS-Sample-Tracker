@@ -1,13 +1,13 @@
 import React, { useState, useContext } from 'react';
-import 'bulma/css/bulma.min.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import 'bulma/css/bulma.min.css';
 
-import { ScanTypeName, ScanType } from './scanTypes.ts'
-import { Guid } from "./components/utils.tsx";
-import { SampleConfiguration } from './sampleConfiguration.ts'
-import { SampleConfigurationContext } from './sampleConfigurationProvider.tsx'
-import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from './components/scanTypeAutocomplete.tsx'
+import { ScanTypeName, ScanType } from '../../scanTypes.ts'
+import { Guid } from "../../components/utils.tsx";
+import { SampleConfiguration } from '../../sampleConfiguration.ts'
+import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx'
+import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx'
 
 
 function AddSamples() {

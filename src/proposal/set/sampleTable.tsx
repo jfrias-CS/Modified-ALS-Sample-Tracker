@@ -2,12 +2,13 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from "react-router-dom"
 import 'bulma/css/bulma.min.css';
 
-import './sampleTable.css'
-import { Guid } from './components/utils.ts'
-import { SampleConfiguration } from './sampleConfiguration.ts'
-import { SampleConfigurationContext } from './sampleConfigurationProvider.tsx'
+import { Guid } from '../../components/utils.tsx'
+import { SampleConfiguration } from '../../sampleConfiguration.ts'
+import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx'
+import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx'
 import AddSamples from './addSamples.tsx'
 import ImportSamples from './importSamples.tsx'
+import './sampleTable.css'
 
 
 const SampleTable: React.FC = () => {
@@ -16,24 +17,44 @@ const SampleTable: React.FC = () => {
 
   const sampleSetContext = useContext(SampleConfigurationContext);
   const [sampleConfigurations, setSampleConfigurations] = useState<SampleConfiguration[]>([]);
+  const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
+  const [loadingMessage, setLoadingMessage] = useState("");
 
 
   useEffect(() => {
     console.log('sampleTable says setId, setsLoaded, scanTypesLoaded changed');
 
-    if (setId === undefined) { throw new Error("Set ID not defined"); }
+    if ((setId === undefined) || (!setId.trim())) {
+      setLoading(LoadingState.Failure);
+      setLoadingMessage("Invalid Set ID");
+      return;
+    }
     const s = setId.trim()
-    if (!s) { throw new Error("Set ID is blank"); }
 
-    if (!sampleSetContext.setsLoaded) { console.log("sets not loaded"); return; }
-    if (!sampleSetContext.scanTypesLoaded) { console.log("scanTypes not loaded"); return; }
+    if (!sampleSetContext.setsLoaded || !sampleSetContext.scanTypesLoaded) {
+      setLoading(LoadingState.Loading);
+      setLoadingMessage("");
+      return;
+    }
 
     const thisSet = sampleSetContext.instance.setsById.get(s as Guid);
 
-    if (thisSet === undefined) { throw new Error("Set ID " + s + " does not exist in ConfigurationSet"); }
+    if (thisSet === undefined) {
+      setLoading(LoadingState.Failure);
+      setLoadingMessage("Set ID not found in Proposal");
+      return;
+    }
 
     setSampleConfigurations(thisSet.all());
+    setLoading(LoadingState.Success);
+
   }, [setId, sampleSetContext.setsLoaded, sampleSetContext.scanTypesLoaded]);
+
+  // If we're in any loading state other than success,
+  // display a loading banner instead of the content.
+  if (loading != LoadingState.Success) {
+    return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
+  }
 
   var headers = [
       (<th key="mm" scope="col">From Left Edge</th>),

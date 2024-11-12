@@ -1,8 +1,8 @@
 import { useEffect, useContext, PropsWithChildren } from 'react';
-import { useParams } from "react-router-dom"
+import { useParams, Outlet } from "react-router-dom"
 import 'bulma/css/bulma.min.css';
 
-import { SampleConfigurationContext } from './sampleConfigurationProvider.tsx'
+import { SampleConfigurationContext } from './../sampleConfigurationProvider.tsx'
 
 
 const ProposalLayout: React.FC<PropsWithChildren> = (props) => {
@@ -55,7 +55,7 @@ const ProposalLayout: React.FC<PropsWithChildren> = (props) => {
       { proposalId ? (<h2 className="subtitle is-2">Proposal ID { proposalId }</h2>) :
                     (<h2 className="subtitle is-2">No Proposal ID given!</h2>)
       }
-      {props.children}
+      <Outlet />
     </div>
   )
 }

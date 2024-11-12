@@ -2,10 +2,12 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from "react-router-dom"
 import 'bulma/css/bulma.min.css';
 
+import { Guid } from '../components/utils.tsx'
+import { SampleConfigurationSet } from '../sampleConfiguration.ts'
+import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx'
+import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx'
 import './barTable.css'
-import { Guid } from './components/utils.tsx'
-import { SampleConfigurationSet } from './sampleConfiguration.ts'
-import { SampleConfigurationContext } from './sampleConfigurationProvider.tsx'
+
 
 function BarTable() {
 
@@ -13,21 +15,34 @@ function BarTable() {
 
   const sampleSetContext = useContext(SampleConfigurationContext);
   const [bars, setBars] = useState<SampleConfigurationSet[]>([]);
-
+  const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
+  const [loadingMessage, setLoadingMessage] = useState("");
 
   useEffect(() => {
     console.log('barTable says setId, setsLoaded, scanTypesLoaded changed');
 
-    if (proposalId === undefined) { throw new Error("Project ID not defined"); }
-    const s = proposalId.trim()
-    if (!s) { throw new Error("Project ID is blank"); }
+    if ((proposalId === undefined) || (!proposalId.trim())) {
+      setLoading(LoadingState.Failure);
+      setLoadingMessage("Invalid Proposal ID");
+      return;
+    }
 
-    if (!sampleSetContext.setsLoaded) { console.log("sets not loaded"); return; }
-    if (!sampleSetContext.scanTypesLoaded) { console.log("scanTypes not loaded"); return; }
+    if (!sampleSetContext.setsLoaded || !sampleSetContext.scanTypesLoaded) {
+      setLoading(LoadingState.Loading);
+      setLoadingMessage("");
+      return;
+    }
 
     setBars(sampleSetContext.instance.all());
+    setLoading(LoadingState.Success);
+
   }, [proposalId, sampleSetContext.setsLoaded, sampleSetContext.scanTypesLoaded]);
 
+  // If we're in any loading state other than success,
+  // display a loading banner instead of the content.
+  if (loading != LoadingState.Success) {
+    return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
+  }
 
   return (
     <>
