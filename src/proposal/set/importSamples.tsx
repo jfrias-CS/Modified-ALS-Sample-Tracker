@@ -11,7 +11,9 @@ import { SampleConfigurationContext } from '../../sampleConfigurationProvider.ts
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
 
 
-function ImportSamples() {
+const ImportSamples: React.FC = () => {
+
+  const { setId } = useParams();
 
   const sampleSetContext = useContext(SampleConfigurationContext);
 
@@ -24,6 +26,11 @@ function ImportSamples() {
   const [inProgress, setInProgress] = useState<boolean>(false);
   const [newName, setNewName] = useState<string>("1");
   const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(null)
+
+  function getSet(): SampleConfigurationSet | undefined {
+    if (!setId) { return undefined; }
+    return sampleSetContext.instance.setsById.get(setId as Guid);
+  }
 
   function clickedOpen() {
     if (!inProgress && !isOpen) {
@@ -77,9 +84,12 @@ function ImportSamples() {
     if (trimmed.length < 1) {
       validName = false;
     } else {
-      if (sampleSetContext.sampleConfigurations.some((c) => c.name == trimmed)) {
-        validName = false;
-        uniqueName = false;
+      const thisSet = getSet();
+      if (thisSet) {
+        if (thisSet.all().some((c) => c.name == trimmed)) {
+          validName = false;
+          uniqueName = false;
+        }
       }
     }
 
@@ -89,7 +99,9 @@ function ImportSamples() {
     setValidAllInput(validQuantity && validName && (scanType !== null));
   }
 
- function pressedSubmit() {
+  function pressedSubmit() {
+    const thisSet = getSet();
+    if (!thisSet) { return; }
     const newSet = {
       id: "13434-ASDSAD-4" as Guid,
       idIsClientGenerated: true,
@@ -102,7 +114,7 @@ function ImportSamples() {
         ["secondParam" as ScanParameterName]: "s2",
       }
     };
-    sampleSetContext.instance.addOrReplace([newSet]);
+    thisSet.addOrReplace([newSet]);
     sampleSetContext.refresh();
   };
 

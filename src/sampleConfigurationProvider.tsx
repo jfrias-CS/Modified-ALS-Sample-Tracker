@@ -8,8 +8,7 @@ import { SampleConfigurationSets } from './sampleConfiguration.ts';
 // This is a "context provider" React component for a SampleConfigurationSets instance.
 
 // It keeps its own internal instance of SampleConfigurationSets and
-// exposes the necessary functions to manipulate it, plus the current full
-// contents of the set.
+// provides hooks for a few additional functions to manipulate it.
 // It's designed to be placed once in the DOM.
 
 // This design allows relatively free access to the current state of the
@@ -45,6 +44,8 @@ interface SetsFromServer {
   sets: SetFromServer[]
 }
 
+
+// The structure we are providing to components in the hierarchy of the provider
 interface SampleConfigurationInterface {
   instance: SampleConfigurationSets;
   scanTypes: ScanTypes;

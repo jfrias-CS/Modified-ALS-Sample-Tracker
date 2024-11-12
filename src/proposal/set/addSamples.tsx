@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react';
+import { useParams } from "react-router-dom"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
@@ -10,7 +11,9 @@ import { SampleConfigurationContext } from '../../sampleConfigurationProvider.ts
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx'
 
 
-function AddSamples() {
+const AddSamples: React.FC = () => {
+
+  const { setId } = useParams();
 
   const sampleSetContext = useContext(SampleConfigurationContext);
 
@@ -24,10 +27,16 @@ function AddSamples() {
   const [newName, setNewName] = useState<string>("1");
   const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(null)
 
+  function getSet() {
+    if (!setId) { return undefined; }
+    return sampleSetContext.instance.setsById.get(setId as Guid);
+  }
+
   function clickedOpen() {
-    if (!inProgress && !isOpen) {
+    const thisSet = getSet();
+    if (!inProgress && !isOpen && thisSet) {
       setIsOpen(true);
-      const goodNames = sampleSetContext.instance.generateUniqueNames(newName, 1);
+      const goodNames = thisSet.generateUniqueNames(newName, 1);
       setNewName(goodNames[0]);
       validate(quantity, goodNames[0], scanTypeValue);
     }
@@ -58,9 +67,12 @@ function AddSamples() {
     if (trimmed.length < 1) {
       validName = false;
     } else {
-      if (sampleSetContext.sampleConfigurations.some((c) => c.name == trimmed)) {
-        validName = false;
-        uniqueName = false;
+      const thisSet = getSet();
+      if (thisSet) {
+        if (thisSet.all().some((c) => c.name == trimmed)) {
+          validName = false;
+          uniqueName = false;
+        }
       }
     }
 
@@ -71,10 +83,13 @@ function AddSamples() {
   }
 
   function pressedSubmit() {
+    const thisSet = getSet();
+    if (!thisSet) { return; }
+
     var count = Math.max(parseInt(quantity, 10), 1);
-    var uniqueNames = sampleSetContext.instance.generateUniqueNames(newName, count);
-    var uniqueIds = sampleSetContext.instance.generateUniqueIds(count);
-    var openLocations = sampleSetContext.instance.generateOpenLocations(count);
+    var uniqueNames = thisSet.generateUniqueNames(newName, count);
+    var uniqueIds = thisSet.generateUniqueIds(count);
+    var openLocations = thisSet.generateOpenLocations(count);
 
     var newSets = [];
     while (count > 0) {
@@ -93,7 +108,7 @@ function AddSamples() {
 
     // This might be asynchronous in the future
     setInProgress(true);
-    sampleSetContext.instance.addOrReplace(newSets);
+    thisSet.addOrReplace(newSets);
     sampleSetContext.refresh();
     setInProgress(false);
     setIsOpen(false);
