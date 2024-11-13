@@ -1,6 +1,5 @@
-import React, { useState, useEffect, PropsWithChildren } from 'react';
+import React, { PropsWithChildren } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { faExclamationTriangle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
@@ -10,13 +9,13 @@ enum LoadingState { NotStarted, Loading, Success, Failure };
 
 
 // Settings passed in with the React component
-interface LoadingBannerParameters {
+interface LoadingBannerProps {
   state: LoadingState;
   message?: string;
 }
 
 
-const LoadingBanner: React.FC<PropsWithChildren<LoadingBannerParameters>> = (props) => {
+const LoadingBanner: React.FC<PropsWithChildren<LoadingBannerProps>> = (props) => {
 
   // Hide everything if we're loaded.
   if (props.state == LoadingState.Success) {
@@ -33,7 +32,7 @@ const LoadingBanner: React.FC<PropsWithChildren<LoadingBannerParameters>> = (pro
       icon = (<FontAwesomeIcon icon={faSpinner} spin={true} />);
       colorClass = "is-dark";
       break;
-    case LoadingState.NotStarted:
+    case LoadingState.Loading:
       message = "Loading ";
       icon = (<FontAwesomeIcon icon={faSpinner} spin={true} />);
       colorClass = "is-info";

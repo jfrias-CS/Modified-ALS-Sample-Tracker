@@ -6,10 +6,10 @@ import { Guid } from '../components/utils.tsx';
 import { SampleConfigurationSet } from '../sampleConfiguration.ts';
 import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx';
 import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
-import './barTable.css';
+import './setTable.css';
 
 
-function BarTable() {
+function SetTable() {
 
   const { proposalId } = useParams();
 
@@ -19,7 +19,7 @@ function BarTable() {
   const [loadingMessage, setLoadingMessage] = useState("");
 
   useEffect(() => {
-    console.log('barTable says setId, setsLoaded, scanTypesLoaded changed');
+    console.log('setTable says setId, setsLoaded, scanTypesLoaded changed');
 
     if ((proposalId === undefined) || (!proposalId.trim())) {
       setLoading(LoadingState.Failure);
@@ -46,7 +46,7 @@ function BarTable() {
 
   return (
     <>
-      <table className="bartable">
+      <table className="settable">
         <thead>
           <tr key="headers">
             <th key="name" scope="col">Name</th>
@@ -71,4 +71,4 @@ function BarTable() {
   )
 }
 
-export default BarTable
+export default SetTable

@@ -2,7 +2,7 @@ import { useEffect, useContext, PropsWithChildren } from 'react';
 import { useParams, Outlet } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
-import { SampleConfigurationContext } from './../sampleConfigurationProvider.tsx';
+import { SampleConfigurationProvider, SampleConfigurationContext } from './../sampleConfigurationProvider.tsx';
 
 
 const ProposalLayout: React.FC<PropsWithChildren> = (props) => {
@@ -49,14 +49,16 @@ const ProposalLayout: React.FC<PropsWithChildren> = (props) => {
   }, []);
 
   return (
-    <div style={{padding: ".375rem 1rem"}}>
-      <h1 className="title">Beamline Sample Set Configuration</h1>
+    <SampleConfigurationProvider proposalId={proposalId}>
+      <div style={{padding: ".375rem 1rem"}}>
+        <h1 className="title">Beamline Sample Set Configuration</h1>
 
-      { proposalId ? (<h2 className="subtitle is-2">Proposal ID { proposalId }</h2>) :
-                    (<h2 className="subtitle is-2">No Proposal ID given!</h2>)
-      }
-      <Outlet />
-    </div>
+        { proposalId ? (<h2 className="subtitle is-2">Proposal ID { proposalId }</h2>) :
+                      (<h2 className="subtitle is-2">No Proposal ID given!</h2>)
+        }
+        <Outlet />
+      </div>
+    </SampleConfigurationProvider>
   )
 }
 

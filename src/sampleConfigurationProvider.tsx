@@ -45,6 +45,11 @@ interface SetsFromServer {
 }
 
 
+// Settings passed into this component
+interface ProviderProps {
+  proposalId: string | undefined;
+}
+
 // The structure we are providing to components in the hierarchy of the provider
 interface SampleConfigurationInterface {
   instance: SampleConfigurationSets;
@@ -64,21 +69,65 @@ const SampleConfigurationContext = createContext<SampleConfigurationInterface>({
                     ingestFromServer: () => {}
                   });
 
-const SampleConfigurationProvider: React.FC<PropsWithChildren> = (props) => {
+const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => {
   const [sampleConfigurationsObject, setSampleConfigurationsObject] = useState<SampleConfigurationSets>(new SampleConfigurationSets("empty", "0" as Guid, true));
   const [scanTypes, setScanTypes] = useState<ScanTypes>({types:[],parameters:[]});
   const [setsLoaded, setSetsLoaded] = useState<boolean>(false);
   const [scanTypesLoaded, setScanTypesLoaded] = useState<boolean>(false);
+  const [proposalId, setProposalId] = useState<string | undefined>(props.proposalId);
 
   useEffect(() => {
     console.log('SampleConfigurationProvider mounted');
-    // My eventually by an asynchronous call.
+
+    // Will eventually be an asynchronous call.
     setScanTypes(getScanTypes());
     setScanTypesLoaded(true);
     return () => {
-        console.log('SampleConfigurationProvider unmounted');
+      console.log('SampleConfigurationProvider unmounted');
     };
   }, []);
+
+  useEffect(() => {
+    if (proposalId === undefined) {
+      console.log('SampleConfigurationProvider given undefined proposalId');
+      return;
+    }
+    console.log('SampleConfigurationProvider given proposalId ' + proposalId);
+    
+    setSetsLoaded(false);
+
+    const fetchData = async () => {
+      try {
+        if (proposalId === undefined) { throw new Error("ProposalId not defined"); }
+
+        const p = proposalId.trim()
+        if (!p) { throw new Error("ProposalId is blank"); }
+
+//        const requestInfo: RequestInfo = new Request("http://backend.localhost/api/v3/datasets", {
+//              method: "GET"
+          //    body: '{"proposalId": p.toString()}',
+//            });
+
+//        const response = await fetch(requestInfo);      
+//        const result = await response.json();
+
+        const s = {
+          name: "Test Project",
+          proposalId: proposalId,
+          sets: []
+        };
+
+        ingestFromServer(s);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    // Call fetchData when the component mounts
+    fetchData();
+    console.log('Called fetchData');
+
+  }, [proposalId]);
 
   function refreshSampleConfigurations() {
     console.log("Calling refreshSampleConfigurations");
@@ -86,7 +135,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren> = (props) => {
 
   function ingestFromServer(s: SetsFromServer) {
     console.log("Calling ingestFromServer");
-    const sets = new SampleConfigurationSets(s.name, s.proposalId as Guid, false);
+    const sets = new SampleConfigurationSets(s.name, proposalId as Guid, false);
     sets.setScanTypes(scanTypes);
     setSampleConfigurationsObject(sets);
     setSetsLoaded(true);
