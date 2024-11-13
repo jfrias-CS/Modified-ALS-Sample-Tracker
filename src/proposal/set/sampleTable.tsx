@@ -37,7 +37,7 @@ const SampleTable: React.FC = () => {
       return;
     }
 
-    const thisSet = sampleSetContext.instance.setsById.get(s as Guid);
+    const thisSet = sampleSetContext.sets.setsById.get(s as Guid);
 
     if (thisSet === undefined) {
       setLoading(LoadingState.Failure);
@@ -63,12 +63,9 @@ const SampleTable: React.FC = () => {
       (<th key="scantype" scope="col">Scan Type</th>)
   ];
 
-  const sampleCount = sampleConfigurations.length;
-
   return (
     <>
       <h4 className="subtitle is-4">General Information</h4>
-
 
       <h4 className="subtitle is-4">Samples</h4>
 
@@ -82,7 +79,7 @@ const SampleTable: React.FC = () => {
             </div>
           </div>
           <div className="level-item">
-            <p className="subtitle is-5"><strong>{ sampleCount }</strong> samples</p>
+            <p className="subtitle is-5"><strong>{ sampleConfigurations.length }</strong> samples</p>
           </div>
           <div className="level-item">
             <ImportSamples />

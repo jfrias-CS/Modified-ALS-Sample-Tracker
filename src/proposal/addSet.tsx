@@ -1,19 +1,12 @@
 import React, { useState, useContext } from 'react';
-import { useParams } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { ScanTypeName, ScanType } from '../../scanTypes.ts';
-import { Guid } from "../../components/utils.tsx";
-import { SampleConfigurationSet } from '../../sampleConfiguration.ts';
-import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
-import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
+import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx';
 
 
 const AddSamples: React.FC = () => {
-
-  const { setId } = useParams();
 
   const sampleSetContext = useContext(SampleConfigurationContext);
 
@@ -23,38 +16,31 @@ const AddSamples: React.FC = () => {
   const [validName, setValidName] = useState<boolean>(true);
   const [uniqueName, setUniqueName] = useState<boolean>(true);
   const [validAllInput, setValidAllInput] = useState<boolean>(true);
-  const [inProgress, setInProgress] = useState<boolean>(false);
   const [newName, setNewName] = useState<string>("1");
-  const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(null)
-
-  function getSet(): SampleConfigurationSet | undefined {
-    if (!setId) { return undefined; }
-    return sampleSetContext.sets.setsById.get(setId as Guid);
-  }
+  const [inProgress, setInProgress] = useState<boolean>(false);
 
   function clickedOpen() {
-    const thisSet = getSet();
-    if (!inProgress && !isOpen && thisSet) {
+    if (!inProgress && !isOpen) {
       setIsOpen(true);
-      const goodNames = thisSet.generateUniqueNames(newName, 1);
+      const goodNames = sampleSetContext.sets.generateUniqueNames(newName, 1);
       setNewName(goodNames[0]);
-      validate(quantity, goodNames[0], scanTypeValue);
+      validate(quantity, goodNames[0]);
     }
   }
 
   function changedQuantity(c:React.ChangeEvent<HTMLInputElement>) {
     const v = c.target.value;
     setQuantity(v);
-    validate(v, newName, scanTypeValue);
+    validate(v, newName);
   }
 
   function changedName(c:React.ChangeEvent<HTMLInputElement>) {
     const v = c.target.value;
     setNewName(v);
-    validate(quantity, v, scanTypeValue);
+    validate(quantity, v);
   }
 
-  function validate(quantity:string, name:string, scanType:ScanType | null) {
+  function validate(quantity:string, name:string) {
     var validQuantity:boolean = true;
     var validName:boolean = true;
     var uniqueName:boolean = true;
@@ -66,49 +52,29 @@ const AddSamples: React.FC = () => {
     const trimmed = name.toString().trim();
     if (trimmed.length < 1) {
       validName = false;
-    } else {
-      const thisSet = getSet();
-      if (thisSet) {
-        if (thisSet.all().some((c) => c.name == trimmed)) {
-          validName = false;
-          uniqueName = false;
-        }
-      }
+    } else if (sampleSetContext.sets.all().some((c) => c.name == trimmed)) {
+      validName = false;
+      uniqueName = false;
     }
 
     setValidQuantity(validQuantity);
     setValidName(validName);
     setUniqueName(uniqueName);
-    setValidAllInput(validQuantity && validName && (scanType !== null));
+    setValidAllInput(validQuantity && validName);
   }
 
   function pressedSubmit() {
-    const thisSet = getSet();
-    if (!thisSet) { return; }
 
     var count = Math.max(parseInt(quantity, 10), 1);
-    var uniqueNames = thisSet.generateUniqueNames(newName, count);
-    var uniqueIds = thisSet.generateUniqueIds(count);
-    var openLocations = thisSet.generateOpenLocations(count);
-
-    var newSamples = [];
-    while (count > 0) {
-      const newSample = {
-        id: uniqueIds[count-1],
-        idIsClientGenerated: true,
-        mmFromLeftEdge: openLocations[count-1],
-        name: uniqueNames[count-1],
-        description: "",
-        scanType: scanTypeValue!.name as ScanTypeName,
-        parameters: { }
-      };
-      newSamples.push(newSample);
-      count--;
-    }
+    var uniqueNames = sampleSetContext.sets.generateUniqueNames(newName, count);
+    var uniqueIds = sampleSetContext.sets.generateUniqueIds(count);
 
     // This might be asynchronous in the future
     setInProgress(true);
-    thisSet.addOrReplace(newSamples);
+    while (count > 0) {
+      sampleSetContext.sets.add(uniqueNames[count-1], "", uniqueIds[count-1], true);
+      count--;
+    }
     sampleSetContext.changed();
     setInProgress(false);
     setIsOpen(false);
@@ -118,24 +84,17 @@ const AddSamples: React.FC = () => {
     if (!inProgress && isOpen) { setIsOpen(false); }
   }
 
-
-  const scanTypeSearchFunctions:ScanTypeSearchFunctions = {
-    itemSelected: (item: ScanType) => { setScanTypeValue(item); validate(quantity, newName, item); },
-    selectedNone: () => { setScanTypeValue(null); validate(quantity, newName, null); }
-  };
-
-
   return (
     <div>
 
-      <button className="button" onClick={ clickedOpen }>Add Samples</button>
+      <button className="button" onClick={ clickedOpen }>Add Bars</button>
 
       <div id="modal-add-sample" className={ isOpen ? "modal is-active" : "modal" }>
         <div className="modal-background"></div>
 
         <div className="modal-card">
           <header className="modal-card-head">
-            <p className="modal-card-title">Add Samples</p>
+            <p className="modal-card-title">Add Bars</p>
             <button className="delete" aria-label="close" onClick={ clickedClose }></button>
 
           </header>
@@ -172,16 +131,6 @@ const AddSamples: React.FC = () => {
                               (<p className="help is-danger">This name is invalid</p>) :
                               (<p className="help is-danger">This name is not unique</p>))
               }
-            </div>
-
-            <div className="field">
-              <label className="label">Scan Type</label>
-              { ScanTypeAutocomplete({
-                elementId: "addsamples-scantype",
-                value: "",
-                selectedItem: null,
-                searchFunctions: scanTypeSearchFunctions
-              }) }
             </div>
 
             <div className="buttons">

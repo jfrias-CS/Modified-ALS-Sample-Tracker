@@ -45,28 +45,39 @@ interface SetsFromServer {
 }
 
 
-// Settings passed into this component
+// This component should be provided with a proposalId to use as a reference when fetching configuration sets.
+// If the component is given a null proposalId it will skip loading,
+// then try again as soon as the value is changed.
 interface ProviderProps {
   proposalId: string | undefined;
 }
 
-// The structure we are providing to components in the hierarchy of the provider
+// The structure we are providing to components in the hierarchy below the provider
 interface SampleConfigurationInterface {
-  instance: SampleConfigurationSets;
-  scanTypes: ScanTypes;
+  // Access to the current instance of SampleConfigurationSets
+  sets: SampleConfigurationSets;
+  // Set to true when the server responds with good data from a request.
   setsLoaded: boolean;
+  // Essential metadata for interpreting SampleConfiguration objects.
+  scanTypes: ScanTypes;
+  // Set to true when successfully loaded, which should happen automatically after this comoponent is mounted.
   scanTypesLoaded: boolean;
-  refresh: () => void;
-  ingestFromServer: (s: SetsFromServer) => void;
+  // A callback for when a child component makes a change to the SampleConfigurationSets instance.
+  changed: () => void;
+  // This counter is incremented whenever the SampleConfigurationSets data is changed.
+  // Components can watch this counter to know when they need to re-render,
+  // or compare existing cached data to check for a re-render.
+  // Actually more straightforward than providing a registration point for callbacks.
+  changeCounter: number;
 }
 
 const SampleConfigurationContext = createContext<SampleConfigurationInterface>({
-                    instance: new SampleConfigurationSets("empty", "0" as Guid, true), // Should never be reached
+                    sets: new SampleConfigurationSets("empty", "0" as Guid, true), // Should never be reached
                     scanTypes: {types:[],parameters:[]},
                     setsLoaded: false,
                     scanTypesLoaded: false,
-                    refresh: () => {},
-                    ingestFromServer: () => {}
+                    changed: () => {},
+                    changeCounter: 0
                   });
 
 const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => {
@@ -75,6 +86,8 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
   const [setsLoaded, setSetsLoaded] = useState<boolean>(false);
   const [scanTypesLoaded, setScanTypesLoaded] = useState<boolean>(false);
   const [proposalId, setProposalId] = useState<string | undefined>(props.proposalId);
+  const [changeCounter, setChangeCounter] = useState<number>(0);
+
 
   useEffect(() => {
     console.log('SampleConfigurationProvider mounted');
@@ -129,8 +142,12 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
 
   }, [proposalId]);
 
-  function refreshSampleConfigurations() {
-    console.log("Calling refreshSampleConfigurations");
+  // A callback for when a child component makes a change to the SampleConfigurationSets instance.
+  // Note: In the future it may be prudent to pass a set ID into this,
+  // to trigger separate server data update calls for each set, since each will have its own history.
+  function changed() {
+    console.log("Calling changed())");
+    setChangeCounter(changeCounter + 1);
   };
 
   function ingestFromServer(s: SetsFromServer) {
@@ -144,17 +161,17 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
   useEffect(() => {
     console.log('Updating scanTypes in sampleConfigurationsObject');
     sampleConfigurationsObject.setScanTypes(scanTypes);
-    refreshSampleConfigurations();
+    changed();
   }, [scanTypes]);
 
   return (
     <SampleConfigurationContext.Provider value={{
-        instance: sampleConfigurationsObject,
+        sets: sampleConfigurationsObject,
         scanTypes: scanTypes,
         setsLoaded: setsLoaded,
         scanTypesLoaded: scanTypesLoaded,
-        refresh: refreshSampleConfigurations,
-        ingestFromServer: ingestFromServer
+        changed: changed,
+        changeCounter: changeCounter
     }}>
     {props.children}
     </SampleConfigurationContext.Provider>

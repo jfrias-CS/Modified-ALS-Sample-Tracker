@@ -271,16 +271,15 @@ export class SampleConfigurationSets {
     this.setsById.forEach((t) => t.setScanTypes(scanTypesCache));
   }
 
-  newSet(name?: string, description?: string, id?: Guid): SampleConfigurationSet {
-    const thisId = id || this.generateUniqueIds()[0];
-    const uniqueName = this.generateUniqueNames(name || "set")[0];
-    const c = new SampleConfigurationSet( uniqueName, description || "", thisId, true );
+  add(name: string, description: string, id: Guid, idIsClientGenerated: boolean): SampleConfigurationSet {
+    const c = new SampleConfigurationSet( name, description, id, idIsClientGenerated );
     if (this.scanTypesCache) {
       c.setScanTypes(this.scanTypesCache);
     }
-    this.setsById.set(thisId, c);
+    this.setsById.set(id, c);
     return c;
   }
+
 
   generateUniqueNames(suggestedName: string, quantity?: number, startIndex?: number | null): string[] {
     let existingNames: string[] = [];
