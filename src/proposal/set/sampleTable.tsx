@@ -87,11 +87,12 @@ const SampleTable: React.FC = () => {
 
       <div className="field">
         <label className="label">Description</label>
-        { InputEditable({
-          elementId: "sampletable-description",
-          value: set.description,
-          editFunctions: editFunctions
-        }) }
+        { //InputEditable({
+          //elementId: "sampletable-description",
+          //value: set.description,
+          //editFunctions: editFunctions
+          //})
+        }
       </div>
 
       <h4 className="subtitle is-4">Samples</h4>

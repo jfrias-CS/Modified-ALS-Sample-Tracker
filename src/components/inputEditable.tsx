@@ -234,6 +234,46 @@ function InputEditable(settings: InputEditableParameters) {
           <label className="label">{ settings.label }</label>)
       ) }
       <div className="field-body">
+        <div className="field is-expanded">
+          <div className="field has-addons">
+            <div className={ controlClass }>
+              <input type="text"
+                className={ inputClass }
+                id={ "debouncer-editable-" + (settings.elementId || "default") }
+                placeholder={ settings.placeholder || "Enter value" }
+                readOnly={ settings.isReadOnly }
+                onChange={ (event) => {
+                  inputChanged(event.target.value)
+                } }
+                autoCorrect="off"
+
+                aria-haspopup="listbox"
+
+                value={ inputValue }
+                onKeyDown={ inputOnKeyDown }
+                onFocus={ inputOnFocus }
+                onBlur={ () => {
+                  // The onblur event may happen because one of the matched items has been clicked.
+                  // Wait a bit to give precedence to the click event in that case.
+                  setTimeout( inputOnBlur, 200);
+                } }
+              />
+              { (inputIcon && (
+                  <span className={ classNames( "icon", "is-left", settings.iconSize) }>
+                    { inputIcon }
+                  </span>)
+              ) }
+              { (statusIcon && (
+                  <span className={ classNames( "icon", "is-right", settings.iconSize) }>
+                    { statusIcon }
+                  </span>)
+              ) }
+            </div>
+            { cancelButton }
+            { saveButton }
+          </div>
+          { helpSection }
+        </div>
       </div>
     </div>
   )
