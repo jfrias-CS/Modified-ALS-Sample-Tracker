@@ -24,7 +24,7 @@ const AddSamples: React.FC = () => {
   const [uniqueName, setUniqueName] = useState<boolean>(true);
   const [validAllInput, setValidAllInput] = useState<boolean>(true);
   const [inProgress, setInProgress] = useState<boolean>(false);
-  const [newName, setNewName] = useState<string>("1");
+  const [newName, setNewName] = useState<string>("Sample");
   const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(null)
 
   function getSet(): SampleConfigurationSet | undefined {

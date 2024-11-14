@@ -16,7 +16,7 @@ const AddSamples: React.FC = () => {
   const [validName, setValidName] = useState<boolean>(true);
   const [uniqueName, setUniqueName] = useState<boolean>(true);
   const [validAllInput, setValidAllInput] = useState<boolean>(true);
-  const [newName, setNewName] = useState<string>("1");
+  const [newName, setNewName] = useState<string>("Bar");
   const [inProgress, setInProgress] = useState<boolean>(false);
 
   function clickedOpen() {

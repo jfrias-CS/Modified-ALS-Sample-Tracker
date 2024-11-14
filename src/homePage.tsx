@@ -17,7 +17,6 @@ const HomePage: React.FC = () => {
     }
   ];
 
-
   return (
 
       <div style={{padding: ".375rem 1rem"}}>
