@@ -128,7 +128,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
 //        const result = await response.json();
 
         const s = {
-          name: "Test Project",
+          name: "Test Proposal",
           proposalId: proposalId,
           sets: []
         };

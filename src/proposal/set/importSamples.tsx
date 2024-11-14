@@ -29,7 +29,7 @@ const ImportSamples: React.FC = () => {
 
   function getSet(): SampleConfigurationSet | undefined {
     if (!setId) { return undefined; }
-    return sampleSetContext.sets.setsById.get(setId as Guid);
+    return sampleSetContext.sets.getById(setId as Guid);
   }
 
   function clickedOpen() {

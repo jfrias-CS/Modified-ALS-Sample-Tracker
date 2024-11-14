@@ -40,6 +40,16 @@ const AddSamples: React.FC = () => {
     validate(quantity, v);
   }
 
+  // If all the form data is valid and the user hits 'Enter' in the name input,
+  // act as if 'Add' was pressed.
+  function nameOnKeyDown(event:React.KeyboardEvent<HTMLInputElement>) {
+    if ( isOpen && !inProgress ) {
+      if ((event.key == "Enter") && validAllInput) {
+        pressedSubmit();
+      }
+    }
+  }
+
   function validate(quantity:string, name:string) {
     var validQuantity:boolean = true;
     var validName:boolean = true;
@@ -87,14 +97,14 @@ const AddSamples: React.FC = () => {
   return (
     <div>
 
-      <button className="button" onClick={ clickedOpen }>Add Bars</button>
+      <button className="button" onClick={ clickedOpen }>Add Sets</button>
 
       <div id="modal-add-sample" className={ isOpen ? "modal is-active" : "modal" }>
         <div className="modal-background"></div>
 
         <div className="modal-card">
           <header className="modal-card-head">
-            <p className="modal-card-title">Add Bars</p>
+            <p className="modal-card-title">Add Sets</p>
             <button className="delete" aria-label="close" onClick={ clickedClose }></button>
 
           </header>
@@ -122,6 +132,7 @@ const AddSamples: React.FC = () => {
                   type="text"
                   placeholder="Unique name"
                   value={ newName }
+                  onKeyDown={ nameOnKeyDown }
                   onChange={ changedName } />
                 <span className="icon is-small is-right">
                   { validName || (<FontAwesomeIcon icon={faExclamationTriangle} color="darkred" />) }

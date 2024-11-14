@@ -14,7 +14,7 @@ const SetTable: React.FC = () => {
   const { proposalId } = useParams();
 
   const sampleSetContext = useContext(SampleConfigurationContext);
-  const [bars, setBars] = useState<SampleConfigurationSet[]>([]);
+  const [sets, setSets] = useState<SampleConfigurationSet[]>([]);
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
   const [loadingMessage, setLoadingMessage] = useState("");
 
@@ -27,7 +27,9 @@ const SetTable: React.FC = () => {
       return;
     }
 
-    setBars(sampleSetContext.sets.all());
+    const sortedSets = sampleSetContext.sets.all().sort((a, b) => a.name.localeCompare(b.name));
+
+    setSets(sortedSets);
     setLoading(LoadingState.Success);
 
   }, [sampleSetContext.changeCounter, sampleSetContext.setsLoaded, sampleSetContext.scanTypesLoaded]);
@@ -58,7 +60,7 @@ const SetTable: React.FC = () => {
             </div>
           </div>
           <div className="level-item">
-            <p className="subtitle is-5"><strong>{ bars.length }</strong> bars</p>
+            <p className="subtitle is-5"><strong>{ sets.length }</strong> sets</p>
           </div>
           <div className="level-item">
             <AddSet />
@@ -82,12 +84,12 @@ const SetTable: React.FC = () => {
         </thead>
         <tbody>
           {
-            bars.map((bar) => {
+            sets.map((set) => {
               return (
-                <tr key={bar["id"]}>
-                    <th scope="row"><Link to={ "set/" + bar.id }>{ bar.name }</Link></th>
-                    <td>{ bar.description }</td>
-                    <td>{ bar.configurationsById.size }</td>
+                <tr key={set["id"]}>
+                    <th scope="row"><Link to={ "set/" + set.id }>{ set.name }</Link></th>
+                    <td>{ set.description }</td>
+                    <td>{ set.configurationsById.size }</td>
                 </tr>);
             })
           }

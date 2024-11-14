@@ -13,7 +13,7 @@ const HomePage: React.FC = () => {
       id: "1" as Guid,
       name: "Test Proposal",
       description: "This is a test proposal, generated client-side as empty.",
-      bars: 0
+      sets: 0
     }
   ];
 
@@ -33,7 +33,7 @@ const HomePage: React.FC = () => {
             <tr key="headers">
               <th key="name" scope="col">Name</th>
               <th key="description" scope="col">Description</th>
-              <th key="samplecount" scope="col">Bars</th>
+              <th key="samplecount" scope="col">Sets</th>
             </tr>
           </thead>
           <tbody>
@@ -43,7 +43,7 @@ const HomePage: React.FC = () => {
                   <tr key={proposal["id"]}>
                       <th scope="row"><Link to={ "/proposal/" + proposal.id }>{ proposal.name }</Link></th>
                       <td>{ proposal.description }</td>
-                      <td>{ proposal.bars }</td>
+                      <td>{ proposal.sets }</td>
                   </tr>);
               })
             }
