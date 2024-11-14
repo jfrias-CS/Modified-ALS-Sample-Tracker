@@ -148,11 +148,11 @@ export function generateUniqueNames(existingNames: string[], suggestedName: stri
   existingNames.forEach((v) => { existingNameSet.add(v) });
 
   var goodNames = [];
-  var goodName = chosenPrefix + chosenStartIndex.toString();
+  var goodName = suggestedName;
   while (chosenQuantity > 0) {
     while (existingNameSet.has(goodName)) {
-      chosenStartIndex++;
       goodName = chosenPrefix + chosenStartIndex.toString();
+      chosenStartIndex++;
     }
     goodNames.push(goodName);
     existingNameSet.add(goodName);
