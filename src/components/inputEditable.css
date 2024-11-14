@@ -1,0 +1,18 @@
+div.inputeditable-notify {
+  display: none;
+  padding-top: 0;
+  z-index: 5;
+  min-width: 8rem;
+  position: absolute;
+}
+
+div.inputeditable-notify.disclosed {
+  display: block;
+}
+
+div.inputeditable-notify-content {
+  background-color: #F8F8F8;
+  border-radius: 4px;
+  box-shadow: 0 2px 3px rgba(10, 10, 10, 0.2), 0 0 0 1px rgba(10, 10, 10, 0.2);
+  padding: 0.2rem 0.7rem 0.4rem 0.7rem;
+}

@@ -8,6 +8,7 @@ import { SampleConfigurationContext } from '../../sampleConfigurationProvider.ts
 import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
+import { InputEditable, EditFunctions, ValidationStatus } from '../../components/inputEditable.tsx';
 import './sampleTable.css';
 
 
@@ -29,7 +30,6 @@ const SampleTable: React.FC = () => {
       setLoadingMessage("Invalid Set ID");
       return;
     }
-    const s = setId.trim()
 
     if (!sampleSetContext.setsLoaded || !sampleSetContext.scanTypesLoaded) {
       setLoading(LoadingState.Loading);
@@ -37,7 +37,7 @@ const SampleTable: React.FC = () => {
       return;
     }
 
-    const thisSet = sampleSetContext.sets.setsById.get(s as Guid);
+    const thisSet = sampleSetContext.sets.getById(setId.trim() as Guid);
 
     if (thisSet === undefined) {
       setLoading(LoadingState.Failure);
@@ -65,6 +65,13 @@ const SampleTable: React.FC = () => {
       (<th key="scantype" scope="col">Scan Type</th>)
   ];
 
+
+  const editFunctions: EditFunctions = {
+    validator: async () => { return { status: ValidationStatus.Success } },
+    submit: async (value: string) => { set.description = value; return { status: ValidationStatus.Success } },
+  };
+
+
   return (
     <>
 
@@ -77,6 +84,15 @@ const SampleTable: React.FC = () => {
       </nav>
 
       <h4 className="subtitle is-4">General Information</h4>
+
+      <div className="field">
+        <label className="label">Description</label>
+        { InputEditable({
+          elementId: "sampletable-description",
+          value: set.description,
+          editFunctions: editFunctions
+        }) }
+      </div>
 
       <h4 className="subtitle is-4">Samples</h4>
 
