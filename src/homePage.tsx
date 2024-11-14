@@ -22,7 +22,11 @@ const HomePage: React.FC = () => {
       <div style={{padding: ".375rem 1rem"}}>
         <h1 className="title">Beamline Sample Set Configuration</h1>
 
-        <h4 className="subtitle is-4">Available Proposals</h4>
+        <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
+          <ul>
+            <li className="is-active"><Link to={ "/" }>Proposals</Link></li>
+          </ul>
+        </nav>
 
         <table className="proposals">
           <thead>

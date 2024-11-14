@@ -81,11 +81,14 @@ const SampleConfigurationContext = createContext<SampleConfigurationInterface>({
                   });
 
 const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => {
+  const [proposalId, setProposalId] = useState<string | undefined>(props.proposalId);
+
   const [sampleConfigurationsObject, setSampleConfigurationsObject] = useState<SampleConfigurationSets>(new SampleConfigurationSets("empty", "0" as Guid, true));
   const [scanTypes, setScanTypes] = useState<ScanTypes>({types:[],parameters:[]});
+
   const [setsLoaded, setSetsLoaded] = useState<boolean>(false);
   const [scanTypesLoaded, setScanTypesLoaded] = useState<boolean>(false);
-  const [proposalId, setProposalId] = useState<string | undefined>(props.proposalId);
+
   const [changeCounter, setChangeCounter] = useState<number>(0);
 
 

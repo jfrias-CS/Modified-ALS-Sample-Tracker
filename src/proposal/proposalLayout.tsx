@@ -21,10 +21,6 @@ const ProposalLayout: React.FC<PropsWithChildren> = (props) => {
     <SampleConfigurationProvider proposalId={proposalId}>
       <div style={{padding: ".375rem 1rem"}}>
         <h1 className="title">Beamline Sample Set Configuration</h1>
-
-        { proposalId ? (<h2 className="subtitle is-2">Proposal ID { proposalId }</h2>) :
-                      (<h2 className="subtitle is-2">No Proposal ID given!</h2>)
-        }
         <Outlet />
       </div>
     </SampleConfigurationProvider>

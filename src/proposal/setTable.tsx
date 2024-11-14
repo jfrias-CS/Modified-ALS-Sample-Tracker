@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { Link, useParams } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
-import { Guid } from '../components/utils.tsx';
 import { SampleConfigurationSet } from '../sampleConfiguration.ts';
 import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx';
 import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
@@ -9,7 +9,9 @@ import AddSet from './addSet.tsx';
 import './setTable.css';
 
 
-function SetTable() {
+const SetTable: React.FC = () => {
+
+  const { proposalId } = useParams();
 
   const sampleSetContext = useContext(SampleConfigurationContext);
   const [bars, setBars] = useState<SampleConfigurationSet[]>([]);
@@ -17,7 +19,7 @@ function SetTable() {
   const [loadingMessage, setLoadingMessage] = useState("");
 
   useEffect(() => {
-    console.log('setTable says changeCounter, setsLoaded, scanTypesLoaded changed');
+    console.log(`setTable changeCounter:${sampleSetContext.changeCounter} setsLoaded:${sampleSetContext.setsLoaded} scanTypesLoaded:${sampleSetContext.scanTypesLoaded}`);
 
     if (!sampleSetContext.setsLoaded || !sampleSetContext.scanTypesLoaded) {
       setLoading(LoadingState.Loading);
@@ -38,6 +40,14 @@ function SetTable() {
 
   return (
     <>
+
+      <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
+        <ul>
+          <li><Link to={ "/" }>Proposals</Link></li>
+          <li className="is-active"><Link to={ "/proposal/" + proposalId }>{ sampleSetContext.sets.name }</Link></li>
+        </ul>
+      </nav>
+
       <nav className="level">
         <div className="level-left">
           <div className="level-item">
@@ -75,7 +85,7 @@ function SetTable() {
             bars.map((bar) => {
               return (
                 <tr key={bar["id"]}>
-                    <th scope="row">{ bar.name }</th>
+                    <th scope="row"><Link to={ "set/" + bar.id }>{ bar.name }</Link></th>
                     <td>{ bar.description }</td>
                     <td>{ bar.configurationsById.size }</td>
                 </tr>);

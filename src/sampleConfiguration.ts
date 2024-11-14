@@ -280,6 +280,9 @@ export class SampleConfigurationSets {
     return c;
   }
 
+  getById(id: Guid): SampleConfigurationSet | undefined {
+    return this.setsById.get(id);
+  }
 
   generateUniqueNames(suggestedName: string, quantity?: number, startIndex?: number | null): string[] {
     let existingNames: string[] = [];

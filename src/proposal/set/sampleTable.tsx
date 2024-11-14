@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
 import { Guid } from '../../components/utils.tsx';
@@ -13,7 +13,7 @@ import './sampleTable.css';
 
 const SampleTable: React.FC = () => {
 
-  const { setId } = useParams();
+  const { proposalId, setId } = useParams();
 
   const sampleSetContext = useContext(SampleConfigurationContext);
   const [sampleConfigurations, setSampleConfigurations] = useState<SampleConfiguration[]>([]);
@@ -22,7 +22,7 @@ const SampleTable: React.FC = () => {
 
 
   useEffect(() => {
-    console.log('sampleTable says setId, setsLoaded, scanTypesLoaded changed');
+    console.log(`sampleTable setId:${setId} changeCounter:${sampleSetContext.changeCounter} setsLoaded:${sampleSetContext.setsLoaded} scanTypesLoaded:${sampleSetContext.scanTypesLoaded}`);
 
     if ((setId === undefined) || (!setId.trim())) {
       setLoading(LoadingState.Failure);
@@ -48,11 +48,13 @@ const SampleTable: React.FC = () => {
     setSampleConfigurations(thisSet.all());
     setLoading(LoadingState.Success);
 
-  }, [setId, sampleSetContext.setsLoaded, sampleSetContext.scanTypesLoaded]);
+  }, [setId, sampleSetContext.changeCounter, sampleSetContext.setsLoaded, sampleSetContext.scanTypesLoaded]);
 
   // If we're in any loading state other than success,
   // display a loading banner instead of the content.
-  if (loading != LoadingState.Success) {
+  const set = sampleSetContext.sets.getById(setId!.trim() as Guid)
+
+  if ((loading != LoadingState.Success) || !set) {
     return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
   }
 
@@ -65,6 +67,15 @@ const SampleTable: React.FC = () => {
 
   return (
     <>
+
+      <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
+        <ul>
+          <li><Link to={ "/" }>Proposals</Link></li>
+          <li><Link to={ "/proposal/" + proposalId }>{ sampleSetContext.sets.name }</Link></li>
+          <li className="is-active"><Link to={ "/proposal/" + proposalId + "/set/" + setId }>{ set.name }</Link></li>
+        </ul>
+      </nav>
+
       <h4 className="subtitle is-4">General Information</h4>
 
       <h4 className="subtitle is-4">Samples</h4>
@@ -106,7 +117,7 @@ const SampleTable: React.FC = () => {
           {
             sampleConfigurations.map((sample) => {
               return (
-                <tr key={sample["name"]}>
+                <tr key={sample["id"]}>
                     <td>{ sample.mmFromLeftEdge.toString() + "mm" }</td>
                     <th scope="row">{ sample.name }</th>
                     <td>{ sample.description }</td>
