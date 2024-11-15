@@ -18,6 +18,7 @@ const SampleTable: React.FC = () => {
 
   const sampleSetContext = useContext(SampleConfigurationContext);
   const [sampleConfigurations, setSampleConfigurations] = useState<SampleConfiguration[]>([]);
+  const [description, setDescription] = useState<string>("");
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
   const [loadingMessage, setLoadingMessage] = useState("");
 
@@ -47,6 +48,7 @@ const SampleTable: React.FC = () => {
 
     const sortedSamples = thisSet.all().sort((a, b) => a.mmFromLeftEdge - b.mmFromLeftEdge);
     setSampleConfigurations(sortedSamples);
+    setDescription(thisSet.description);
 
     setLoading(LoadingState.Success);
 
@@ -56,9 +58,6 @@ const SampleTable: React.FC = () => {
   // display a loading banner instead of the content.
   const set = sampleSetContext.sets.getById(setId!.trim() as Guid)
 
-  if ((loading != LoadingState.Success) || !set) {
-    return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
-  }
 
   var headers = [
       (<th key="mm" scope="col">From Left Edge</th>),
@@ -70,8 +69,17 @@ const SampleTable: React.FC = () => {
 
   const editFunctions: EditFunctions = {
     validator: async () => { return { status: ValidationStatus.Success } },
-    submit: async (value: string) => { set.description = value; return { status: ValidationStatus.Success } },
+    submit: async (value: string) => {
+              set!.description = value;
+              setDescription(value);
+              return { status: ValidationStatus.Success }
+            },
   };
+
+
+  if ((loading != LoadingState.Success) || !set) {
+    return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
+  }
 
 
   return (
@@ -85,16 +93,14 @@ const SampleTable: React.FC = () => {
         </ul>
       </nav>
 
-      <h4 className="subtitle is-4">General Information</h4>
-
       <div className="field">
-        <label className="label">Description</label>
-        { //InputEditable({
-          //elementId: "sampletable-description",
-          //value: set.description,
-          //editFunctions: editFunctions
-          //})
-        }
+        <InputEditable
+            label="Description"
+            elementId="sampletable-description"
+            value={set.description}
+            placeholder="Describe this sample"
+            showHelp={true}
+            editFunctions={editFunctions} />
       </div>
 
       <h4 className="subtitle is-4">Samples</h4>
