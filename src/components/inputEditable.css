@@ -16,3 +16,11 @@ div.inputeditable-notify-content {
   box-shadow: 0 2px 3px rgba(10, 10, 10, 0.2), 0 0 0 1px rgba(10, 10, 10, 0.2);
   padding: 0.2rem 0.7rem 0.4rem 0.7rem;
 }
+
+
+@media (prefers-color-scheme: dark) {
+  div.inputeditable-notify-content {
+    background-color: #080808;
+    box-shadow: 0 2px 3px rgba(120, 120, 120, 0.2), 0 0 0 1px rgba(120, 120, 120, 0.2);
+  }
+}
