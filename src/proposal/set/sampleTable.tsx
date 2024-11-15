@@ -45,7 +45,9 @@ const SampleTable: React.FC = () => {
       return;
     }
 
-    setSampleConfigurations(thisSet.all());
+    const sortedSamples = thisSet.all().sort((a, b) => a.mmFromLeftEdge - b.mmFromLeftEdge);
+    setSampleConfigurations(sortedSamples);
+
     setLoading(LoadingState.Success);
 
   }, [setId, sampleSetContext.changeCounter, sampleSetContext.setsLoaded, sampleSetContext.scanTypesLoaded]);
