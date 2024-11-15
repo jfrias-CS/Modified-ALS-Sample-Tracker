@@ -48,12 +48,13 @@ enum InputTypingState { NotTyping, IsTyping, StoppedTyping };
 enum InputValidationState { NotTriggered, Succeeded, Failed };
 
 
-function InputEditable(settings: InputEditableParameters) {
+// Just a small helper function to concetenate CSS class names
+function classNames(...names:(string|null|undefined)[]): string {
+  return names.filter((name) => (name !== undefined) && (name !== null) && (name.length > 0)).join(" "); 
+}
 
-  // Just a small helper function to concetenate CSS class names
-  function classNames(...names:(string|null|undefined)[]): string {
-    return names.filter((name) => (name !== undefined) && (name !== null) && (name.length > 0)).join(" "); 
-  }
+
+function InputEditable(settings: InputEditableParameters) {
 
   // Value in the DOM input element
   const [inputValue, setInputValue] = useState<string>(settings.value);
@@ -79,14 +80,14 @@ function InputEditable(settings: InputEditableParameters) {
 
   // This handles keyboard-based selection in the dropdown.
   // Changes to the input value are handled in inputChanged.
-  function inputOnKeyDown(event:React.KeyboardEvent<HTMLInputElement>) {
+  function inputOnKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key == "Escape") {
       reset();
       // Defocus?
     } else if (event.key == "Enter") {
       if (inputValue == settings.value) {
         reset();
-      } else {
+      } else if (validationState == InputValidationState.Succeeded) {
         save();
       }
     }
@@ -96,7 +97,7 @@ function InputEditable(settings: InputEditableParameters) {
   // Deal with changes to the input value.
   // We trigger a short delay before searching, and in the meantime
   // we set the UI to show no matches and no selection.
-  function inputChanged(value:string) {
+  function inputChanged(value: string) {
     if (debounceTimer) { clearTimeout(debounceTimer); }
     setDebounceTimer(setTimeout(() => inputCompleted(value), settings.debounceTime || 150));
     setInputValue(value);
@@ -106,10 +107,12 @@ function InputEditable(settings: InputEditableParameters) {
   }
 
 
-  function inputCompleted(value:string) {
+  function inputCompleted(value: string) {
     setTypingState(InputTypingState.StoppedTyping);
-    setOperationInProgress(true);
-    settings.editFunctions.validator(value).then((result) => gotValidationResult(value, result));
+    if (value != settings.value) {
+      setOperationInProgress(true);
+      settings.editFunctions.validator(value).then((result) => gotValidationResult(value, result));
+    }
   }
 
 
@@ -121,8 +124,9 @@ function InputEditable(settings: InputEditableParameters) {
   }
 
 
-  function gotValidationResult(value:string, result: ValidationResult) {
+  function gotValidationResult(value: string, result: ValidationResult) {
     setTypingState(InputTypingState.NotTyping);
+    setOperationInProgress(false);
     switch(result.status ?? ValidationStatus.Success) {
       case ValidationStatus.Success:
       case ValidationStatus.SuccessWithWarning:
@@ -134,7 +138,6 @@ function InputEditable(settings: InputEditableParameters) {
         setValidationMessage(result.message ?? "Error in search");
         break;
     }
-    setOperationInProgress(false);
   }
 
 
@@ -146,9 +149,9 @@ function InputEditable(settings: InputEditableParameters) {
 
 
   function inputOnFocus() {
-    setValidationState(InputValidationState.NotTriggered);
-    setValidationMessage(null);
-    inputCompleted(inputValue);
+//    setValidationState(InputValidationState.NotTriggered);
+//    setValidationMessage(null);
+//    inputCompleted(inputValue);
   }
 
 
@@ -161,68 +164,48 @@ function InputEditable(settings: InputEditableParameters) {
   var statusIcon: JSX.Element | null = null;
   var inputIcon: JSX.Element | null = settings.icon || null;
   var help: JSX.Element | null = null;
-  var saveButton: JSX.Element | null = null;
-  var cancelButton: JSX.Element | null = null;
-  
-  if (operationInProgress) {
-    statusIcon = (<FontAwesomeIcon icon={faSpinner} spin={true} />); 
+  var showSaveButton: boolean = false;
+  var showCancelButton: boolean = false;
 
-  } else if ((typingState == InputTypingState.StoppedTyping) &&
-             (validationState == InputValidationState.NotTriggered)) {
-    statusIcon = (<FontAwesomeIcon icon={faQuestion} />);
-    inputIcon = null;
+  // Only show decoration if the value has been edited (differs from value specified in settings)
+  if (inputValue != settings.value) {
 
-  } else {
-
-    cancelButton = (
-      <div className="control">
-        <button className="button" onClick={ () => { reset() }}>
-          <span className={ classNames( "icon", "is-right", "is-danger", "is-small") }>
-            <FontAwesomeIcon icon={faX} />
-          </span>
-        </button>
-      </div>
-    );
-
-    if (validationState == InputValidationState.Failed) {
-      inputColor = "is-danger";
-      statusIcon = (<FontAwesomeIcon icon={faExclamationTriangle} color="darkred" />);
-      if ((inputValue != settings.value) && settings.showHelp && validationMessage) {
-        help = (<p className="help is-danger">{ validationMessage }</p>);
-      }
-    } else if (validationState == InputValidationState.Succeeded) {
-      statusIcon = (<FontAwesomeIcon icon={faCheck} />);
-
-      saveButton = (
-        <div className="control">
-          <button className="button" onClick={ () => { save() }}>
-            <span className={ classNames( "icon", "is-right", "is-success", "is-small") }>
-              <FontAwesomeIcon icon={faCheck} />
-            </span>
-          </button>
-        </div>
-      );
-  
+    if (settings.isTextArea) {
+      help = (<p className="help">Press Ctrl + Enter to save. Press Ctrl + Esc to cancel.</p>);
     } else {
-      if ((inputValue != settings.value) && settings.showHelp) {
-        if (settings.isTextArea) {
-          help = (<p className="help">Press Ctrl + Enter to save. Press Ctrl + Esc to cancel.</p>);
+      help = (<p className="help">Press Enter to save. Press Esc to cancel.</p>);
+    }
+
+    // If an operation is in progress (validation or saving) then only show the wait spinner.
+    // No other controls/feedback are relevant.
+    if (operationInProgress) {
+      statusIcon = (<FontAwesomeIcon icon={faSpinner} spin={true} />); 
+
+    } else {
+
+      if (validationMessage) {
+        if (validationState == InputValidationState.Failed) {
+          help = (<p className="help is-danger">{ validationMessage }</p>);
         } else {
-          help = (<p className="help">Press Enter to save. Press Esc to cancel.</p>);
+          help = (<p className="help">{ validationMessage }</p>);
+        }
+      }
+
+      if (validationState == InputValidationState.Failed) {
+        inputColor = "is-danger";
+        statusIcon = (<FontAwesomeIcon icon={faExclamationTriangle} color="darkred" />);
+      }
+
+      // Even if the value is different, we will only show the controls
+      // when the user has finished typing (giving the validation time to run.)
+      if (typingState == InputTypingState.NotTyping) {
+        showCancelButton = true;
+
+        if (validationState == InputValidationState.Succeeded) {
+          showSaveButton = true;
         }
       }
     }
-  }
-
-  var helpSection: JSX.Element | null = null;
-  if (help) {
-    helpSection = (
-      <div className="inputeditable-notify disclosed"> 
-        <div className="inputeditable-notify-content">
-          { help }
-        </div>
-      </div>
-    );
   }
 
   const controlClass = classNames("control", "is-expanded", inputIcon ? "has-icons-left" : "", statusIcon ? "has-icons-right" : "");
@@ -269,10 +252,36 @@ function InputEditable(settings: InputEditableParameters) {
                   </span>)
               ) }
             </div>
-            { cancelButton }
-            { saveButton }
+            { showCancelButton && (
+                <div className="control">
+                  <button className="button has-background-danger-dark" onClick={ () => { reset() }}>
+                    <span className={ classNames( "icon", "is-right", "is-small") }>
+                      <FontAwesomeIcon icon={faX} />
+                    </span>
+                  </button>
+                </div>
+              )
+            }
+            { showSaveButton && (
+              <div className="control">
+                <button className="button has-background-primary-dark" onClick={ () => { save() }}>
+                  <span className={ classNames( "icon", "is-right", "is-small") }>
+                    <FontAwesomeIcon icon={faCheck} color="lightgreen" />
+                  </span>
+                </button>
+              </div>
+
+              )
+            }
           </div>
-          { helpSection }
+          { (help && settings.showHelp) && (
+            <div className="inputeditable-notify disclosed"> 
+              <div className="inputeditable-notify-content">
+                { help }
+              </div>
+            </div>
+            )
+          }
         </div>
       </div>
     </div>
