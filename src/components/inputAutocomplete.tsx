@@ -56,12 +56,13 @@ enum InputTypingState { NotTyping, IsTyping, StoppedTyping };
 enum InputValidationState { NotTriggered, Succeeded, Failed };
 
 
-function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
+// Just a small helper function to concatenate CSS class names
+function classNames(...names:(string|null|undefined)[]): string {
+  return names.filter((name) => (name !== undefined) && (name !== null) && (name.length > 0)).join(" "); 
+}
 
-  // Just a small helper function to concetenate CSS class names
-  function classNames(...names:(string|null)[]): string {
-    return names.filter((name) => (name !== null) && (name.length > 0)).join(" "); 
-  }
+
+function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
 
   // Value in the DOM input element
   const [inputValue, setInputValue] = useState<string>(settings.value);

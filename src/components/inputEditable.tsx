@@ -48,7 +48,7 @@ enum InputTypingState { NotTyping, IsTyping, StoppedTyping };
 enum InputValidationState { NotTriggered, Succeeded, Failed };
 
 
-// Just a small helper function to concetenate CSS class names
+// Just a small helper function to concatenate CSS class names
 function classNames(...names:(string|null|undefined)[]): string {
   return names.filter((name) => (name !== undefined) && (name !== null) && (name.length > 0)).join(" "); 
 }
