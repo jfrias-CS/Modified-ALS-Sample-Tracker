@@ -4,9 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { ScanTypeName, ScanType } from '../../scanTypes.ts';
+import { ScanType } from '../../scanTypes.ts';
 import { Guid } from "../../components/utils.tsx";
-import { SampleConfigurationSet } from '../../sampleConfiguration.ts';
+import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
 import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
 
@@ -54,7 +54,7 @@ const AddSamples: React.FC = () => {
     validate(quantity, v, scanTypeValue);
   }
 
-  function validate(quantity:string, name:string, scanType:ScanType | null) {
+  function validate(quantity:string, name:string, scanType: ScanType | null) {
     var validQuantity:boolean = true;
     var validName:boolean = true;
     var uniqueName:boolean = true;
@@ -93,14 +93,22 @@ const AddSamples: React.FC = () => {
 
     var newSamples = [];
     while (count > 0) {
-      const newSample = {
+
+      // Make a set of parameters for the chosen ScanType, with default or blank values.
+      const parameters:{ [key: Guid]: string|null } = {};
+      scanTypeValue!.parameters.forEach((p) => {
+        const parameterType = sampleSetContext.scanTypes.parameters.get(p);
+        if (parameterType) { parameters[parameterType.id] = parameterType.default ?? ""; }
+      });
+
+      const newSample: SampleConfiguration = {
         id: uniqueIds[count-1],
         idIsClientGenerated: true,
         mmFromLeftEdge: openLocations[count-1],
         name: uniqueNames[count-1],
         description: "",
-        scanType: scanTypeValue!.name as ScanTypeName,
-        parameters: { }
+        scanType: scanTypeValue!.name,
+        parameters: parameters
       };
       newSamples.push(newSample);
       count--;
