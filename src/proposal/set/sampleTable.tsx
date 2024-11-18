@@ -81,6 +81,13 @@ const SampleTable: React.FC = () => {
     return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
   }
 
+  const displayedParameterIds = set.relevantParameters.filter((p) => sampleSetContext.scanTypes.parametersById.has(p));
+  const displayedParameters = displayedParameterIds.map((p) => sampleSetContext.scanTypes.parametersById.get(p)!);
+
+  displayedParameters.forEach((p) => {
+    headers.push((<th key={p.id} scope="col">{ p.name }</th>));
+  });
+
 
   return (
     <>
@@ -141,12 +148,26 @@ const SampleTable: React.FC = () => {
         <tbody>
           {
             sampleConfigurations.map((sample) => {
+              var cells = [
+                (<td key="mm">{ sample.mmFromLeftEdge.toString() + "mm" }</td>),
+                (<th key="name" scope="row">{ sample.name }</th>),
+                (<td key="description">{ sample.description }</td>),
+                (<td key="scantype">{ sample.scanType }</td>)
+              ];
+
+              const allowedParameters = new Set(sampleSetContext.scanTypes.typesByName.get(sample.scanType)!.parameters);
+
+              displayedParameters.forEach((p) => {
+                if (!allowedParameters.has(p.id)) {
+                  cells.push((<td key={ p.id } className="notused"></td>));
+                } else {
+                  cells.push((<td key={ p.id }>{ sample.parameters[p.id] ?? "" }</td>));
+                }
+              });
+
               return (
                 <tr key={sample["id"]}>
-                    <td>{ sample.mmFromLeftEdge.toString() + "mm" }</td>
-                    <th scope="row">{ sample.name }</th>
-                    <td>{ sample.description }</td>
-                    <td>{ sample.scanType }</td>
+                  { cells }
                 </tr>);
             })
           }

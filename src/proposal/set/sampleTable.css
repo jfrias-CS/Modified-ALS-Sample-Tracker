@@ -16,3 +16,13 @@ table.sampletable tr:hover {
   cursor: pointer;
   user-select: none;
 }
+
+table.sampletable td.notused {
+  background-color: #DDD;
+}
+
+@media (prefers-color-scheme: dark) {
+  table.sampletable td.notused {
+    background-color: #333;
+  }
+}
