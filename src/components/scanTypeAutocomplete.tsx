@@ -35,7 +35,8 @@ function ScanTypeAutocomplete(settings:ScanTypeAutocompleteParameters) {
 
   async function searchScanTypes(searchString: string): Promise<SearchResult<ScanType>> {
     const searchStringLower = searchString.toLowerCase();
-    const matches = sampleSetContext.scanTypes.types.filter((s) =>
+    const toTest = sampleSetContext.scanTypes.typeNamesInDisplayOrder.map((t) => sampleSetContext.scanTypes.typesByName.get(t)!);
+    const matches = toTest.filter((s) =>
                       s.name.toLowerCase().includes(searchStringLower) ||
                       s.description.toLowerCase().includes(searchStringLower));
     return { matches: matches };

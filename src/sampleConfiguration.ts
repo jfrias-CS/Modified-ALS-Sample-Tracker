@@ -144,13 +144,13 @@ export class SampleConfigurationSet {
   // Can remain empty
   description: string;
   configurationsById: Map<string, SampleConfiguration>;
-  // A sorted array of the unique names of all parameters used
+  // An array of identifiers of all parameters used
   // by the ScanTypes of all current SampleConfigurations.
   relevantParameters: Array<Guid>;
   // Undo/redo history tracker
   history: UndoHistory;
   // A cached value used as a reference by e.g. findRelevantParameters.
-  // This can be unfedined until legitimate ScanType information is available.
+  // This can be undefined until legitimate ScanType information is available.
   scanTypesByName!: Map<ScanTypeName, ScanType>;
 
   constructor(name: string, description: string, id: Guid, idIsClientGenerated: boolean) {
@@ -164,23 +164,33 @@ export class SampleConfigurationSet {
   }
 
   setScanTypes(scanTypesCache: ScanTypes) {
-    this.scanTypesByName = new Map();
-    scanTypesCache.types.forEach((t) => this.scanTypesByName.set(t.name, t));
+    this.scanTypesByName = scanTypesCache.typesByName;
     this.findRelevantParameters();
   }
 
   // Look through all the current sample configurations for scan parameters,
-  // and gather all the unique parameter names into a sorted list.
-  // Used for rendering the proper columns in the interface.
+  // and gather all the unique parameter names into a list, in the order encountered.
+  // Used for deciding which parameter columns to render in the interface.
   findRelevantParameters() {
     const scanTypesByName = this.scanTypesByName;
     let workingSet: Set<Guid> = new Set();
-    this.configurationsById.forEach((v) => {
+    let relevantParameters: Guid[] = [];
+
+    // Start from the SampleConfiguration closest to the left edge,
+    // since that's the default sort when displaying them.
+    const sortedSamples = this.all().sort((a, b) => a.mmFromLeftEdge - b.mmFromLeftEdge);
+
+    sortedSamples.forEach((v) => {
       if (!scanTypesByName.has(v.scanType)) { return; }
       const t = scanTypesByName.get(v.scanType)!;
-      t.parameters.forEach((p) => workingSet.add(p));      
+      t.parameters.forEach((p) => {
+        if (!workingSet.has(p)) {
+          relevantParameters.push(p);
+          workingSet.add(p);
+        }
+      });
     });
-    this.relevantParameters = Array.from(workingSet).sort();
+    this.relevantParameters = relevantParameters;
   }
 
   addOrReplace(input:SampleConfiguration[]) {

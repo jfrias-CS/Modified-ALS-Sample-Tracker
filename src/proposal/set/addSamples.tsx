@@ -97,7 +97,7 @@ const AddSamples: React.FC = () => {
       // Make a set of parameters for the chosen ScanType, with default or blank values.
       const parameters:{ [key: Guid]: string|null } = {};
       scanTypeValue!.parameters.forEach((p) => {
-        const parameterType = sampleSetContext.scanTypes.parameters.get(p);
+        const parameterType = sampleSetContext.scanTypes.parametersById.get(p);
         if (parameterType) { parameters[parameterType.id] = parameterType.default ?? ""; }
       });
 

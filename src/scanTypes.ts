@@ -26,13 +26,15 @@ export interface ScanType {
   name: ScanTypeName;
   description: string;
   referenceUrl?: string;
+  // Which parameters are valid for this ScanType. Given in order meant to be displayed.
   parameters: Array<Guid>;
 }
 
 
 export interface ScanTypes {
-  types: ScanType[];
-  parameters: Map<Guid, ScanParameterType>;
+  typesByName: Map<ScanTypeName, ScanType>;
+  typeNamesInDisplayOrder: ScanTypeName[];
+  parametersById: Map<Guid, ScanParameterType>;
 }
 
 
@@ -53,7 +55,7 @@ export function getScanTypes(): ScanTypes {
   const parameters: ScanParameterType[] = [
 
     { id: "incangles" as Guid,
-      name: "incident angles" as ScanParameterName,
+      name: "Incident Angles" as ScanParameterName,
       description: "A list of incident angles to use, between -30 and 30 degrees. For example 0.13, 0.15, 0.17. Or enter \"auto\" to use the auto-incident angle routine.",
       default: "auto",
       required: true,
@@ -63,7 +65,7 @@ export function getScanTypes(): ScanTypes {
       },
     },
     { id: "exptime" as Guid,
-      name: "exposure time" as ScanParameterName,
+      name: "Exposure Time" as ScanParameterName,
       description: "The number of exposure seconds needed, or enter \"auto\" if auto exposure is desired.",
       default: "auto",
       required: true,
@@ -73,7 +75,7 @@ export function getScanTypes(): ScanTypes {
       },
     },
     { id: "mspots" as Guid,
-      name: "measurement spots" as ScanParameterName,
+      name: "Measurement Spots" as ScanParameterName,
       description: "The number of measurement spots per sample (2 mm apart, centered around center of sample).",
       default: "1",
       validator: (v) => {
@@ -82,7 +84,7 @@ export function getScanTypes(): ScanTypes {
       },
     },
     { id: "expmax" as Guid,
-      name: "max exposure time" as ScanParameterName,
+      name: "Max Exposure Time" as ScanParameterName,
       description: "The upper limit for exposure time in seconds. Can be up to 120.",
       default: "120",
       validator: (v) => {
@@ -91,22 +93,32 @@ export function getScanTypes(): ScanTypes {
       },
     },
     { id: "imgtype" as Guid,
-      name: "image type" as ScanParameterName,
+      name: "Image Type" as ScanParameterName,
       description: "The type of image to generate",
       required: true,
       choices: ["single", "tiled"],
       default: "tiled"
+    },
+    { id: "testunused" as Guid,
+      name: "Unused" as ScanParameterName,
+      description: "This parameter is unused, except for the test ScanType",
     }
   ];
 
   var parameterMap = new Map<Guid, ScanParameterType>();
   parameters.forEach((p) => parameterMap.set(p.id, p));
 
+  // Specified in the order they will be displayed and searched in the UI.
   const types: ScanType[] = [
     {
       name: "GIWAXS" as ScanTypeName,
       description: "GIWAXS",
       parameters: ["incangles" as Guid, "exptime" as Guid, "mspots" as Guid, "expmax" as Guid, "imgtype" as Guid]
+    },
+    {
+      name: "Test" as ScanTypeName,
+      description: "Test ScanType. Not to be used in production. Has two parameters: \"testunused\" and \"imgtype\".",
+      parameters: ["testunused" as Guid, "imgtype" as Guid]
     }
 //      {
 //        name: "GIWAXS with 3-parameter gpCAM" as ScanTypeName,
@@ -120,9 +132,13 @@ export function getScanTypes(): ScanTypes {
 //      }
   ];
 
+  var typeMap = new Map<ScanTypeName, ScanType>();
+  types.forEach((t) => typeMap.set(t.name, t));
+
   return {
-    types: types,
-    parameters: parameterMap
+    typesByName: typeMap,
+    typeNamesInDisplayOrder: types.map((t) => t.name ),
+    parametersById: parameterMap
   };
 }
 
