@@ -49,6 +49,29 @@ function classNames(...names:(string|null|undefined)[]): string {
 }
 
 
+// Given a DOM node, walk up the tree looking for a node of type "div"
+// with class "value" assigned to it, and return the pixel width of that element,
+// or 23 if a matching node can't be found.
+function findWidth(node: HTMLElement): number {
+  var n = node.nodeName || "";
+  n = n.trim().toLowerCase();
+  const p = node.parentNode as HTMLElement | null;
+  if (n != "div") {
+      if (!p) { return 23 } else { return findWidth(p) }
+  } else {
+    const c = node.classList;
+    if (c.contains("value")) {
+        const rect = node.getBoundingClientRect();
+        return rect.width;
+    } else if (!p) {
+      return 23
+    } else {
+      return findWidth(p)
+    }
+  }
+}
+
+
 function SampleCell(settings: SampleCellParameters) {
 
   // Value in the DOM input element
@@ -60,8 +83,10 @@ function SampleCell(settings: SampleCellParameters) {
   const [operationInProgress, setOperationInProgress] = useState<boolean>(false);
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [justBlurred, setJustBlurred] = useState<boolean>(false);
+  const [cellActivated, setCellActivated] = useState<boolean>(false);
+  const [lastMinimumWidth, setLastMinimumWidth] = useState<string>("23px");
 
-  const ref = useRef<HTMLTableCellElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const lastHtml = useRef<string>('');
 
 
@@ -76,35 +101,34 @@ function SampleCell(settings: SampleCellParameters) {
   }, [justBlurred]);
 
 
+  function clickedValue(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    const w = findWidth(event.target as HTMLElement);
+    setLastMinimumWidth(`${w}px`);
+    setCellActivated(true);
+  }
+
+
   // This handles keyboard-based selection in the dropdown.
   // Changes to the input value are handled in inputChanged.
-  function inputOnKeyDown(event: React.KeyboardEvent<HTMLTableCellElement>) {
+  function inputOnKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key == "Escape") {
       reset();
       // Defocus
-      if (ref.current) {
-        ref.current.blur();
+      if (inputRef.current) {
+        inputRef.current.blur();
       }
     } else if (event.key == "Enter") {
-//      if (inputValue == settings.value) {
+      if (inputValue == settings.value) {
         reset();
-//      } else if (validationState == InputValidationState.Succeeded) {
-//        save();
-//      }
-    } else {
-      var curText = ref.current?.innerText || '';
-      curText = curText.replace(/&nbsp;|\u202F|\u00A0/g, ' ');
-      curText = curText.replace(/\n/g, '');
-      if (curText !== lastHtml.current) {
-        inputChanged(curText);
+      } else if (validationState == InputValidationState.Succeeded) {
+        save();
       }
-      lastHtml.current = inputValue;
     }
   }
 
 
   function onInput(event: React.FormEvent<HTMLTableCellElement>) {
-    var curText = ref.current?.innerText || '';
+    var curText = inputRef.current?.innerText || '';
     curText = curText.replace(/&nbsp;|\u202F|\u00A0/g, ' ');
     curText = curText.replace(/\n/g, '');
     if (curText !== lastHtml.current) {
@@ -113,12 +137,48 @@ function SampleCell(settings: SampleCellParameters) {
     lastHtml.current = inputValue;
   };
 
-
   useEffect(() => {
-    if (!ref.current) return;
-    if (ref.current.innerText === inputValue) return;
-    ref.current.innerText = inputValue;
-  }, [inputValue]);
+    document.addEventListener("mousedown", clickedElsewhere)
+    return () => {
+      document.removeEventListener("mousedown", clickedElsewhere)
+    };
+  }, []);
+
+
+  function clickedElsewhere(event: MouseEvent) {
+
+    // Given a DOM node, this walks up the tree looking for a node of type "td"
+    // with "sampleX" and "sampleY" values in its dataset.
+    // If the values match the settings for this SampleCell, we return true.
+    function findThisCell(node: HTMLElement): boolean {
+      var n = node.nodeName || "";
+      n = n.trim().toLowerCase();
+      const p = node.parentNode;
+      if (n != "td") {
+          if (!p) { return false; } else { return findThisCell(p as HTMLElement); }
+      } else {
+        const x = node.dataset.sampleX || "";
+        const y = node.dataset.sampleY || "";
+        if ((x == settings.x.toString()) && (y == settings.y.toString())) {
+          return true;
+        } else {
+          if (!p) { return false; } else { return findThisCell(p as HTMLElement); }
+        }
+      }
+    }
+
+    const found = findThisCell(event.target as HTMLElement);
+    if (!found) {
+      if ((inputValue == settings.value) || (validationState != InputValidationState.Succeeded)) {
+        reset();
+      } else {
+        save();
+      }
+      if (inputRef.current) {
+        inputRef.current.blur();
+      }
+    }
+  }
 
 
   // Deal with changes to the input value.
@@ -149,7 +209,14 @@ function SampleCell(settings: SampleCellParameters) {
     // If the save is successful we expect the user of this component to change "value" in the settings,
     // which will effectively reset the control.
     const result = settings.cellFunctions.save(settings.x, settings.y, inputValue);
-    gotValidationResult(inputValue, result);
+    setCellActivated(false);
+    if (result.status == CellValidationStatus.Success) {
+      setCellActivated(false);
+      setValidationState(InputValidationState.NotTriggered);
+      setValidationMessage(null);
+    } else {
+      reset();
+    }
   }
 
 
@@ -167,6 +234,7 @@ function SampleCell(settings: SampleCellParameters) {
 
 
   function reset() {
+    setCellActivated(false);
     setInputValue(settings.value);
     setValidationState(InputValidationState.NotTriggered);
     setValidationMessage(null);
@@ -222,93 +290,47 @@ function SampleCell(settings: SampleCellParameters) {
     }
   }
 
-  const controlClass = classNames("control", "is-expanded", statusIcon ? "has-icons-right" : "");
-  const inputClass = classNames("input", inputColor, "is-normal");
-
+  const cellClass = classNames(cellActivated ? "activated" : "", settings.isUnused ? "unused" : "");
+  const helpClass = classNames("notify", help ? "disclosed" : "");
 
   return (
     <td key={ settings.elementKey }
-        ref={ref}
         data-sample-x={settings.x}
         data-sample-y={settings.y}
-        tabIndex={settings.x+(50*settings.y)}
         data-sample-unused={settings.isUnused || 0}
-        autoCorrect="off"
-        onKeyDown={ inputOnKeyDown }
-        onFocus={ inputOnFocus }
-        onBlur={ () => {
-          // The onblur event may happen because one of the matched items has been clicked.
-          // Wait a bit to give precedence to the click event in that case.
-          setTimeout( inputOnBlur, 200);
-        } }
-    ></td>
-  );
-
-  return (
-    <td key={ settings.elementKey } className="notused"><div><div>&nbsp;</div></div></td>
-  );
-
-  return (
-    <div className={ classNames("editable", "field") }>
-      <div className="field-body">
-        <div className="field is-expanded">
-          <div className="field has-addons">
-            <div className={ controlClass }>
-              <input type="text"
-                className={ inputClass }
-                id={ "debouncer-editable-" + (settings.elementKey || "default") }
-                autoCorrect="off"
-
-                aria-haspopup="listbox"
-
-                value={ inputValue }
-                onFocus={ inputOnFocus }
-                onBlur={ () => {
-                  // The onblur event may happen because one of the matched items has been clicked.
-                  // Wait a bit to give precedence to the click event in that case.
-                  setTimeout( inputOnBlur, 200);
-                } }
-              />
-              { (statusIcon && (
-                  <span className={ classNames( "icon", "is-right" ) }>
-                    { statusIcon }
-                  </span>)
-              ) }
+        className={ cellClass }
+    >
+      <div>
+        { settings.isUnused ?
+            (<div className="value">&nbsp;</div>) :
+            (<div className="value" onClick={ clickedValue }>{settings.value}</div>)
+        }
+        <div className="cellTableInput">
+          <input type="text"
+            placeholder={ "Enter value" }
+            onChange={ (event) => {
+              inputChanged(event.target.value)
+            } }
+            autoCorrect="off"
+            value={ inputValue }
+            onKeyDown={ inputOnKeyDown }
+            onFocus={ inputOnFocus }
+            onBlur={ () => {
+              // The onblur event may happen because of some external event.
+              // Wait a bit to give precedence to that event in that case.
+              setTimeout( inputOnBlur, 200);
+            } }
+            style={ {width: lastMinimumWidth} }
+          />
+          <div className={ helpClass }> 
+            <div className="notify-content">
+              { help }
             </div>
-            { showCancelButton && (
-                <div className="control">
-                  <button className="button has-background-danger-dark" onClick={ () => { reset() }}>
-                    <span className={ classNames( "icon", "is-right", "is-small") }>
-                      <FontAwesomeIcon icon={faX} />
-                    </span>
-                  </button>
-                </div>
-              )
-            }
-            { showSaveButton && (
-              <div className="control">
-                <button className="button has-background-primary-dark" onClick={ () => { save() }}>
-                  <span className={ classNames( "icon", "is-right", "is-small") }>
-                    <FontAwesomeIcon icon={faCheck} color="lightgreen" />
-                  </span>
-                </button>
-              </div>
-
-              )
-            }
           </div>
-          { help && (
-            <div className="inputeditable-notify disclosed"> 
-              <div className="inputeditable-notify-content">
-                { help }
-              </div>
-            </div>
-            )
-          }
         </div>
       </div>
-    </div>
-  )
+    </td>
+  );
 }
 
 

@@ -3,10 +3,6 @@ table.sampletable {
   height: fit-content;
 }
 
-table.sampletable tr td:not(.notused) {
-  padding: .375rem 1rem;
-}
-
 table.sampletable tr th {
   padding: .375rem 1rem;
 }
@@ -22,22 +18,78 @@ table.sampletable tr:hover {
   user-select: none;
 }
 
-table.sampletable td:focus {
-  background-color: hsl(221, 14%, calc(60%));
-}
-
-table.sampletable td.notused {
-  padding: 0.1rem 0.2rem;
-}
-
-table.sampletable td.notused > div {
+table.sampletable td > div {
   display: grid;
   height: 100%;
   align-items: stretch;
 }
 
-table.sampletable td.notused > div > div {
+table.sampletable td.focused {
+  background-color: hsl(221, 14%, calc(60%));
+}
+
+/* Table cells with unused parameters */
+
+table.sampletable td.unused {
+  padding: 0.1rem 0.2rem;
+}
+
+table.sampletable td.unused > div > div.value {
   border-radius: 10px;
   background-image: url("/diagonal_lines.png");
   opacity: 0.3;
+}
+
+table.sampletable td.unused > div > div.cellTableInput {
+  display: none;
+}
+
+/* Table cells showing values (not being edited) */
+
+table.sampletable tr td:not(.unused):not(.activated) {
+  padding: .375rem 1rem;
+}
+
+table.sampletable td:not(.activated) > div > div.cellTableInput {
+  display: none;
+}
+
+table.sampletable td:not(.activated) > div > div.cellTableInput > div.notify {
+  display: none;
+}
+
+/* Table cells showing values in editing mode */
+
+table.sampletable tr td.activated {
+  padding: 0.33rem 0.7rem;
+}
+
+table.sampletable td.activated > div > div.value {
+  display: none;
+}
+
+table.sampletable td > div > div.cellTableInput > div.notify {
+  display: none;
+  padding-top: 0;
+  z-index: 5;
+  min-width: 8rem;
+  position: absolute;
+}
+
+table.sampletable td.activated > div > div.cellTableInput > div.notify.disclosed {
+  display: block;
+}
+
+table.sampletable td > div > div.cellTableInput > div.notify > div.notify-content {
+  background-color: #F8F8F8;
+  border-radius: 4px;
+  box-shadow: 0 2px 3px rgba(10, 10, 10, 0.2), 0 0 0 1px rgba(10, 10, 10, 0.2);
+  padding: 0.2rem 0.7rem 0.4rem 0.7rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  table.sampletable td > div > div.cellTableInput > div.notify > div.notify-content {
+    background-color: #080808;
+    box-shadow: 0 2px 3px rgba(120, 120, 120, 0.2), 0 0 0 1px rgba(120, 120, 120, 0.2);
+  }
 }
