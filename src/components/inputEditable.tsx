@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
-import { faExclamationTriangle, faSpinner, faQuestion, faCheck, faX } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faSpinner, faCheck, faX } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
 import './inputEditable.css';
@@ -95,8 +95,7 @@ function InputEditable(settings: InputEditableParameters) {
 
   
   // Deal with changes to the input value.
-  // We trigger a short delay before searching, and in the meantime
-  // we set the UI to show no matches and no selection.
+  // We trigger a short delay before validating.
   function inputChanged(value: string) {
     if (debounceTimer) { clearTimeout(debounceTimer); }
     setDebounceTimer(setTimeout(() => inputCompleted(value), settings.debounceTime || 150));
@@ -135,7 +134,7 @@ function InputEditable(settings: InputEditableParameters) {
         break;
       case ValidationStatus.Failure:
         setValidationState(InputValidationState.Failed);
-        setValidationMessage(result.message ?? "Error in search");
+        setValidationMessage(result.message ?? "Invalid value");
         break;
     }
   }
@@ -236,8 +235,8 @@ function InputEditable(settings: InputEditableParameters) {
                 onKeyDown={ inputOnKeyDown }
                 onFocus={ inputOnFocus }
                 onBlur={ () => {
-                  // The onblur event may happen because one of the matched items has been clicked.
-                  // Wait a bit to give precedence to the click event in that case.
+                  // The onblur event may happen because of some external event.
+                  // Wait a bit to give precedence to that event in that case.
                   setTimeout( inputOnBlur, 200);
                 } }
               />
