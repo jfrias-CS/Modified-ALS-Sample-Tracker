@@ -159,12 +159,14 @@ const SampleTable: React.FC = () => {
 
               const allowedParameters = new Set(sampleSetContext.scanTypes.typesByName.get(sample.scanType)!.parameters);
 
-              displayedParameters.forEach((p) => {
-                if (!allowedParameters.has(p.id)) {
-                  cells.push((<td key={ p.id } className="notused"><div><div>&nbsp;</div></div></td>));
-                } else {
-                  cells.push((<td key={ p.id }>{ sample.parameters[p.id] ?? "" }</td>));
-                }
+              displayedParameters.forEach((p, paramIndex) => {
+                const unused = !allowedParameters.has(p.id);
+                const td = (<SampleCell x={paramIndex+4} y={sampleIndex}
+                              elementKey={ p.id }
+                              isUnused={unused}
+                              cellFunctions={cellFunctions}
+                              value={ sample.parameters[p.id] ?? "" } />) ;
+                cells.push(td);
               });
 
               return (

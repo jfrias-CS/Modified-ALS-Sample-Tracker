@@ -76,7 +76,7 @@ export function getScanTypes(): ScanTypes {
     },
     { id: "mspots" as Guid,
       name: "Measurement Spots" as ScanParameterName,
-      description: "The number of measurement spots per sample (2 mm apart, centered around center of sample).",
+      description: "The number of measurement spots per sample (2 mm apart, around center of sample).",
       default: "1",
       validator: (v) => {
         if (isInt(v) && atOrAbove(1, v)) { return null; }
