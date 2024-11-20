@@ -52,23 +52,23 @@ function classNames(...names:(string|null|undefined)[]): string {
 
 // Given a DOM node, walk up the tree looking for a node of type "div"
 // with class "value" assigned to it, and return the pixel width of that element,
-// or 23 if a matching node can't be found.
+// or 0 if a matching node can't be found.
 function findWidth(node: HTMLElement): number {
   var n = node.nodeName || "";
   n = n.trim().toLowerCase();
   const p = node.parentNode as HTMLElement | null;
   if (n != "td") {
-      if (!p) { return 23 } else { return findWidth(p) }
+      if (!p) { return 0 } else { return findWidth(p) }
   } else {
-//    const c = node.classList;
-//    if (c.contains("value")) {
+    const c = node.classList;
+    if (c.contains("samplecell")) {
         const rect = node.getBoundingClientRect();
         return rect.width;
-//    } else if (!p) {
-//      return 23
-//    } else {
-//      return findWidth(p)
-//    }
+    } else if (!p) {
+      return 0
+    } else {
+      return findWidth(p)
+    }
   }
 }
 
@@ -88,7 +88,7 @@ function SampleCell(settings: SampleCellParameters) {
   const [lastMinimumWidth, setLastMinimumWidth] = useState<string>("23px");
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const lastHtml = useRef<string>('');
+  const valueRef = useRef<HTMLDivElement>(null);
 
 
   // Triggered one time only, whenever the input is blurred.
@@ -103,10 +103,6 @@ function SampleCell(settings: SampleCellParameters) {
 
 
   function clickedValue(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    if (inputRef.current) {
-      const w = findWidth( inputRef.current as HTMLElement);
-      setLastMinimumWidth(`${w}px`);
-    }
 //    setCellActivated(true);
   }
 
@@ -131,28 +127,27 @@ function SampleCell(settings: SampleCellParameters) {
 
 
   function onInput(event: React.FormEvent<HTMLTableCellElement>) {
-    var curText = inputRef.current?.innerText || '';
-    curText = curText.replace(/&nbsp;|\u202F|\u00A0/g, ' ');
-    curText = curText.replace(/\n/g, '');
-    if (curText !== lastHtml.current) {
-      inputChanged(curText);
-    }
-    lastHtml.current = inputValue;
+//    curText = curText.replace(/&nbsp;|\u202F|\u00A0/g, ' ');
+//    curText = curText.replace(/\n/g, '');
   };
 
   useEffect(() => {
-    if (justActivated) {
-      console.log("just activated");
-      if (inputRef.current) {
-        const w = findWidth( inputRef.current as HTMLElement);
-        setLastMinimumWidth(`${w}px`);
+    if (settings.isActivated) {
+      console.log("activated");
+      var w = 20;
+      if (valueRef.current) {
+        w = findWidth( valueRef.current as HTMLElement);
+        w = Math.max(w - 22, 20);
+        console.log(w);
       }
+      setLastMinimumWidth(`${w}px`);
     }
+    setJustActivated(settings.isActivated);
     //    document.addEventListener("mousedown", clickedElsewhere)
     return () => {
 //      document.removeEventListener("mousedown", clickedElsewhere)
     };
-  }, [justActivated]);
+  }, [settings.isActivated]);
 
 
   function clickedElsewhere(event: MouseEvent) {
@@ -300,7 +295,7 @@ function SampleCell(settings: SampleCellParameters) {
     }
   }
 
-  const cellClass = classNames(settings.isActivated ? "activated" : "", settings.isUnused ? "unused" : "");
+  const cellClass = classNames("samplecell", justActivated ? "editing" : "", settings.isUnused ? "unused" : "", inputColor);
   const helpClass = classNames("notify", help ? "disclosed" : "");
 
   return (
@@ -311,10 +306,7 @@ function SampleCell(settings: SampleCellParameters) {
         className={ cellClass }
     >
       <div>
-        { settings.isUnused ?
-            (<div className="value">&nbsp;</div>) :
-            (<div className="value">{settings.value}</div>)
-        }
+        <div className="value" ref={ valueRef }>{ settings.isUnused ? (<span>&nbsp;</span>) : settings.value }</div>
         <div className="cellTableInput">
           <input type="text"
             placeholder={ "Enter value" }

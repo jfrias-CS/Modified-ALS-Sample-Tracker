@@ -4,7 +4,7 @@ table.sampletable {
 }
 
 table.sampletable tr th {
-  padding: .375rem 1rem;
+  padding: 0.3rem 0.6rem;
 }
 
 table.sampletable tr:nth-child(even) {
@@ -18,57 +18,63 @@ table.sampletable tr:hover {
   user-select: none;
 }
 
-table.sampletable td > div {
+table.sampletable td.samplecell > div {
   display: grid;
   height: 100%;
   align-items: stretch;
 }
 
-table.sampletable td.focused {
-  background-color: hsl(221, 14%, calc(60%));
-}
-
 /* Table cells with unused parameters */
 
-table.sampletable td.unused {
+table.sampletable td.samplecell.unused {
   padding: 0.1rem 0.2rem;
 }
 
-table.sampletable td.unused > div > div.value {
+table.sampletable td.samplecell.unused > div > div.value {
   border-radius: 10px;
   background-image: url("/diagonal_lines.png");
   opacity: 0.3;
 }
 
-table.sampletable td.unused > div > div.cellTableInput {
+table.sampletable td.samplecell.unused > div > div.cellTableInput {
   display: none;
 }
 
 /* Table cells showing values (not being edited) */
 
-table.sampletable tr td:not(.unused):not(.activated) {
+table.sampletable tr td.samplecell:not(.unused):not(.editing) {
   padding: .375rem 1rem;
 }
 
-table.sampletable td:not(.activated) > div > div.cellTableInput {
+table.sampletable td.samplecell:not(.editing) > div > div.cellTableInput {
   display: none;
 }
 
-table.sampletable td:not(.activated) > div > div.cellTableInput > div.notify {
+table.sampletable td.samplecell:not(.editing) > div > div.cellTableInput > div.notify {
   display: none;
+}
+
+/* Table cell with focus but not activated for editing */
+
+table.sampletable td.samplecell.focused {
+  background-color: hsl(221, 14%, calc(60%));
 }
 
 /* Table cells showing values in editing mode */
 
-table.sampletable tr td.activated {
-  padding: 0.33rem 0.7rem;
+table.sampletable tr td.samplecell.editing {
+  padding: 0.1rem 0;
 }
 
-table.sampletable td.activated > div > div.value {
+table.sampletable td.samplecell.editing > div > div.value {
   display: none;
 }
 
-table.sampletable td > div > div.cellTableInput > div.notify {
+table.sampletable tr td.samplecell.editing div.cellTableInput > input {
+  padding: 0.3rem 0 0.3rem 0.8rem;
+}
+
+table.sampletable td.samplecell > div > div.cellTableInput > div.notify {
   display: none;
   padding-top: 0;
   z-index: 5;
@@ -76,11 +82,13 @@ table.sampletable td > div > div.cellTableInput > div.notify {
   position: absolute;
 }
 
-table.sampletable td.activated > div > div.cellTableInput > div.notify.disclosed {
+/* Pop-under box for editing feedback */
+
+table.sampletable td.samplecell.editing > div > div.cellTableInput > div.notify.disclosed {
   display: block;
 }
 
-table.sampletable td > div > div.cellTableInput > div.notify > div.notify-content {
+table.sampletable td.samplecell > div > div.cellTableInput > div.notify > div.notify-content {
   background-color: #F8F8F8;
   border-radius: 4px;
   box-shadow: 0 2px 3px rgba(10, 10, 10, 0.2), 0 0 0 1px rgba(10, 10, 10, 0.2);
@@ -88,7 +96,7 @@ table.sampletable td > div > div.cellTableInput > div.notify > div.notify-conten
 }
 
 @media (prefers-color-scheme: dark) {
-  table.sampletable td > div > div.cellTableInput > div.notify > div.notify-content {
+  table.sampletable td.samplecell > div > div.cellTableInput > div.notify > div.notify-content {
     background-color: #080808;
     box-shadow: 0 2px 3px rgba(120, 120, 120, 0.2), 0 0 0 1px rgba(120, 120, 120, 0.2);
   }
