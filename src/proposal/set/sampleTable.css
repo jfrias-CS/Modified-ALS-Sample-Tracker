@@ -1,4 +1,9 @@
-table.sampletable tr td {
+table.sampletable {
+  font-size: 0.9rem !important;
+  height: fit-content;
+}
+
+table.sampletable tr td:not(.notused) {
   padding: .375rem 1rem;
 }
 
@@ -17,12 +22,22 @@ table.sampletable tr:hover {
   user-select: none;
 }
 
-table.sampletable td.notused {
-  background-color: #DDD;
+table.sampletable td:focus {
+  background-color: hsl(221, 14%, calc(60%));
 }
 
-@media (prefers-color-scheme: dark) {
-  table.sampletable td.notused {
-    background-color: #333;
-  }
+table.sampletable td.notused {
+  padding: 0.1rem 0.2rem;
+}
+
+table.sampletable td.notused > div {
+  display: grid;
+  height: 100%;
+  align-items: stretch;
+}
+
+table.sampletable td.notused > div > div {
+  border-radius: 10px;
+  background-image: url("/diagonal_lines.png");
+  opacity: 0.3;
 }

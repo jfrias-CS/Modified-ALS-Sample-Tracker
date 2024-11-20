@@ -9,6 +9,7 @@ import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx'
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
 import { InputEditable, EditFunctions, ValidationStatus } from '../../components/inputEditable.tsx';
+import { SampleCell, CellFunctions, CellValidationStatus } from './sampleCell.tsx';
 import './sampleTable.css';
 
 
@@ -58,15 +59,6 @@ const SampleTable: React.FC = () => {
   // display a loading banner instead of the content.
   const set = sampleSetContext.sets.getById(setId!.trim() as Guid)
 
-
-  var headers = [
-      (<th key="mm" scope="col">From Left Edge</th>),
-      (<th key="name" scope="col">Name</th>),
-      (<th key="description" scope="col">Description</th>),
-      (<th key="scantype" scope="col">Scan Type</th>)
-  ];
-
-
   const editFunctions: EditFunctions = {
     validator: async () => { return { status: ValidationStatus.Success } },
     submit: async (value: string) => {
@@ -81,13 +73,28 @@ const SampleTable: React.FC = () => {
     return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
   }
 
+  var tableHeaders = [
+      (<th key="mm" scope="col">From Left Edge</th>),
+      (<th key="name" scope="col">Name</th>),
+      (<th key="description" scope="col">Description</th>),
+      (<th key="scantype" scope="col">Scan Type</th>)
+  ];
+
   const displayedParameterIds = set.relevantParameters.filter((p) => sampleSetContext.scanTypes.parametersById.has(p));
   const displayedParameters = displayedParameterIds.map((p) => sampleSetContext.scanTypes.parametersById.get(p)!);
 
   displayedParameters.forEach((p) => {
-    headers.push((<th key={p.id} scope="col">{ p.name }</th>));
+    tableHeaders.push((<th key={p.id} scope="col">{ p.name }</th>));
   });
 
+  const cellFunctions: CellFunctions = {
+    validator: () => { return { status: CellValidationStatus.Success, message: null }; },
+    save: () => { return { status: CellValidationStatus.Success, message: null }; },
+    up: () => { return CellValidationStatus.Success; },
+    down: () => { return CellValidationStatus.Success; },
+    left: () => { return CellValidationStatus.Success; },
+    right: () => { return CellValidationStatus.Success; }
+  }
 
   return (
     <>
@@ -142,24 +149,19 @@ const SampleTable: React.FC = () => {
       <table className="sampletable">
         <thead>
           <tr key="headers">
-            { headers }
+            { tableHeaders }
           </tr>
         </thead>
         <tbody>
           {
-            sampleConfigurations.map((sample) => {
-              var cells = [
-                (<td key="mm">{ sample.mmFromLeftEdge.toString() + "mm" }</td>),
-                (<th key="name" scope="row">{ sample.name }</th>),
-                (<td key="description">{ sample.description }</td>),
-                (<td key="scantype">{ sample.scanType }</td>)
-              ];
+            sampleConfigurations.map((sample, sampleIndex) => {
+              var cells: JSX.Element[] = [];
 
               const allowedParameters = new Set(sampleSetContext.scanTypes.typesByName.get(sample.scanType)!.parameters);
 
               displayedParameters.forEach((p) => {
                 if (!allowedParameters.has(p.id)) {
-                  cells.push((<td key={ p.id } className="notused"></td>));
+                  cells.push((<td key={ p.id } className="notused"><div><div>&nbsp;</div></div></td>));
                 } else {
                   cells.push((<td key={ p.id }>{ sample.parameters[p.id] ?? "" }</td>));
                 }
@@ -167,6 +169,10 @@ const SampleTable: React.FC = () => {
 
               return (
                 <tr key={sample["id"]}>
+                  <SampleCell x={0} y={sampleIndex} elementKey="mm" cellFunctions={cellFunctions} value={ sample.mmFromLeftEdge.toString() } />
+                  <SampleCell x={1} y={sampleIndex} elementKey="name" cellFunctions={cellFunctions} value={ sample.name } />
+                  <SampleCell x={2} y={sampleIndex} elementKey="description" cellFunctions={cellFunctions} value={ sample.description } />
+                  <SampleCell x={3} y={sampleIndex} elementKey="scantype" cellFunctions={cellFunctions} value={ sample.scanType } />
                   { cells }
                 </tr>);
             })
