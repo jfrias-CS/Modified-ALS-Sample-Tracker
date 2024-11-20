@@ -34,7 +34,7 @@ interface SearchFunctions<Item> {
 // Settings passed in with the React component
 interface InputAutocompleteParameters<Item> {
   elementId: string;
-  addedStyle?: string;
+  addedClass?: string;
   icon?: JSX.Element;
   inputSize?: string;
   iconSize?: SizeProp;
@@ -359,7 +359,7 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
   }
  
   return (
-    <div className={ settings.addedStyle ? "autocomplete " + settings.addedStyle : "autocomplete" }>
+    <div className={ settings.addedClass ? "autocomplete " + settings.addedClass : "autocomplete" }>
       <div className={ isDropdownActive() ? "dropdown is-active" : "dropdown" }>
         <div className="dropdown-trigger">
           { searchInput() }

@@ -59,7 +59,7 @@ function ScanTypeAutocomplete(settings:ScanTypeAutocompleteParameters) {
 
   return InputAutocomplete<ScanType>({
       elementId: settings.elementId,
-      addedStyle: "scantype",
+      addedClass: "scantype",
       inputSize: settings.inputSize,
       iconSize: settings.iconSize,
       placeholder: "Select a Scan Type",

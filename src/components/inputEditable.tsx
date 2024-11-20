@@ -27,7 +27,7 @@ interface EditFunctions {
 // Settings passed in with the React component
 interface InputEditableParameters {
   elementId: string;
-  addedStyle?: string;
+  addedClass?: string;
   icon?: JSX.Element;
   inputSize?: string;
   iconSize?: SizeProp;
@@ -211,7 +211,7 @@ function InputEditable(settings: InputEditableParameters) {
   const inputClass = classNames("input", inputColor, settings.inputSize || "is-normal");
 
   return (
-    <div className={ classNames("editable", "field", settings.addedStyle) }>
+    <div className={ classNames("editable", "field", settings.addedClass) }>
       { (settings.label && (
           <label className="label">{ settings.label }</label>)
       ) }
