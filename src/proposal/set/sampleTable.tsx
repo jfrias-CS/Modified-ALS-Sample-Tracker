@@ -13,6 +13,29 @@ import { SampleCell, CellFunctions, CellValidationStatus } from './sampleCell.ts
 import './sampleTable.css';
 
 
+type Coordinates = {x: number, y: number};
+
+// Given a DOM node, walks up the tree looking for a node of type "td"
+// with "sampleX" and "sampleY" values in its dataset.
+// If those values are present, return them, otherwise return null.
+function findAnEditableCell(node: HTMLElement): Coordinates | null {
+  var n = node.nodeName || "";
+  n = n.trim().toLowerCase();
+  const p = node.parentNode;
+  if (n != "td") {
+      if (!p) { return null; } else { return findAnEditableCell(p as HTMLElement); }
+  } else {
+    const x = node.dataset.sampleX;
+    const y = node.dataset.sampleY;
+    if ((x !== undefined) && (y !== undefined)) {
+      return { x: parseInt(x, 10), y: parseInt(y, 10)};
+    } else {
+      if (!p) { return null; } else { return findAnEditableCell(p as HTMLElement); }
+    }
+  }
+}
+
+
 const SampleTable: React.FC = () => {
 
   const { proposalId, setId } = useParams();
@@ -20,6 +43,11 @@ const SampleTable: React.FC = () => {
   const sampleSetContext = useContext(SampleConfigurationContext);
   const [sampleConfigurations, setSampleConfigurations] = useState<SampleConfiguration[]>([]);
   const [description, setDescription] = useState<string>("");
+
+  const [tableHasFocus, setTableHasFocus] = useState<boolean>(false);
+  const [cellFocusX, setCellFocusX] = useState<number | null>(null);
+  const [cellFocusY, setCellFocusY] = useState<number | null>(null);
+
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
   const [loadingMessage, setLoadingMessage] = useState("");
 
@@ -59,7 +87,7 @@ const SampleTable: React.FC = () => {
   // display a loading banner instead of the content.
   const set = sampleSetContext.sets.getById(setId!.trim() as Guid)
 
-  const editFunctions: EditFunctions = {
+  const descriptionEditFunctions: EditFunctions = {
     validator: async () => { return { status: ValidationStatus.Success } },
     submit: async (value: string) => {
               set!.description = value;
@@ -67,6 +95,41 @@ const SampleTable: React.FC = () => {
               return { status: ValidationStatus.Success }
             },
   };
+
+
+  function tableOnFocus() {
+    setTableHasFocus(true);
+  }
+
+  function tableOnBlur() {
+    setTableHasFocus(false);
+  }
+
+
+  // Triggered one time only, whenever the input is blurred.
+  // Used to ensure the latest state values are being validated (instead of old ones),
+  // after a click event on a pulldown item.
+  useEffect(() => {
+    if (!tableHasFocus) {
+      console.log(`Table lost focus`);
+    } else {
+      console.log(`Table got focus`);
+    }
+  }, [tableHasFocus]);
+
+
+  function tableOnClick(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    const foundEditableCell = findAnEditableCell(event.target as HTMLElement);
+    if (!foundEditableCell) {
+      setCellFocusX(null);
+      setCellFocusY(null);  
+      return;
+    }
+    setCellFocusX(foundEditableCell.x);
+    setCellFocusY(foundEditableCell.y);
+
+    console.log(foundEditableCell);
+  }
 
 
   if ((loading != LoadingState.Success) || !set) {
@@ -114,7 +177,7 @@ const SampleTable: React.FC = () => {
             value={set.description}
             placeholder="Describe this sample"
             showHelp={true}
-            editFunctions={editFunctions} />
+            editFunctions={descriptionEditFunctions} />
       </div>
 
       <h4 className="subtitle is-4">Samples</h4>
@@ -146,7 +209,12 @@ const SampleTable: React.FC = () => {
         </div>
       </nav>
 
-      <table className="sampletable">
+      <table className="sampletable"
+              tabIndex={0}
+              onFocus={ tableOnFocus }
+              onBlur={ tableOnBlur }
+              onClick={ tableOnClick }
+          >
         <thead>
           <tr key="headers">
             { tableHeaders }
@@ -161,9 +229,11 @@ const SampleTable: React.FC = () => {
 
               displayedParameters.forEach((p, paramIndex) => {
                 const unused = !allowedParameters.has(p.id);
+                const activated = (cellFocusX === (paramIndex+4)) && (cellFocusY === sampleIndex);
                 const td = (<SampleCell x={paramIndex+4} y={sampleIndex}
                               elementKey={ p.id }
                               isUnused={unused}
+                              isActivated={activated}
                               cellFunctions={cellFunctions}
                               value={ sample.parameters[p.id] ?? "" } />) ;
                 cells.push(td);
@@ -171,10 +241,26 @@ const SampleTable: React.FC = () => {
 
               return (
                 <tr key={sample["id"]}>
-                  <SampleCell x={0} y={sampleIndex} elementKey="mm" cellFunctions={cellFunctions} value={ sample.mmFromLeftEdge.toString() } />
-                  <SampleCell x={1} y={sampleIndex} elementKey="name" cellFunctions={cellFunctions} value={ sample.name } />
-                  <SampleCell x={2} y={sampleIndex} elementKey="description" cellFunctions={cellFunctions} value={ sample.description } />
-                  <SampleCell x={3} y={sampleIndex} elementKey="scantype" cellFunctions={cellFunctions} value={ sample.scanType } />
+                  <SampleCell x={0} y={sampleIndex}
+                      elementKey="mm"
+                      isActivated={false}
+                      cellFunctions={cellFunctions}
+                      value={ sample.mmFromLeftEdge.toString() } />
+                  <SampleCell x={1} y={sampleIndex}
+                      elementKey="name"
+                      isActivated={false}
+                      cellFunctions={cellFunctions}
+                      value={ sample.name } />
+                  <SampleCell x={2} y={sampleIndex}
+                      elementKey="description"
+                      isActivated={false}
+                      cellFunctions={cellFunctions}
+                      value={ sample.description } />
+                  <SampleCell x={3} y={sampleIndex}
+                      elementKey="scantype"
+                      isActivated={false}
+                      cellFunctions={cellFunctions}
+                      value={ sample.scanType } />
                   { cells }
                 </tr>);
             })

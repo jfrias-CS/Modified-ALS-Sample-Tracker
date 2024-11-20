@@ -31,6 +31,7 @@ interface SampleCellParameters {
   elementKey: string;
   x: number;
   y: number;
+  isActivated: boolean;
   value: string;
   isUnused?: boolean;
   debounceTime?: number;
@@ -56,18 +57,18 @@ function findWidth(node: HTMLElement): number {
   var n = node.nodeName || "";
   n = n.trim().toLowerCase();
   const p = node.parentNode as HTMLElement | null;
-  if (n != "div") {
+  if (n != "td") {
       if (!p) { return 23 } else { return findWidth(p) }
   } else {
-    const c = node.classList;
-    if (c.contains("value")) {
+//    const c = node.classList;
+//    if (c.contains("value")) {
         const rect = node.getBoundingClientRect();
         return rect.width;
-    } else if (!p) {
-      return 23
-    } else {
-      return findWidth(p)
-    }
+//    } else if (!p) {
+//      return 23
+//    } else {
+//      return findWidth(p)
+//    }
   }
 }
 
@@ -83,7 +84,7 @@ function SampleCell(settings: SampleCellParameters) {
   const [operationInProgress, setOperationInProgress] = useState<boolean>(false);
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [justBlurred, setJustBlurred] = useState<boolean>(false);
-  const [cellActivated, setCellActivated] = useState<boolean>(false);
+  const [justActivated, setJustActivated] = useState<boolean>(settings.isActivated);
   const [lastMinimumWidth, setLastMinimumWidth] = useState<string>("23px");
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -102,9 +103,11 @@ function SampleCell(settings: SampleCellParameters) {
 
 
   function clickedValue(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    const w = findWidth(event.target as HTMLElement);
-    setLastMinimumWidth(`${w}px`);
-    setCellActivated(true);
+    if (inputRef.current) {
+      const w = findWidth( inputRef.current as HTMLElement);
+      setLastMinimumWidth(`${w}px`);
+    }
+//    setCellActivated(true);
   }
 
 
@@ -138,11 +141,18 @@ function SampleCell(settings: SampleCellParameters) {
   };
 
   useEffect(() => {
-    document.addEventListener("mousedown", clickedElsewhere)
+    if (justActivated) {
+      console.log("just activated");
+      if (inputRef.current) {
+        const w = findWidth( inputRef.current as HTMLElement);
+        setLastMinimumWidth(`${w}px`);
+      }
+    }
+    //    document.addEventListener("mousedown", clickedElsewhere)
     return () => {
-      document.removeEventListener("mousedown", clickedElsewhere)
+//      document.removeEventListener("mousedown", clickedElsewhere)
     };
-  }, []);
+  }, [justActivated]);
 
 
   function clickedElsewhere(event: MouseEvent) {
@@ -209,9 +219,9 @@ function SampleCell(settings: SampleCellParameters) {
     // If the save is successful we expect the user of this component to change "value" in the settings,
     // which will effectively reset the control.
     const result = settings.cellFunctions.save(settings.x, settings.y, inputValue);
-    setCellActivated(false);
+//    setCellActivated(false);
     if (result.status == CellValidationStatus.Success) {
-      setCellActivated(false);
+//      setCellActivated(false);
       setValidationState(InputValidationState.NotTriggered);
       setValidationMessage(null);
     } else {
@@ -234,7 +244,7 @@ function SampleCell(settings: SampleCellParameters) {
 
 
   function reset() {
-    setCellActivated(false);
+//    setCellActivated(false);
     setInputValue(settings.value);
     setValidationState(InputValidationState.NotTriggered);
     setValidationMessage(null);
@@ -290,7 +300,7 @@ function SampleCell(settings: SampleCellParameters) {
     }
   }
 
-  const cellClass = classNames(cellActivated ? "activated" : "", settings.isUnused ? "unused" : "");
+  const cellClass = classNames(settings.isActivated ? "activated" : "", settings.isUnused ? "unused" : "");
   const helpClass = classNames("notify", help ? "disclosed" : "");
 
   return (
@@ -303,7 +313,7 @@ function SampleCell(settings: SampleCellParameters) {
       <div>
         { settings.isUnused ?
             (<div className="value">&nbsp;</div>) :
-            (<div className="value" onClick={ clickedValue }>{settings.value}</div>)
+            (<div className="value">{settings.value}</div>)
         }
         <div className="cellTableInput">
           <input type="text"
@@ -313,6 +323,7 @@ function SampleCell(settings: SampleCellParameters) {
             } }
             autoCorrect="off"
             value={ inputValue }
+            ref={ inputRef }
             onKeyDown={ inputOnKeyDown }
             onFocus={ inputOnFocus }
             onBlur={ () => {
