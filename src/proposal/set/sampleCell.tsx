@@ -243,7 +243,7 @@ function SampleCell(settings: SampleCellParameters) {
   }
 
 
-  function inputOnBlur() {
+  function inputOnBlur(e: React.FocusEvent<HTMLInputElement, Element>) {
     if ((validationState == InputValidationState.Succeeded) && (inputValue != settings.value)) {
       save();
     } else {
@@ -300,11 +300,7 @@ function SampleCell(settings: SampleCellParameters) {
             ref={ inputRef }
             onKeyDown={ inputOnKeyDown }
             onFocus={ inputOnFocus }
-            onBlur={ () => {
-              // The onblur event may happen because of some external event.
-              // Wait a bit to give precedence to that event in that case.
-              setTimeout( inputOnBlur, 200);
-            } }
+            onBlur={ inputOnBlur }
             style={ {width: lastMinimumWidth} }
           />
           <div className={ helpClass }> 
