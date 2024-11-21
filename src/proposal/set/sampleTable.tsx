@@ -120,7 +120,7 @@ const SampleTable: React.FC = () => {
 
   const set = sampleSetContext.sets.getById(setId!.trim() as Guid)
 
-  // If we're in any loading state other than success, or we can't find out set,
+  // If we're in any loading state other than success, or we can't find our set,
   // display a loading banner instead of the content.
   if ((loading != LoadingState.Success) || !set) {
     return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
@@ -259,9 +259,50 @@ const SampleTable: React.FC = () => {
   }
 
 
+  // A function passed to every SampleCell (non-header table cell in samples table)
+  // that saves the given input value to the SampleConfiguration indicated by the
+  // table cell at the given x,y location.
+  // It relies on the displayedParameters constant, calculated just above.
+  function cellSave(x: number, y: number, inputString: string): CellValidationResult {
+
+    const thisSample = sampleConfigurations[y];
+    if (!thisSample) {
+      return { status: CellValidationStatus.Failure, message: "Error: SampleConfiguration does not exist!" }
+    }
+
+    var editedConfig = thisSample.clone();
+
+    // "mm From Left Edge"
+    if (x === 0) {
+      editedConfig.mmFromLeftEdge = parseFloat(inputString);
+
+    // Name
+    } else if (x === 1) {
+      editedConfig.name = inputString;
+
+    // Description
+    } else if (x === 2) {
+      editedConfig.description = inputString;
+
+    // Validate scan parameters
+    } else if ((x > 3) && ((x-4) < displayedParameters.length)) {
+      const paramType = displayedParameters[x - 4];
+      editedConfig.parameters[paramType.id] = inputString;
+    }
+
+    const thisSet = sampleSetContext.sets.getById(setId!.trim() as Guid)!;
+    thisSet.addOrReplace([editedConfig]);
+
+    // This may not be the right behavior
+    sampleConfigurations[y] = editedConfig;
+
+    return { status: CellValidationStatus.Success, message: null };
+  }
+
+
   const cellFunctions: CellFunctions = {
     validator: cellValidator,
-    save: () => { return { status: CellValidationStatus.Success, message: null }; },
+    save: cellSave,
     up: goUp,
     down: goDown,
     left: goLeft,
