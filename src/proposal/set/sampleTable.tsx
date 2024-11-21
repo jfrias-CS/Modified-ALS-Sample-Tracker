@@ -9,7 +9,7 @@ import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx'
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
 import { InputEditable, EditFunctions, ValidationStatus } from '../../components/inputEditable.tsx';
-import { SampleCell, CellFunctions, CellValidationStatus } from './sampleCell.tsx';
+import { SampleCell, CellFunctions, CellValidationStatus, CellValidationResult } from './sampleCell.tsx';
 import './sampleTable.css';
 
 
@@ -83,28 +83,6 @@ const SampleTable: React.FC = () => {
 
   }, [setId, sampleSetContext.changeCounter, sampleSetContext.setsLoaded, sampleSetContext.scanTypesLoaded]);
 
-  // If we're in any loading state other than success,
-  // display a loading banner instead of the content.
-  const set = sampleSetContext.sets.getById(setId!.trim() as Guid)
-
-  const descriptionEditFunctions: EditFunctions = {
-    validator: async () => { return { status: ValidationStatus.Success } },
-    submit: async (value: string) => {
-              set!.description = value;
-              setDescription(value);
-              return { status: ValidationStatus.Success }
-            },
-  };
-
-
-  function tableOnFocus() {
-    setTableHasFocus(true);
-  }
-
-  function tableOnBlur() {
-    setTableHasFocus(false);
-  }
-
 
   // Triggered one time only, whenever the input is blurred.
   // Used to ensure the latest state values are being validated (instead of old ones),
@@ -118,23 +96,178 @@ const SampleTable: React.FC = () => {
   }, [tableHasFocus]);
 
 
+  function tableOnFocus() {
+    setTableHasFocus(true);
+  }
+
+  function tableOnBlur() {
+    setTableHasFocus(false);
+  }
+
+
   function tableOnClick(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     const foundEditableCell = findAnEditableCell(event.target as HTMLElement);
     if (!foundEditableCell) {
       setCellFocusX(null);
-      setCellFocusY(null);  
+      setCellFocusY(null);
       return;
     }
     setCellFocusX(foundEditableCell.x);
     setCellFocusY(foundEditableCell.y);
-
     console.log(foundEditableCell);
   }
 
 
+  const set = sampleSetContext.sets.getById(setId!.trim() as Guid)
+
+  // If we're in any loading state other than success, or we can't find out set,
+  // display a loading banner instead of the content.
   if ((loading != LoadingState.Success) || !set) {
     return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
   }
+
+
+  const descriptionEditFunctions: EditFunctions = {
+    validator: async () => { return { status: ValidationStatus.Success } },
+    submit: async (value: string) => {
+              set!.description = value;
+              setDescription(value);
+              return { status: ValidationStatus.Success }
+            },
+  };
+
+
+  const displayedParameterIds = set.relevantParameters.filter((p) => sampleSetContext.scanTypes.parametersById.has(p));
+  const displayedParameters = displayedParameterIds.map((p) => sampleSetContext.scanTypes.parametersById.get(p)!);
+
+
+  // Add the vector to the given currentPosition until it points to a table cell that is
+  // valid for editing, then return that position, or return null if we run off the edge of the table.
+  function lookForAdjacentCell(currentPosition: Coordinates, vector: Coordinates): Coordinates | null {
+    // Sanity check
+    if ((vector.x == 0) && (vector.y == 0)) { return null; }
+    const nextPosition = { x: currentPosition.x + vector.x, y: currentPosition.y + vector.y };
+    const xMax = displayedParameters.length + 4;  // Four additional columns on the left
+    const yMax = sampleConfigurations.length;
+    if ((nextPosition.x < 0) || (nextPosition.y < 0) || (nextPosition.x >= xMax) || (nextPosition.y >= yMax)) {
+      return null;
+    }
+    // At this point we know the cell we're looking at is within the table.
+    if (nextPosition.x < 4) {
+      // The first four cells are always editable.
+      return nextPosition;
+    }
+    // The only thing to ask now is whether the cell is for a ScanParameterType that's
+    // _actually_used_ by the ScanType set by that row's SampleConfiguration.
+    const thisParameter = displayedParameters[nextPosition.x - 4];
+    const thisSample = sampleConfigurations[nextPosition.y];
+
+    const allowedParameters = sampleSetContext.scanTypes.typesByName.get(thisSample.scanType)!.parameters;
+    if (allowedParameters.some((p) => p == thisParameter.id)) {
+      return nextPosition;
+    }
+
+    // If it's not one of the parameters used in that ScanType, we need to keep looking.
+    return lookForAdjacentCell(nextPosition, vector);
+  }
+
+
+  // Use lookForAdjacentCell to walk along the table from the given cell coordinates,
+  // in the given directon, and switch editing to the first editable cell we find.
+  function switchEditingToNearbyCell(currentPosition: Coordinates, vector: Coordinates): CellValidationStatus {
+    const found = lookForAdjacentCell(currentPosition, vector);
+    if (found === null) {
+      return CellValidationStatus.Failure;
+    }
+    setCellFocusX(found.x);
+    setCellFocusY(found.y);
+    return CellValidationStatus.Success;
+  }
+
+
+  // Seek upward in the table for a nearby editable cell and switch to it if available.
+  function goUp(x: number, y: number): CellValidationStatus {
+    const travelVector: Coordinates = {x: 0, y: -1};
+    return switchEditingToNearbyCell({x: x, y: y}, travelVector);
+  }
+
+
+  // Seek downward in the table for a nearby editable cell and switch to it if available.
+  function goDown(x: number, y: number): CellValidationStatus {
+    const travelVector: Coordinates = {x: 0, y: 1};
+    return switchEditingToNearbyCell({x: x, y: y}, travelVector);
+  }
+
+
+  // Seek left in the table for a nearby editable cell and switch to it if available.
+  function goLeft(x: number, y: number): CellValidationStatus {
+    const travelVector: Coordinates = {x: -1, y: 0};
+    return switchEditingToNearbyCell({x: x, y: y}, travelVector);
+  }
+
+
+  // Seek right in the table for a nearby editable cell and switch to it if available.
+  function goRight(x: number, y: number): CellValidationStatus {
+    const travelVector: Coordinates = {x: 1, y: 0};
+    return switchEditingToNearbyCell({x: x, y: y}, travelVector);
+  }
+
+
+  // A function passed to every SampleCell (non-header table cell in samples table)
+  // that validates the given input value based on its cell's x,y location in the table.
+  // It relies on the displayedParameters constant, calculated just above.
+  function cellValidator(x: number, y: number, inputString: string): CellValidationResult {
+
+    // Validate "mm From Left Edge"
+    if (x === 0) {
+      const inputNumber = parseFloat(inputString);
+      if (isNaN(inputNumber)) {
+        return { status: CellValidationStatus.Failure, message: "Offset must be a number." };
+      } else if (sampleConfigurations.some((sample) => sample.mmFromLeftEdge == inputNumber)) {
+        return { status: CellValidationStatus.Failure, message: "Location must be unique on bar." };
+      }
+      return { status: CellValidationStatus.Success, message: null };
+
+    // Validate Name
+    } else if (x === 1) {
+      if (inputString == "") {
+        return { status: CellValidationStatus.Failure, message: "Name cannot be blank." };
+      } else if (sampleConfigurations.some((sample) => sample.name == inputString)) {
+        return { status: CellValidationStatus.Failure, message: "Name must be unique on bar." };
+      }
+      return { status: CellValidationStatus.Success, message: null };
+
+    // Validate Description
+    } else if (x === 2) {
+      // Description can be anything
+      return { status: CellValidationStatus.Success, message: null };
+
+    // Validate scan parameters
+    } else if ((x > 3) && ((x-4) < displayedParameters.length)) {
+
+      const paramType = displayedParameters[x - 4];
+      if (paramType.validator !== undefined) {
+        const result = paramType.validator(inputString);
+        if (result !== null) {
+          return { status: CellValidationStatus.Failure, message: result };
+        }
+      }
+      // If no validator exists, or the validator returned null, the value is good.
+      return { status: CellValidationStatus.Success, message: null };
+    }
+    return { status: CellValidationStatus.Failure, message: "Error: Cannot find this parameter!" };
+  }
+
+
+  const cellFunctions: CellFunctions = {
+    validator: cellValidator,
+    save: () => { return { status: CellValidationStatus.Success, message: null }; },
+    up: goUp,
+    down: goDown,
+    left: goLeft,
+    right: goRight
+  }
+
 
   var tableHeaders = [
       (<th key="mm" scope="col">From Left Edge</th>),
@@ -143,21 +276,10 @@ const SampleTable: React.FC = () => {
       (<th key="scantype" scope="col">Scan Type</th>)
   ];
 
-  const displayedParameterIds = set.relevantParameters.filter((p) => sampleSetContext.scanTypes.parametersById.has(p));
-  const displayedParameters = displayedParameterIds.map((p) => sampleSetContext.scanTypes.parametersById.get(p)!);
-
   displayedParameters.forEach((p) => {
     tableHeaders.push((<th key={p.id} scope="col">{ p.name }</th>));
   });
 
-  const cellFunctions: CellFunctions = {
-    validator: () => { return { status: CellValidationStatus.Success, message: null }; },
-    save: () => { return { status: CellValidationStatus.Success, message: null }; },
-    up: () => { return CellValidationStatus.Success; },
-    down: () => { return CellValidationStatus.Success; },
-    left: () => { return CellValidationStatus.Success; },
-    right: () => { return CellValidationStatus.Success; }
-  }
 
   return (
     <>
@@ -225,16 +347,18 @@ const SampleTable: React.FC = () => {
             sampleConfigurations.map((sample, sampleIndex) => {
               var cells: JSX.Element[] = [];
 
+              const cellFocusOnThisY = (cellFocusY === sampleIndex);
               const allowedParameters = new Set(sampleSetContext.scanTypes.typesByName.get(sample.scanType)!.parameters);
 
               displayedParameters.forEach((p, paramIndex) => {
                 const unused = !allowedParameters.has(p.id);
-                const activated = (cellFocusX === (paramIndex+4)) && (cellFocusY === sampleIndex);
+                const activated = (cellFocusX === (paramIndex+4)) && cellFocusOnThisY;
                 const td = (<SampleCell x={paramIndex+4} y={sampleIndex}
                               elementKey={ p.id }
                               isUnused={unused}
                               isActivated={activated}
                               cellFunctions={cellFunctions}
+                              description={ p.description }
                               value={ sample.parameters[p.id] ?? "" } />) ;
                 cells.push(td);
               });
@@ -243,22 +367,22 @@ const SampleTable: React.FC = () => {
                 <tr key={sample["id"]}>
                   <SampleCell x={0} y={sampleIndex}
                       elementKey="mm"
-                      isActivated={false}
+                      isActivated={(cellFocusX === 0) && cellFocusOnThisY}
                       cellFunctions={cellFunctions}
                       value={ sample.mmFromLeftEdge.toString() } />
                   <SampleCell x={1} y={sampleIndex}
                       elementKey="name"
-                      isActivated={false}
+                      isActivated={(cellFocusX === 1) && cellFocusOnThisY}
                       cellFunctions={cellFunctions}
                       value={ sample.name } />
                   <SampleCell x={2} y={sampleIndex}
                       elementKey="description"
-                      isActivated={false}
+                      isActivated={(cellFocusX === 2) && cellFocusOnThisY}
                       cellFunctions={cellFunctions}
                       value={ sample.description } />
                   <SampleCell x={3} y={sampleIndex}
                       elementKey="scantype"
-                      isActivated={false}
+                      isActivated={(cellFocusX === 3) && cellFocusOnThisY}
                       cellFunctions={cellFunctions}
                       value={ sample.scanType } />
                   { cells }

@@ -93,6 +93,8 @@ table.sampletable td.samplecell > div > div.cellTableInput > div.notify > div.no
   border-radius: 4px;
   box-shadow: 0 2px 3px rgba(10, 10, 10, 0.2), 0 0 0 1px rgba(10, 10, 10, 0.2);
   padding: 0.2rem 0.7rem 0.4rem 0.7rem;
+  margin-right: 0.5rem;
+  max-width: 500px;
 }
 
 @media (prefers-color-scheme: dark) {
