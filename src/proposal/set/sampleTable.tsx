@@ -357,17 +357,14 @@ const SampleTable: React.FC = () => {
           <div className="level-item">
             <p className="subtitle is-5"><strong>{ sampleConfigurations.length }</strong> samples</p>
           </div>
+        </div>
+
+        <div className="level-right">
           <div className="level-item">
             <ImportSamples />
           </div>
           <div className="level-item">
             <AddSamples />
-          </div>
-        </div>
-
-        <div className="level-right">
-          <div className="level-item">
-            <a className="button is-success">Save Changes</a>
           </div>
         </div>
       </nav>

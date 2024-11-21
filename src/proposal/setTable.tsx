@@ -62,14 +62,11 @@ const SetTable: React.FC = () => {
           <div className="level-item">
             <p className="subtitle is-5"><strong>{ sets.length }</strong> sets</p>
           </div>
-          <div className="level-item">
-            <AddSet />
-          </div>
         </div>
 
         <div className="level-right">
           <div className="level-item">
-            <a className="button is-success">Save Changes</a>
+            <AddSet />
           </div>
         </div>
       </nav>
