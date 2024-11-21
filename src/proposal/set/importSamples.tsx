@@ -102,7 +102,7 @@ const ImportSamples: React.FC = () => {
   function pressedSubmit() {
     const thisSet = getSet();
     if (!thisSet) { return; }
-    const newSet = {
+    const newSet = new SampleConfiguration({
       id: "13434-ASDSAD-4" as Guid,
       idIsClientGenerated: true,
       mmFromLeftEdge: 10,
@@ -113,7 +113,7 @@ const ImportSamples: React.FC = () => {
         ["firstParam" as ScanParameterName]: "s1",
         ["secondParam" as ScanParameterName]: "s2",
       }
-    };
+    });
     thisSet.addOrReplace([newSet]);
     sampleSetContext.changed();
   };

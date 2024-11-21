@@ -6,7 +6,7 @@ import { Guid, generateUniqueIds, generateUniqueNames } from "./components/utils
 // to those sets.
 
 
-export interface SampleConfiguration {
+export interface NewSampleConfigurationParameters {
   // A unique identifier either generated on the server, or generated locally.
   id: Guid;
   // If true, the identifier was generated client-side and this record still needs to be created server-side.
@@ -23,6 +23,50 @@ export interface SampleConfiguration {
   // This is not strictly enforced, so old inapplicable values can be preserved
   // in case a previous ScanType selection is re-selected.
   parameters: { [key: Guid]: string|null }
+}
+
+
+// Represents the configuration for one sample
+export class SampleConfiguration {
+
+  // A unique identifier either generated on the server, or generated locally.
+  id: Guid;
+  // If true, the identifier was generated client-side and this record still needs to be created server-side.
+  // If false, the idenfitier was generated on the server and can be used for write operations.
+  idIsClientGenerated: boolean;
+  // Intended to be short and unique, but this is not strictly enforced.
+  name: string;
+  // Intended to be a unique number, but not enforced, for editing convenience.
+  mmFromLeftEdge: number;
+  // Meant to be longer than the name.  Can be blank.
+  description: string;
+  scanType: ScanTypeName;
+  // Key/value parameter set. Keys should only be valid for the chosen ScanType.
+  // This is not strictly enforced, so old inapplicable values can be preserved
+  // in case a previous ScanType selection is re-selected.
+  parameters: { [key: Guid]: string|null }
+
+	constructor (p: NewSampleConfigurationParameters) {
+		this.id = p.id;
+		this.idIsClientGenerated = p.idIsClientGenerated || false;
+		this.name = p.name;
+		this.mmFromLeftEdge = p.mmFromLeftEdge || 0;
+		this.description = p.description || "";
+		this.scanType = p.scanType;
+		this.parameters = p.parameters;
+	}
+
+  clone() {
+    return new SampleConfiguration({
+      id: this.id,
+      idIsClientGenerated: this.idIsClientGenerated,
+      name: this.name,
+      mmFromLeftEdge: this.mmFromLeftEdge,
+      description: this.description,
+      scanType: this.scanType,
+      parameters: this.parameters
+  	});
+  }
 }
 
 
@@ -193,7 +237,7 @@ export class SampleConfigurationSet {
     this.relevantParameters = relevantParameters;
   }
 
-  addOrReplace(input:SampleConfiguration[]) {
+  addOrReplace(input: SampleConfiguration[]) {
 
     const h = new UndoHistoryEntry();
     const currentSet = this.configurationsById;

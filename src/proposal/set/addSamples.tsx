@@ -101,7 +101,7 @@ const AddSamples: React.FC = () => {
         if (parameterType) { parameters[parameterType.id] = parameterType.default ?? ""; }
       });
 
-      const newSample: SampleConfiguration = {
+      const newSample = new SampleConfiguration({
         id: uniqueIds[count-1],
         idIsClientGenerated: true,
         mmFromLeftEdge: openLocations[count-1],
@@ -109,7 +109,7 @@ const AddSamples: React.FC = () => {
         description: "",
         scanType: scanTypeValue!.name,
         parameters: parameters
-      };
+      });
       newSamples.push(newSample);
       count--;
     }

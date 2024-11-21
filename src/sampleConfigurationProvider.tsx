@@ -73,7 +73,7 @@ interface SampleConfigurationInterface {
 
 const SampleConfigurationContext = createContext<SampleConfigurationInterface>({
                     sets: new SampleConfigurationSets("empty", "0" as Guid, true), // Should never be reached
-                    scanTypes: {types:[],parameters:[]},
+                    scanTypes: {typesByName:new Map(),typeNamesInDisplayOrder:[],parametersById:new Map()},
                     setsLoaded: false,
                     scanTypesLoaded: false,
                     changed: () => {},
@@ -84,7 +84,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
   const [proposalId, setProposalId] = useState<string | undefined>(props.proposalId);
 
   const [sampleConfigurationsObject, setSampleConfigurationsObject] = useState<SampleConfigurationSets>(new SampleConfigurationSets("empty", "0" as Guid, true));
-  const [scanTypes, setScanTypes] = useState<ScanTypes>({types:[],parameters:[]});
+  const [scanTypes, setScanTypes] = useState<ScanTypes>({typesByName:new Map(),typeNamesInDisplayOrder:[],parametersById:new Map()});
 
   const [setsLoaded, setSetsLoaded] = useState<boolean>(false);
   const [scanTypesLoaded, setScanTypesLoaded] = useState<boolean>(false);
