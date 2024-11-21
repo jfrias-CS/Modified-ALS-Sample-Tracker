@@ -58,7 +58,6 @@ function InputEditable(settings: InputEditableParameters) {
 
   // Value in the DOM input element
   const [inputValue, setInputValue] = useState<string>(settings.value);
-  // Which item in the dropdown is currently selected, if any, numbered from 0 starting at the top
   const [typingState, setTypingState] = useState<InputTypingState>(InputTypingState.NotTyping);
   const [validationState, setValidationState] = useState<InputValidationState>(InputValidationState.NotTriggered);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
@@ -78,8 +77,8 @@ function InputEditable(settings: InputEditableParameters) {
   }, [justBlurred]);
 
 
-  // This handles keyboard-based selection in the dropdown.
-  // Changes to the input value are handled in inputChanged.
+  // This handles keyboard-based actions in the input field.
+  // Changes to the input value are handled in inputOnChange.
   function inputOnKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key == "Escape") {
       reset();
@@ -96,7 +95,8 @@ function InputEditable(settings: InputEditableParameters) {
   
   // Deal with changes to the input value.
   // We trigger a short delay before validating.
-  function inputChanged(value: string) {
+  function inputOnChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const value = event.target.value;
     if (debounceTimer) { clearTimeout(debounceTimer); }
     setDebounceTimer(setTimeout(() => inputCompleted(value), settings.debounceTime || 150));
     setInputValue(value);
@@ -223,16 +223,14 @@ function InputEditable(settings: InputEditableParameters) {
                 className={ inputClass }
                 id={ "debouncer-editable-" + (settings.elementId || "default") }
                 placeholder={ settings.placeholder || "Enter value" }
+                value={ inputValue }
                 readOnly={ settings.isReadOnly }
-                onChange={ (event) => {
-                  inputChanged(event.target.value)
-                } }
+                onKeyDown={ inputOnKeyDown }
+                onChange={ inputOnChange }
                 autoCorrect="off"
 
                 aria-haspopup="listbox"
 
-                value={ inputValue }
-                onKeyDown={ inputOnKeyDown }
                 onFocus={ inputOnFocus }
                 onBlur={ () => {
                   // The onblur event may happen because of some external event.
