@@ -354,7 +354,7 @@ const SampleTable: React.FC = () => {
                 const unused = !allowedParameters.has(p.id);
                 const activated = (cellFocusX === (paramIndex+4)) && cellFocusOnThisY;
                 const td = (<SampleCell x={paramIndex+4} y={sampleIndex}
-                              elementKey={ p.id }
+                              key={ p.id }
                               isUnused={unused}
                               isActivated={activated}
                               cellFunctions={cellFunctions}
@@ -366,22 +366,22 @@ const SampleTable: React.FC = () => {
               return (
                 <tr key={sample["id"]}>
                   <SampleCell x={0} y={sampleIndex}
-                      elementKey="mm"
+                      key="mm"
                       isActivated={(cellFocusX === 0) && cellFocusOnThisY}
                       cellFunctions={cellFunctions}
                       value={ sample.mmFromLeftEdge.toString() } />
                   <SampleCell x={1} y={sampleIndex}
-                      elementKey="name"
+                      key="name"
                       isActivated={(cellFocusX === 1) && cellFocusOnThisY}
                       cellFunctions={cellFunctions}
                       value={ sample.name } />
                   <SampleCell x={2} y={sampleIndex}
-                      elementKey="description"
+                      key="description"
                       isActivated={(cellFocusX === 2) && cellFocusOnThisY}
                       cellFunctions={cellFunctions}
                       value={ sample.description } />
                   <SampleCell x={3} y={sampleIndex}
-                      elementKey="scantype"
+                      key="scantype"
                       isActivated={(cellFocusX === 3) && cellFocusOnThisY}
                       cellFunctions={cellFunctions}
                       value={ sample.scanType } />
