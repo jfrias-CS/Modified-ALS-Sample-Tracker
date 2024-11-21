@@ -1,4 +1,4 @@
-# Sample sample metadata input app
+# Sample metadata input app
 
 A browser application for quickly creating and submitting sets of sample metadata, including per-set QR codes that will become physical labels printed and attached to sample carriers.
 
