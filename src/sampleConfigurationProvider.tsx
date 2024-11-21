@@ -119,13 +119,25 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
         const p = proposalId.trim()
         if (!p) { throw new Error("ProposalId is blank"); }
 
-//        const requestInfo: RequestInfo = new Request("http://backend.localhost/api/v3/datasets", {
-//              method: "GET"
-          //    body: '{"proposalId": p.toString()}',
-//            });
+        const requestInit: RequestInit = {
+          method: "GET",
+          headers: [["Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJzY2ljYXRhZG1pbkB5b3VyLnNpdGUiLCJhdXRoU3RyYXRlZ3kiOiJsb2NhbCIsIl9fdiI6MCwiaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJpYXQiOjE3MzIyMjc3NjMsImV4cCI6MTczMjIzMTM2M30.PDAN6zKgYiJ5iPgn1tBOJBAI5987uRXm3fTPZxIwfqA"]]
+        };
 
-//        const response = await fetch(requestInfo);      
-//        const result = await response.json();
+        const url = 'http://backend.localhost/api/v3/samples';
+        const params = {
+//          fields: '{"text":"1", "metadataKey": "proposalId", "characteristics": [{"lhs":"proposalId","relation":"EQUAL_TO_STRING","rhs":"1"}]}'
+          filter: '{"where":{"ownerGroup": "aGroup" }}'
+        };
+
+        const queryString = new URLSearchParams(params);        
+        const requestInfo: RequestInfo = new Request(`${url}?${queryString}`, requestInit );
+        
+        const response = await fetch(requestInfo);      
+        const result = await response.json();
+
+        console.log("got result");
+        console.log(result);
 
         const s = {
           name: "Test Proposal",
