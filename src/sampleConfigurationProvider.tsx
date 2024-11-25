@@ -3,6 +3,7 @@ import { createContext, useState, useEffect, PropsWithChildren } from "react";
 import { Guid } from "./components/utils.tsx";
 import { ScanTypes, getScanTypes } from './scanTypes.ts';
 import { SampleConfigurationSets } from './sampleConfiguration.ts';
+import { readConfigsForProposalId } from './sampleConfigurationDb.ts';
 
 
 // This is a "context provider" React component for a SampleConfigurationSets instance.
@@ -19,30 +20,6 @@ import { SampleConfigurationSets } from './sampleConfiguration.ts';
 // invalidates the content of the entire table, forcing both a re-sort and a re-draw.
 // If we're dealing with sample sets larger than, say, 1000, with dozens of parameters,
 // we might need to redesign.
-
-
-// These three interfaces define the records we expect to get from the server when fetching real data
-interface ConfigFromServer {
-  name: string,
-  id: string,
-  mmFromLeftEdge: string,
-  description: string,
-  scanType: string,
-  parameters: { [key: string]: string|null }
-}
-
-interface SetFromServer {
-  name: string,
-  description: string,
-  id: string,
-  configs: ConfigFromServer[]
-}
-
-interface SetsFromServer {
-  name: string,
-  proposalId: string,
-  sets: SetFromServer[]
-}
 
 
 // This component should be provided with a proposalId to use as a reference when fetching configuration sets.
@@ -119,25 +96,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
         const p = proposalId.trim()
         if (!p) { throw new Error("ProposalId is blank"); }
 
-        const requestInit: RequestInit = {
-          method: "GET",
-          headers: [["Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJzY2ljYXRhZG1pbkB5b3VyLnNpdGUiLCJhdXRoU3RyYXRlZ3kiOiJsb2NhbCIsIl9fdiI6MCwiaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJpYXQiOjE3MzIyMjc3NjMsImV4cCI6MTczMjIzMTM2M30.PDAN6zKgYiJ5iPgn1tBOJBAI5987uRXm3fTPZxIwfqA"]]
-        };
-
-        const url = 'http://backend.localhost/api/v3/samples';
-        const params = {
-//          fields: '{"text":"1", "metadataKey": "proposalId", "characteristics": [{"lhs":"proposalId","relation":"EQUAL_TO_STRING","rhs":"1"}]}'
-          filter: '{"where":{"ownerGroup": "aGroup" }}'
-        };
-
-        const queryString = new URLSearchParams(params);        
-        const requestInfo: RequestInfo = new Request(`${url}?${queryString}`, requestInit );
-        
-        const response = await fetch(requestInfo);      
-        const result = await response.json();
-
-        console.log("got result");
-        console.log(result);
+        const result = await readConfigsForProposalId(p);
 
         const s = {
           name: "Test Proposal",
