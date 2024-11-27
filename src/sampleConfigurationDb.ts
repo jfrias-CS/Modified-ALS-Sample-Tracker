@@ -2,20 +2,7 @@ import { ScanTypes, getScanTypes } from './scanTypes.ts';
 import { SampleConfigurationSets } from './sampleConfiguration.ts';
 
 
-// This is a "context provider" React component for a SampleConfigurationSets instance.
-
-// It keeps its own internal instance of SampleConfigurationSets and
-// provides hooks for a few additional functions to manipulate it.
-// It's designed to be placed once in the DOM.
-
-// This design allows relatively free access to the current state of the
-// entire configuration anywhere, but of course creates the usual performance problem
-// of the set being monolithic.  That is, even if we just change one parameter
-// in one SampleConfiguration and it's not the value being sorted on, which would
-// require us to only update a single table cell in the DOM, this design
-// invalidates the content of the entire table, forcing both a re-sort and a re-draw.
-// If we're dealing with sample sets larger than, say, 1000, with dozens of parameters,
-// we might need to redesign.
+// Database interconnection functions for SampleConfiguration objects.
 
 
 // These three interfaces define the records we expect to get from the server when fetching real data
@@ -40,6 +27,18 @@ interface SetsFromServer {
   proposalId: string,
   sets: SetFromServer[]
 }
+
+
+// Somewhere up here we need an authentication check that looks for a cookie containing the bearer token given to us post-authentication.
+// If the cookie is missing, it needs to look for a token (jwt) in the encoded fields of the URL.
+// If the token exists it should be extracted and saved as a cookie, and the load should proceed.
+// If there is no cookie and no JWT, we should redirect to a login URL, with a post-load ridirect given as the
+// original requested URL, e.g:
+//    const loginUrl = new URL(urls.ALS_AUTH_URL + "/login");
+//    loginUrl.searchParams.append("return_to", window.location.toString());
+//    window.location.href = loginUrl.toString();
+
+
 
 async function readConfigsForProposalId(proposalId: string) {
 
