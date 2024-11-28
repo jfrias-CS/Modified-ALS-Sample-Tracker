@@ -4,6 +4,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
 import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx';
+import { readConfigsForProposalId, createNewSet } from './../sampleConfigurationDb.ts';
 
 
 const AddSamples: React.FC = () => {
@@ -42,7 +43,7 @@ const AddSamples: React.FC = () => {
 
   // If all the form data is valid and the user hits 'Enter' in the name input,
   // act as if 'Add' was pressed.
-  function nameOnKeyDown(event:React.KeyboardEvent<HTMLInputElement>) {
+  async function nameOnKeyDown(event:React.KeyboardEvent<HTMLInputElement>) {
     if ( isOpen && !inProgress ) {
       if ((event.key == "Enter") && validAllInput) {
         pressedSubmit();
@@ -73,7 +74,7 @@ const AddSamples: React.FC = () => {
     setValidAllInput(validQuantity && validName);
   }
 
-  function pressedSubmit() {
+  async function pressedSubmit() {
 
     var count = Math.max(parseInt(quantity, 10), 1);
     var uniqueNames = sampleSetContext.sets.generateUniqueNames(newName, count);
@@ -84,8 +85,12 @@ const AddSamples: React.FC = () => {
     while (count > 0) {
       sampleSetContext.sets.add(uniqueNames[count-1], "", uniqueIds[count-1], true);
       count--;
+
+      const result = await createNewSet(uniqueNames[count-1], "");
+      console.log(result);
     }
     sampleSetContext.changed();
+
     setInProgress(false);
     setIsOpen(false);
   };
