@@ -160,26 +160,3 @@ export function generateUniqueNames(existingNames: string[], suggestedName: stri
   }
   return goodNames;
 }
-
-
-// Generate a quantity of unique Guid numbers that are guaranteed to not exist in
-// the given array of Guids.
-export function generateUniqueIds(existingIds: Guid[], quantity?: number) {
-  var chosenQuantity = Math.max(quantity||1, 1);
-
-  var maxUniqueNumber = 1;
-  if (existingIds.length > 0) {
-    existingIds.forEach((v) => {
-      maxUniqueNumber = Math.max(parseInt(v, 10), maxUniqueNumber);
-    });
-    maxUniqueNumber++;
-  }
-
-  var goodIds: Guid[] = [];
-  while (chosenQuantity > 0) {
-    goodIds.push(maxUniqueNumber.toString() as Guid);
-    maxUniqueNumber++;
-    chosenQuantity--;
-  }
-  return goodIds;
-}

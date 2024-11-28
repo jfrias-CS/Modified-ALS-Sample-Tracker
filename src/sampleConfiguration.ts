@@ -1,5 +1,5 @@
 import { ScanTypes, ScanTypeName, ScanType } from './scanTypes.ts';
-import { Guid, generateUniqueIds, generateUniqueNames } from "./components/utils.tsx";
+import { Guid, generateUniqueNames } from "./components/utils.tsx";
 
 // Class definitions to represent sample configurations,
 // sets of sample configurations, and undo/redo history for changes
@@ -7,11 +7,8 @@ import { Guid, generateUniqueIds, generateUniqueNames } from "./components/utils
 
 
 export interface NewSampleConfigurationParameters {
-  // A unique identifier either generated on the server, or generated locally.
+  // A unique identifier generated on the server.
   id: Guid;
-  // If true, the identifier was generated client-side and this record still needs to be created server-side.
-  // If false, the idenfitier was generated on the server and can be used for write operations.
-  idIsClientGenerated: boolean;
   // Intended to be short and unique, but this is not strictly enforced.
   name: string;
   // Intended to be a unique number, but not enforced, for editing convenience.
@@ -22,18 +19,15 @@ export interface NewSampleConfigurationParameters {
   // Key/value parameter set. Keys should only be valid for the chosen ScanType.
   // This is not strictly enforced, so old inapplicable values can be preserved
   // in case a previous ScanType selection is re-selected.
-  parameters: { [key: Guid]: string|null }
+  parameters: Map<Guid, string|null>
 }
 
 
 // Represents the configuration for one sample
 export class SampleConfiguration {
 
-  // A unique identifier either generated on the server, or generated locally.
+  // A unique identifier generated on the server.
   id: Guid;
-  // If true, the identifier was generated client-side and this record still needs to be created server-side.
-  // If false, the idenfitier was generated on the server and can be used for write operations.
-  idIsClientGenerated: boolean;
   // Intended to be short and unique, but this is not strictly enforced.
   name: string;
   // Intended to be a unique number, but not enforced, for editing convenience.
@@ -44,22 +38,20 @@ export class SampleConfiguration {
   // Key/value parameter set. Keys should only be valid for the chosen ScanType.
   // This is not strictly enforced, so old inapplicable values can be preserved
   // in case a previous ScanType selection is re-selected.
-  parameters: { [key: Guid]: string|null }
+  parameters: Map<Guid, string|null>
 
 	constructor (p: NewSampleConfigurationParameters) {
 		this.id = p.id;
-		this.idIsClientGenerated = p.idIsClientGenerated || false;
 		this.name = p.name;
 		this.mmFromLeftEdge = p.mmFromLeftEdge || 0;
 		this.description = p.description || "";
 		this.scanType = p.scanType;
-		this.parameters = p.parameters;
+		this.parameters = new Map(p.parameters);
 	}
 
   clone() {
     return new SampleConfiguration({
       id: this.id,
-      idIsClientGenerated: this.idIsClientGenerated,
       name: this.name,
       mmFromLeftEdge: this.mmFromLeftEdge,
       description: this.description,
@@ -182,9 +174,6 @@ class UndoHistory {
 export class SampleConfigurationSet {
   id: Guid;
   name: string;
-  // If true, the identifier was generated client-side and this record still needs to be created server-side.
-  // If false, the idenfitier was generated on the server and can be used for write operations.
-  idIsClientGenerated: boolean;
   // Can remain empty
   description: string;
   configurationsById: Map<string, SampleConfiguration>;
@@ -197,10 +186,9 @@ export class SampleConfigurationSet {
   // This can be undefined until legitimate ScanType information is available.
   scanTypesByName!: Map<ScanTypeName, ScanType>;
 
-  constructor(name: string, description: string, id: Guid, idIsClientGenerated: boolean) {
+  constructor(name: string, description: string, id: Guid) {
     this.id = id;
     this.name = name;
-    this.idIsClientGenerated = idIsClientGenerated;
     this.configurationsById = new Map();
     this.description = description;
     this.relevantParameters = [];
@@ -237,7 +225,7 @@ export class SampleConfigurationSet {
     this.relevantParameters = relevantParameters;
   }
 
-  addOrReplace(input: SampleConfiguration[]) {
+  addOrReplaceWithHistory(input: SampleConfiguration[]) {
 
     const h = new UndoHistoryEntry();
     const currentSet = this.configurationsById;
@@ -262,6 +250,13 @@ export class SampleConfigurationSet {
     this.findRelevantParameters();
   }
 
+  add(input: SampleConfiguration[]) {
+    // Now that we've updated undo/redo history, write the changes.
+    input.forEach((i) => this.configurationsById.set(i.id, i));
+    // The set of relevant parameters may have changed.
+    this.findRelevantParameters();
+  }
+
   generateUniqueNames(suggestedName: string, quantity?: number, startIndex?: number | null): string[] {
     let existingNames: string[] = [];
     this.configurationsById.forEach((v) => { existingNames.push(v.name) });
@@ -269,13 +264,6 @@ export class SampleConfigurationSet {
     return generateUniqueNames(existingNames, suggestedName, quantity, startIndex);
   }
 
-  // Generate an ID number that is guaranteed to not exist in
-  // the current sample set.
-  generateUniqueIds(quantity?: number) {
-    var currentIds: Guid[] = [];
-    this.configurationsById.forEach((v) => { if (v.idIsClientGenerated) { currentIds.push(v.id); }});
-    return generateUniqueIds(currentIds, quantity);
-  }
 
   // Generate bar locations that are at least 10mm beyond the current
   // rightmost sample location, and 10mm apart from each other.
@@ -307,14 +295,12 @@ export class SampleConfigurationSet {
 // A set of sets of SampleConfigurations, and functions to manage them.
 export class SampleConfigurationSets {
   id: Guid;
-  idIsClientGenerated: boolean
   name: string;
   setsById: Map<Guid, SampleConfigurationSet>;
   scanTypesCache?: ScanTypes;
 
-  constructor(name: string, id: Guid, idIsClientGenerated: boolean) {
+  constructor(name: string, id: Guid) {
     this.id = id;
-    this.idIsClientGenerated = idIsClientGenerated;
     this.name = name;
     this.setsById = new Map();
   }
@@ -325,8 +311,8 @@ export class SampleConfigurationSets {
     this.setsById.forEach((t) => t.setScanTypes(scanTypesCache));
   }
 
-  add(name: string, description: string, id: Guid, idIsClientGenerated: boolean): SampleConfigurationSet {
-    const c = new SampleConfigurationSet( name, description, id, idIsClientGenerated );
+  add(id: Guid, name: string, description: string): SampleConfigurationSet {
+    const c = new SampleConfigurationSet( name, description, id );
     if (this.scanTypesCache) {
       c.setScanTypes(this.scanTypesCache);
     }
@@ -342,14 +328,6 @@ export class SampleConfigurationSets {
     let existingNames: string[] = [];
     this.setsById.forEach((v) => { existingNames.push(v.name) });
     return generateUniqueNames(existingNames, suggestedName, quantity, startIndex);
-  }
-
-  // Generate an ID number that is guaranteed to not exist in
-  // the current sample sets.
-  generateUniqueIds(quantity?: number) {
-    var currentIds: Guid[] = [];
-    this.setsById.forEach((v) => { if (v.idIsClientGenerated) { currentIds.push(v.id); } });
-    return generateUniqueIds(currentIds, quantity);
   }
 
   all() {

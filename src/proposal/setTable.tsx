@@ -5,7 +5,7 @@ import 'bulma/css/bulma.min.css';
 import { SampleConfigurationSet } from '../sampleConfiguration.ts';
 import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx';
 import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
-import AddSet from './addSet.tsx';
+import AddSet from './addSets.tsx';
 import './setTable.css';
 
 

@@ -287,11 +287,11 @@ const SampleTable: React.FC = () => {
     // Validate scan parameters
     } else if ((x > 3) && ((x-4) < displayedParameters.length)) {
       const paramType = displayedParameters[x - 4];
-      editedConfig.parameters[paramType.id] = inputString;
+      editedConfig.parameters.set(paramType.id, inputString);
     }
 
     const thisSet = sampleSetContext.sets.getById(setId!.trim() as Guid)!;
-    thisSet.addOrReplace([editedConfig]);
+    thisSet.addOrReplaceWithHistory([editedConfig]);
 
     // This may not be the right behavior
     sampleConfigurations[y] = editedConfig;

@@ -4,9 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAngleDown, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { ScanTypeName, ScanParameterName, ScanType } from '../../scanTypes.ts';
+import { ScanTypeName, ScanType } from '../../scanTypes.ts';
 import { Guid } from '../../components/utils.tsx';
-import { SampleConfigurationSet } from '../../sampleConfiguration.ts';
+import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
 import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
 
@@ -18,13 +18,8 @@ const ImportSamples: React.FC = () => {
   const sampleSetContext = useContext(SampleConfigurationContext);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [quantity, setQuantity] = useState<string>("1");
-  const [validQuantity, setValidQuantity] = useState<boolean>(true);
-  const [validName, setValidName] = useState<boolean>(true);
-  const [uniqueName, setUniqueName] = useState<boolean>(true);
   const [validAllInput, setValidAllInput] = useState<boolean>(true);
   const [inProgress, setInProgress] = useState<boolean>(false);
-  const [newName, setNewName] = useState<string>("1");
   const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(null)
 
   function getSet(): SampleConfigurationSet | undefined {
@@ -35,7 +30,7 @@ const ImportSamples: React.FC = () => {
   function clickedOpen() {
     if (!inProgress && !isOpen) {
       setIsOpen(true);
-      validate(quantity, newName, scanTypeValue);
+      validate(scanTypeValue);
     }
   }
 
@@ -71,50 +66,23 @@ const ImportSamples: React.FC = () => {
   }
 
 
-  function validate(quantity:string, name:string, scanType:ScanType | null) {
-    var validQuantity:boolean = true;
-    var validName:boolean = true;
-    var uniqueName:boolean = true;
+  function validate(scanType:ScanType | null) {
 
-    if (parseInt(quantity, 10) < 1) {
-      validQuantity = false;
-    }
-
-    const trimmed = name.toString().trim();
-    if (trimmed.length < 1) {
-      validName = false;
-    } else {
-      const thisSet = getSet();
-      if (thisSet) {
-        if (thisSet.all().some((c) => c.name == trimmed)) {
-          validName = false;
-          uniqueName = false;
-        }
-      }
-    }
-
-    setValidQuantity(validQuantity);
-    setValidName(validName);
-    setUniqueName(uniqueName);
-    setValidAllInput(validQuantity && validName && (scanType !== null));
+    setValidAllInput((scanType !== null));
   }
 
   function pressedSubmit() {
     const thisSet = getSet();
     if (!thisSet) { return; }
-    const newSet = new SampleConfiguration({
+    const newConfig = new SampleConfiguration({
       id: "13434-ASDSAD-4" as Guid,
-      idIsClientGenerated: true,
       mmFromLeftEdge: 10,
       name: "4",
       description: "This is the second sample.",
       scanType: "two_parameter_generic" as ScanTypeName,
-      parameters: {
-        ["firstParam" as ScanParameterName]: "s1",
-        ["secondParam" as ScanParameterName]: "s2",
-      }
+      parameters: new Map()
     });
-    thisSet.addOrReplace([newSet]);
+    thisSet.addOrReplaceWithHistory([newConfig]);
     sampleSetContext.changed();
   };
 
@@ -124,8 +92,8 @@ const ImportSamples: React.FC = () => {
 
 
   const scanTypeSearchFunctions:ScanTypeSearchFunctions = {
-    itemSelected: (item: ScanType) => { setScanTypeValue(item); validate(quantity, newName, item); },
-    selectedNone: () => { setScanTypeValue(null); validate(quantity, newName, null); }
+    itemSelected: (item: ScanType) => { setScanTypeValue(item); validate(item); },
+    selectedNone: () => { setScanTypeValue(null); validate(null); }
   };
 
 

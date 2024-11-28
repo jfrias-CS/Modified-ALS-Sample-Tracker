@@ -10,8 +10,8 @@ const HomePage: React.FC = () => {
 
   const proposals = [
     {
-      id: "1" as Guid,
-      name: "Test Proposal",
+      id: "group1" as Guid,
+      name: "Test Proposal (group1)",
       description: "This is a test proposal, generated client-side as empty.",
       sets: 0
     }

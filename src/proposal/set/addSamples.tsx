@@ -9,6 +9,7 @@ import { Guid } from "../../components/utils.tsx";
 import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
 import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
+import { createNewConfiguration } from '../../sampleConfigurationDb.ts';
 
 
 const AddSamples: React.FC = () => {
@@ -19,13 +20,15 @@ const AddSamples: React.FC = () => {
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<string>("1");
+  const [description, setDescription] = useState<string>("");
+  const [newName, setNewName] = useState<string>("Sample");
+  const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(null)
+
   const [validQuantity, setValidQuantity] = useState<boolean>(true);
   const [validName, setValidName] = useState<boolean>(true);
   const [uniqueName, setUniqueName] = useState<boolean>(true);
   const [validAllInput, setValidAllInput] = useState<boolean>(true);
   const [inProgress, setInProgress] = useState<boolean>(false);
-  const [newName, setNewName] = useState<string>("Sample");
-  const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(null)
 
   function getSet(): SampleConfigurationSet | undefined {
     if (!setId) { return undefined; }
@@ -52,6 +55,11 @@ const AddSamples: React.FC = () => {
     const v = c.target.value;
     setNewName(v);
     validate(quantity, v, scanTypeValue);
+  }
+
+  function changedDescription(c:React.ChangeEvent<HTMLInputElement>) {
+    const v = c.target.value;
+    setDescription(v);
   }
 
   function validate(quantity:string, name:string, scanType: ScanType | null) {
@@ -82,41 +90,43 @@ const AddSamples: React.FC = () => {
     setValidAllInput(validQuantity && validName && (scanType !== null));
   }
 
-  function pressedSubmit() {
+  async function pressedSubmit() {
     const thisSet = getSet();
     if (!thisSet) { return; }
 
     var count = Math.max(parseInt(quantity, 10), 1);
     var uniqueNames = thisSet.generateUniqueNames(newName, count);
-    var uniqueIds = thisSet.generateUniqueIds(count);
     var openLocations = thisSet.generateOpenLocations(count);
 
     var newSamples = [];
     while (count > 0) {
 
       // Make a set of parameters for the chosen ScanType, with default or blank values.
-      const parameters:{ [key: Guid]: string|null } = {};
+      const parameters:Map<Guid, string|null> = new Map();
       scanTypeValue!.parameters.forEach((p) => {
         const parameterType = sampleSetContext.scanTypes.parametersById.get(p);
-        if (parameterType) { parameters[parameterType.id] = parameterType.default ?? ""; }
+        if (parameterType) { parameters.set(parameterType.id, parameterType.default ?? ""); }
       });
 
-      const newSample = new SampleConfiguration({
-        id: uniqueIds[count-1],
-        idIsClientGenerated: true,
-        mmFromLeftEdge: openLocations[count-1],
-        name: uniqueNames[count-1],
-        description: "",
-        scanType: scanTypeValue!.name,
-        parameters: parameters
-      });
-      newSamples.push(newSample);
+      const result = await createNewConfiguration(thisSet.id, uniqueNames[count-1], description, scanTypeValue!.name);
+
+      if (result.success) {
+        const newSample = new SampleConfiguration({
+          id: result.response!.id,
+          mmFromLeftEdge: openLocations[count-1],
+          name: uniqueNames[count-1],
+          description: description,
+          scanType: scanTypeValue!.name,
+          parameters: parameters
+        });
+        newSamples.push(newSample);
+      }
+
       count--;
     }
 
-    // This might be asynchronous in the future
     setInProgress(true);
-    thisSet.addOrReplace(newSamples);
+    thisSet.addOrReplaceWithHistory(newSamples);
     sampleSetContext.changed();
     setInProgress(false);
     setIsOpen(false);
@@ -180,6 +190,17 @@ const AddSamples: React.FC = () => {
                               (<p className="help is-danger">This name is invalid</p>) :
                               (<p className="help is-danger">This name is not unique</p>))
               }
+            </div>
+
+            <div className="field">
+              <label className="label">Description</label>
+              <div className="control">
+                <input className="input"
+                  type="text"
+                  placeholder="Optional description"
+                  value={ description }
+                  onChange={ changedDescription } />
+              </div>
             </div>
 
             <div className="field">

@@ -4,7 +4,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
 import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx';
-import { readConfigsForProposalId, createNewSet } from './../sampleConfigurationDb.ts';
+import { createNewSet } from '../sampleConfigurationDb.ts';
 
 
 const AddSamples: React.FC = () => {
@@ -13,11 +13,14 @@ const AddSamples: React.FC = () => {
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<string>("1");
+  const [newName, setNewName] = useState<string>("Bar");
+  const [description, setDescription] = useState<string>("");
+
   const [validQuantity, setValidQuantity] = useState<boolean>(true);
   const [validName, setValidName] = useState<boolean>(true);
   const [uniqueName, setUniqueName] = useState<boolean>(true);
   const [validAllInput, setValidAllInput] = useState<boolean>(true);
-  const [newName, setNewName] = useState<string>("Bar");
+
   const [inProgress, setInProgress] = useState<boolean>(false);
 
   function clickedOpen() {
@@ -39,6 +42,11 @@ const AddSamples: React.FC = () => {
     const v = c.target.value;
     setNewName(v);
     validate(quantity, v);
+  }
+
+  function changedDescription(c:React.ChangeEvent<HTMLInputElement>) {
+    const v = c.target.value;
+    setDescription(v);
   }
 
   // If all the form data is valid and the user hits 'Enter' in the name input,
@@ -78,16 +86,14 @@ const AddSamples: React.FC = () => {
 
     var count = Math.max(parseInt(quantity, 10), 1);
     var uniqueNames = sampleSetContext.sets.generateUniqueNames(newName, count);
-    var uniqueIds = sampleSetContext.sets.generateUniqueIds(count);
 
-    // This might be asynchronous in the future
     setInProgress(true);
     while (count > 0) {
-      sampleSetContext.sets.add(uniqueNames[count-1], "", uniqueIds[count-1], true);
+      const result = await createNewSet(uniqueNames[count-1], description);
+      if (result.success) {
+        sampleSetContext.sets.add(result.response!.id, uniqueNames[count-1], description);
+      }
       count--;
-
-      const result = await createNewSet(uniqueNames[count-1], "");
-      console.log(result);
     }
     sampleSetContext.changed();
 
@@ -147,6 +153,17 @@ const AddSamples: React.FC = () => {
                               (<p className="help is-danger">This name is invalid</p>) :
                               (<p className="help is-danger">This name is not unique</p>))
               }
+            </div>
+
+            <div className="field">
+              <label className="label">Description</label>
+              <div className="control">
+                <input className="input"
+                  type="text"
+                  placeholder="Optional description"
+                  value={ description }
+                  onChange={ changedDescription } />
+              </div>
             </div>
 
             <div className="buttons">
