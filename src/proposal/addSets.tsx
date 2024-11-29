@@ -22,6 +22,7 @@ const AddSamples: React.FC = () => {
   const [validAllInput, setValidAllInput] = useState<boolean>(true);
 
   const [inProgress, setInProgress] = useState<boolean>(false);
+  const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
 
   function clickedOpen() {
     if (!inProgress && !isOpen) {
@@ -86,23 +87,31 @@ const AddSamples: React.FC = () => {
 
     var count = Math.max(parseInt(quantity, 10), 1);
     var uniqueNames = sampleSetContext.sets.generateUniqueNames(newName, count);
+    var error: string | null = null;
 
+    setSubmitErrorMessage(null);
     setInProgress(true);
-    while (count > 0) {
+    while (count > 0 && (error === null)) {
       const result = await createNewSet(uniqueNames[count-1], description);
       if (result.success) {
         sampleSetContext.sets.add(result.response!.id, uniqueNames[count-1], description);
+      } else {
+        error = result.message || "";
       }
       count--;
     }
     sampleSetContext.changed();
-
     setInProgress(false);
-    setIsOpen(false);
+
+    if (error !== null) {
+      setSubmitErrorMessage(error);
+    } else {
+      setIsOpen(false);
+    }
   };
 
   function clickedClose() {
-    if (!inProgress && isOpen) { setIsOpen(false); }
+    if (!inProgress && isOpen) { setSubmitErrorMessage(null); setIsOpen(false); }
   }
 
   return (
@@ -176,6 +185,15 @@ const AddSamples: React.FC = () => {
               />
               <button className="button" onClick={ clickedClose }>Cancel</button>
             </div>
+
+            { submitErrorMessage && (
+              <article className="message is-danger">
+                <div className="message-body">
+                  { submitErrorMessage }
+                </div>
+              </article>
+            )}
+
             </section>
 
         </div>

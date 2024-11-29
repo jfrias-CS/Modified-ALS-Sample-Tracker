@@ -1,6 +1,9 @@
 import { Guid } from "./components/utils.tsx";
 
 
+const jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzQwZWI1NWNlNTRlMTU0NjUzYWNhMjEiLCJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJzY2ljYXRhZG1pbkB5b3VyLnNpdGUiLCJhdXRoU3RyYXRlZ3kiOiJsb2NhbCIsIl9fdiI6MCwiaWQiOiI2NzQwZWI1NWNlNTRlMTU0NjUzYWNhMjEiLCJpYXQiOjE3MzI4Mzg3NDYsImV4cCI6MTczMjg0MjM0Nn0.nHkug8Mpcq3wVK5X4JNeMxf98pS-6LmCx52hVgJDWm8';
+
+
 // Database interconnection functions for SampleConfiguration objects.
 
 interface ResponseWrapper<Data> {
@@ -48,21 +51,30 @@ interface RecordFromServer {
 
 
 async function get(url: string, params: Record<string, string>): Promise<ResponseWrapper<Response>> {
-  const jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzQwZWI1NWNlNTRlMTU0NjUzYWNhMjEiLCJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJzY2ljYXRhZG1pbkB5b3VyLnNpdGUiLCJhdXRoU3RyYXRlZ3kiOiJsb2NhbCIsIl9fdiI6MCwiaWQiOiI2NzQwZWI1NWNlNTRlMTU0NjUzYWNhMjEiLCJpYXQiOjE3MzI3NTU3MzksImV4cCI6MTczMjc1OTMzOX0.hlxNo0iJdCddnx7q0M4CvXWq2zNpzX5sGWJDMDd3XRs';
-  const requestInit: RequestInit = {
-    method: "GET",
-    headers: { 'Authorization': "Bearer " + jwt }
-  };
-  const queryString = new URLSearchParams(params);
-  const requestInfo: RequestInfo = new Request(`http://backend.localhost/api/v3/${url}?${queryString}`, requestInit );
-  const response = await fetch(requestInfo);
-  return { success: true, response: response };
+  try {
+    const requestInit: RequestInit = {
+      method: "GET",
+      headers: { 'Authorization': "Bearer " + jwt }
+    };
+    const queryString = new URLSearchParams(params);
+    const requestInfo: RequestInfo = new Request(`http://backend.localhost/api/v3/${url}?${queryString}`, requestInit );
+    const response = await fetch(requestInfo);
+
+    if (response.status == 201 || response.status == 200) {
+      return { success: true, response: response };
+    } else {
+      if (response.status == 401) {
+        return { success: false, response: response, message: "Error: Unauthorized. Are you sure you're still logged in?" };
+      }
+      return { success: false, response: response, message: "Error" };
+    }
+  } catch (err) {
+    return { success: false, message: "Exception" };
+  }
 }
 
 
 async function post(url: string, body: string): Promise<ResponseWrapper<Response>> {
-  const jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzQwZWI1NWNlNTRlMTU0NjUzYWNhMjEiLCJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJzY2ljYXRhZG1pbkB5b3VyLnNpdGUiLCJhdXRoU3RyYXRlZ3kiOiJsb2NhbCIsIl9fdiI6MCwiaWQiOiI2NzQwZWI1NWNlNTRlMTU0NjUzYWNhMjEiLCJpYXQiOjE3MzI3NTU3MzksImV4cCI6MTczMjc1OTMzOX0.hlxNo0iJdCddnx7q0M4CvXWq2zNpzX5sGWJDMDd3XRs';
-
   try {
 
     const requestInit: RequestInit = {
@@ -74,16 +86,17 @@ async function post(url: string, body: string): Promise<ResponseWrapper<Response
       body: body
     };
     const requestInfo: RequestInfo = new Request('http://backend.localhost/api/v3/' + url, requestInit );
-
     const response = await fetch(requestInfo);
 
     if (response.status == 201 || response.status == 200) {
       return { success: true, response: response };
     } else {
+      if (response.status == 401) {
+        return { success: false, response: response, message: "Error: Unauthorized. Are you sure you're still logged in?" };
+      }
       return { success: false, response: response, message: "Error" };
     }
   } catch (err) {
-
     return { success: false, message: "Exception" };
   }
 }
