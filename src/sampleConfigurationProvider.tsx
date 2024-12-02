@@ -167,9 +167,11 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
       // Anything in sampleCharacteristics that starts with lbnl_config_ and not lbnl_config_meta_
       // is treated as a Scan Type parameter and its value is added to the parameter set.
       for (const [key, value] of Object.entries(sc)) {
-        if (!(key.startsWith('lbnl_config_'))) { return; }
-        if (characeristicsToIgnore.has(key)) { return; }
-        parameters.set(key.replace(/lbnl_config_/, '') as Guid, value as string);
+        if (key.startsWith('lbnl_config_')) {
+          if (!characeristicsToIgnore.has(key)) { 
+            parameters.set(key.replace(/lbnl_config_/, '') as Guid, value as string);
+          }
+        }
       }
 
       const newSample = new SampleConfiguration({
@@ -181,7 +183,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
         parameters: parameters
       });
 
-      thisSet.add(newSample);
+      thisSet.add([newSample]);
     });
 
     setSampleConfigurationsObject(setContainer);
