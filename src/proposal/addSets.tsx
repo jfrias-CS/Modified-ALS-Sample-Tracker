@@ -194,7 +194,7 @@ const AddSamples: React.FC = () => {
               </article>
             )}
 
-            </section>
+          </section>
 
         </div>
       </div>

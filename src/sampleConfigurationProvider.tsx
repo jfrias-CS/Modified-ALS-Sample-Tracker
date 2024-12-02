@@ -165,7 +165,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
       const parameters:Map<Guid, string|null> = new Map();
 
       // Anything in sampleCharacteristics that starts with lbnl_config_ and not lbnl_config_meta_
-      // is treated as a Scan Type parameter and its valud is added to the parameter set.
+      // is treated as a Scan Type parameter and its value is added to the parameter set.
       for (const [key, value] of Object.entries(sc)) {
         if (!(key.startsWith('lbnl_config_'))) { return; }
         if (characeristicsToIgnore.has(key)) { return; }

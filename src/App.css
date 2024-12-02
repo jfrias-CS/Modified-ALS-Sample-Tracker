@@ -1,4 +1,6 @@
-#root { }
+#root { 
+    padding: var(--bulma-size-normal);
+}
 
 .modal.has-overflow {
     position: fixed ! important;

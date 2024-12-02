@@ -1,5 +1,6 @@
 table.sampletable {
   font-size: 0.9rem !important;
+  margin-top: 0.5rem;
   height: fit-content;
 }
 

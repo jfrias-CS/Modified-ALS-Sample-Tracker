@@ -28,7 +28,7 @@ interface CellFunctions {
 
 // Settings passed in with the React component
 interface SampleCellParameters {
-  key: string;
+  cellKey: string;
   x: number;
   y: number;
   isActivated: boolean;
@@ -283,7 +283,7 @@ function SampleCell(settings: SampleCellParameters) {
   const helpClass = classNames("notify", help ? "disclosed" : "");
 
   return (
-    <td key={ settings.key }
+    <td key={ settings.cellKey }
         data-sample-x={settings.x}
         data-sample-y={settings.y}
         data-sample-unused={settings.isUnused || 0}

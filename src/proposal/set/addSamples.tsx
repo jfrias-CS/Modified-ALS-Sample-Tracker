@@ -19,16 +19,18 @@ const AddSamples: React.FC = () => {
   const sampleSetContext = useContext(SampleConfigurationContext);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [newName, setNewName] = useState<string>("Sample");
   const [quantity, setQuantity] = useState<string>("1");
   const [description, setDescription] = useState<string>("");
-  const [newName, setNewName] = useState<string>("Sample");
   const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(null)
 
   const [validQuantity, setValidQuantity] = useState<boolean>(true);
   const [validName, setValidName] = useState<boolean>(true);
   const [uniqueName, setUniqueName] = useState<boolean>(true);
   const [validAllInput, setValidAllInput] = useState<boolean>(true);
+
   const [inProgress, setInProgress] = useState<boolean>(false);
+  const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
 
   function getSet(): SampleConfigurationSet | undefined {
     if (!setId) { return undefined; }
@@ -94,12 +96,17 @@ const AddSamples: React.FC = () => {
     const thisSet = getSet();
     if (!thisSet) { return; }
 
+    var error: string | null = null;
+
     var count = Math.max(parseInt(quantity, 10), 1);
     var uniqueNames = thisSet.generateUniqueNames(newName, count);
     var openLocations = thisSet.generateOpenLocations(count);
 
+    setSubmitErrorMessage(null);
+    setInProgress(true);
+
     var newSamples = [];
-    while (count > 0) {
+    while (count > 0 && (error === null)) {
 
       // Make a set of parameters for the chosen ScanType, with default or blank values.
       const parameters:Map<Guid, string|null> = new Map();
@@ -120,20 +127,25 @@ const AddSamples: React.FC = () => {
           parameters: parameters
         });
         newSamples.push(newSample);
+      } else {
+        error = result.message || "";
       }
 
       count--;
     }
 
-    setInProgress(true);
     thisSet.addOrReplaceWithHistory(newSamples);
     sampleSetContext.changed();
     setInProgress(false);
-    setIsOpen(false);
+    if (error !== null) {
+      setSubmitErrorMessage(error);
+    } else {
+      setIsOpen(false);
+    }
   };
 
   function clickedClose() {
-    if (!inProgress && isOpen) { setIsOpen(false); }
+    if (!inProgress && isOpen) { setSubmitErrorMessage(null); setIsOpen(false); }
   }
 
 
@@ -222,7 +234,16 @@ const AddSamples: React.FC = () => {
               />
               <button className="button" onClick={ clickedClose }>Cancel</button>
             </div>
-            </section>
+
+            { submitErrorMessage && (
+              <article className="message is-danger">
+                <div className="message-body">
+                  { submitErrorMessage }
+                </div>
+              </article>
+            )}
+
+          </section>
 
         </div>
       </div>

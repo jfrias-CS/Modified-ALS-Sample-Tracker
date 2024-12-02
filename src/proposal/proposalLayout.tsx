@@ -5,7 +5,7 @@ import 'bulma/css/bulma.min.css';
 import { SampleConfigurationProvider } from './../sampleConfigurationProvider.tsx';
 
 
-const ProposalLayout: React.FC<PropsWithChildren> = (props) => {
+const ProposalLayout: React.FC<PropsWithChildren> = () => {
 
   const { proposalId } = useParams();
 
@@ -18,12 +18,14 @@ const ProposalLayout: React.FC<PropsWithChildren> = (props) => {
   }, []);
 
   return (
-    <SampleConfigurationProvider proposalId={proposalId}>
-      <div style={{padding: ".375rem 1rem"}}>
+    <>
+      <div className="block">
         <h1 className="title">Beamline Sample Set Configuration</h1>
-        <Outlet />
       </div>
-    </SampleConfigurationProvider>
+      <SampleConfigurationProvider proposalId={proposalId}>
+        <Outlet />
+      </SampleConfigurationProvider>
+    </>
   )
 }
 
