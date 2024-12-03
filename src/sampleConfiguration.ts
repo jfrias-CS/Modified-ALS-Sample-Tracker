@@ -81,7 +81,7 @@ class SampleConfigurationSetChanges {
 
   preferNewer: boolean;
   additions: Array<SampleConfiguration>;
-  deletions: Array<Guid>;
+  deletions: Array<SampleConfiguration>;
 
 	constructor (preferNewer: boolean) {
 		this.preferNewer = preferNewer;
@@ -106,11 +106,10 @@ class SampleConfigurationSetChanges {
 		}
 	}
 
-  newDeletion(deletion: Guid) {
+  newDeletion(deletion: SampleConfiguration) {
+    // Only push the change if there isn't one for that ID already
     var s =
-      this.deletions.some(function(item) {
-        if (deletion == item) { return true; } else { return false; }
-      });
+      this.deletions.some((item) => (item.id == deletion.id));
     if (!s) {
       this.deletions.push(deletion);
     }
@@ -243,17 +242,17 @@ export class SampleConfigurationSet {
     const h = new UndoHistoryEntry();
     const currentSet = this.configurationsById;
 
-    const newIds = input.filter((i) => !currentSet.has(i.id)).map((i) => i.id);
-    const conflictingIds = input.filter((i) => currentSet.has(i.id)).map((i) => i.id);
+    const newConfigs = input.filter((i) => !currentSet.has(i.id));
+    const conflictingConfigs = input.filter((i) => currentSet.has(i.id));
 
     // Every given SampleConfiguration is a new change in forward history
     input.forEach((i) => h.newChanges.newAddition(i));
     // Every SampleConfiguration in the existing set that's replaced by a new one
     // should be preserved and restored if we go backward in history (undo)
-    conflictingIds.forEach((i) => h.oldChanges.newAddition(currentSet.get(i)!));    
+    conflictingConfigs.forEach((i) => h.oldChanges.newAddition(currentSet.get(i.id)!));    
     // Every given SampleConfiguration with a novel id (not seen in the current set)
     // should be removed if we go backward in history (undo)
-    newIds.forEach((i) => h.oldChanges.newDeletion(i));
+    newConfigs.forEach((i) => h.oldChanges.newDeletion(i));
     // Event construction is complete.
     this.history.addEvent(h);
 
