@@ -2,8 +2,8 @@ import { createContext, useState, useEffect, PropsWithChildren } from "react";
 
 import { Guid } from "./components/utils.tsx";
 import { ScanTypes, getScanTypes } from './scanTypes.ts';
-import { SampleConfiguration, SampleConfigurationSets } from './sampleConfiguration.ts';
-import { RecordFromServer, readConfigsForProposalId } from './sampleConfigurationDb.ts';
+import { SampleConfigurationSets } from './sampleConfiguration.ts';
+import { RecordsFromServer, readConfigsForProposalId } from './sampleConfigurationApi.ts';
 
 
 // This is a "context provider" React component for a SampleConfigurationSets instance.
@@ -80,6 +80,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
     };
   }, []);
 
+
   useEffect(() => {
     if (proposalId === undefined) {
       console.log('SampleConfigurationProvider given undefined proposalId');
@@ -112,6 +113,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
 
   }, [proposalId]);
 
+
   // A callback for when a child component makes a change to the SampleConfigurationSets instance.
   // Note: In the future it may be prudent to pass a set ID into this,
   // to trigger separate server data update calls for each set, since each will have its own history.
@@ -120,81 +122,33 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
     setChangeCounter(changeCounter + 1);
   };
 
-  function ingestFromServer(records: RecordFromServer[]) {
-    console.log("Calling ingestFromServer");
 
-    var setRecords:RecordFromServer[] = [];
-    var configRecords:RecordFromServer[] = [];
-    records.forEach((s) => {
-      // Skip any records that don't have a sampleCharacteristics object.
-      // They will definitely not contain enough information to be useful.
-      if (!s.sampleCharacteristics) { return; }
-      // Skip any records that claim to be invalid.
-      // These may be detritus from incomplete undo purging in a previous session.
-      if (!(s.sampleCharacteristics.lbnl_config_meta_valid)) { return; }
-      // Separate the records into "set" and "configuration" buckets
-      if (s.sampleCharacteristics.lbnl_config_meta_type == 'set') { setRecords.push(s); }
-      else if (s.sampleCharacteristics.lbnl_config_meta_type == 'configuration') { configRecords.push(s); }
-    });
+  function ingestFromServer(records: RecordsFromServer) {
+    console.log("Calling ingestFromServer");
+    console.log(records);
 
     // Create a master container for all our sets
     const setContainer = new SampleConfigurationSets(proposalId!, proposalId as Guid);
     setContainer.setScanTypes(scanTypes);
+    setContainer.add(records.sets);
 
-    // Add a new SampleConfigurationSet object for each record we got that looks like one.
-    setRecords.forEach((r) => { setContainer.add(
-                                    r.id as Guid,
-                                    r.description,
-                                    r.sampleCharacteristics.lbnl_config_meta_description || "")
-    });
-
-    // Everything else in the sampleCharacteristics object that's prefixed with "lbnl_config_" will
-    // be treated as the name of a Scan Type parameter.
-    const characeristicsToIgnore:Set<string> = new Set(
-      ["lbnl_config_meta_type", "lbnl_config_meta_valid", "lbnl_config_meta_description", "lbnl_config_meta_set_id",
-       "lbnl_config_meta_scan_type", "lbnl_config_meta_mm_from_left_edge"]
-    );
-
-    configRecords.forEach((r) => {
-      const sc = r.sampleCharacteristics;
-      const setId = sc.lbnl_config_meta_set_id;
-      if (!setId) { return; }
-      const thisSet = setContainer.getById(setId);
+    records.configs.forEach((c) => {
+      const thisSet = setContainer.getById(c.setId);
       if (!thisSet) { return; }
-
-      const parameters:Map<Guid, string|null> = new Map();
-
-      // Anything in sampleCharacteristics that starts with lbnl_config_ and not lbnl_config_meta_
-      // is treated as a Scan Type parameter and its value is added to the parameter set.
-      for (const [key, value] of Object.entries(sc)) {
-        if (key.startsWith('lbnl_config_')) {
-          if (!characeristicsToIgnore.has(key)) { 
-            parameters.set(key.replace(/lbnl_config_/, '') as Guid, value as string);
-          }
-        }
-      }
-
-      const newSample = new SampleConfiguration({
-        id: r.id as Guid,
-        mmFromLeftEdge: sc.lbnl_config_meta_mm_from_left_edge,
-        name: r.description,
-        description: sc.lbnl_config_meta_description,
-        scanType: sc.lbnl_config_meta_scan_type,
-        parameters: parameters
-      });
-
-      thisSet.add([newSample]);
+      thisSet.add([c]);
     });
 
     setSampleConfigurationsObject(setContainer);
     setSetsLoaded(true);
   };
 
+
   useEffect(() => {
     console.log('Updating scanTypes in sampleConfigurationsObject');
     sampleConfigurationsObject.setScanTypes(scanTypes);
     changed();
   }, [scanTypes]);
+
 
   return (
     <SampleConfigurationContext.Provider value={{

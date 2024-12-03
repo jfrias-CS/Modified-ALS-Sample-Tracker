@@ -9,6 +9,8 @@ import { Guid, generateUniqueNames } from "./components/utils.tsx";
 export interface NewSampleConfigurationParameters {
   // A unique identifier generated on the server.
   id: Guid;
+  // Unique identifier of the set this config belongs to.
+  setId: Guid;
   // Intended to be short and unique, but this is not strictly enforced.
   name: string;
   // Intended to be a unique number, but not enforced, for editing convenience.
@@ -28,6 +30,8 @@ export class SampleConfiguration {
 
   // A unique identifier generated on the server.
   id: Guid;
+  // Unique identifier of the set this config belongs to.
+  setId: Guid;
   // Intended to be short and unique, but this is not strictly enforced.
   name: string;
   // Intended to be a unique number, but not enforced, for editing convenience.
@@ -42,6 +46,7 @@ export class SampleConfiguration {
 
 	constructor (p: NewSampleConfigurationParameters) {
 		this.id = p.id;
+		this.setId = p.setId;
 		this.name = p.name;
 		this.mmFromLeftEdge = p.mmFromLeftEdge || 0;
 		this.description = p.description || "";
@@ -52,6 +57,7 @@ export class SampleConfiguration {
   clone() {
     return new SampleConfiguration({
       id: this.id,
+      setId: this.setId,
       name: this.name,
       mmFromLeftEdge: this.mmFromLeftEdge,
       description: this.description,
@@ -186,7 +192,7 @@ export class SampleConfigurationSet {
   // This can be undefined until legitimate ScanType information is available.
   scanTypesByName!: Map<ScanTypeName, ScanType>;
 
-  constructor(name: string, description: string, id: Guid) {
+  constructor(id: Guid, name: string, description: string) {
     this.id = id;
     this.name = name;
     this.configurationsById = new Map();
@@ -226,7 +232,6 @@ export class SampleConfigurationSet {
   }
 
   addOrReplaceWithHistory(input: SampleConfiguration[]) {
-
     const h = new UndoHistoryEntry();
     const currentSet = this.configurationsById;
 
@@ -250,8 +255,9 @@ export class SampleConfigurationSet {
     this.findRelevantParameters();
   }
 
+  // Adds the given SampleConfiguration objects to the set without doing any checking.
+  // Used to build up an initial state.
   add(input: SampleConfiguration[]) {
-    // Now that we've updated undo/redo history, write the changes.
     input.forEach((i) => this.configurationsById.set(i.id, i));
     // The set of relevant parameters may have changed.
     this.findRelevantParameters();
@@ -311,13 +317,14 @@ export class SampleConfigurationSets {
     this.setsById.forEach((t) => t.setScanTypes(scanTypesCache));
   }
 
-  add(id: Guid, name: string, description: string): SampleConfigurationSet {
-    const c = new SampleConfigurationSet( name, description, id );
-    if (this.scanTypesCache) {
-      c.setScanTypes(this.scanTypesCache);
-    }
-    this.setsById.set(id, c);
-    return c;
+  // Adds the given SampleConfigurationSet objects to the set without doing any checking.
+  // Used to build up an initial state.
+  add(input: SampleConfigurationSet[]) {
+    const t = this.scanTypesCache;
+    input.forEach((c) => {
+      if (t) { c.setScanTypes(t); }
+      this.setsById.set(c.id, c);
+    });
   }
 
   getById(id: Guid): SampleConfigurationSet | undefined {

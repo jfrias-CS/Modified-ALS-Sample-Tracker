@@ -9,7 +9,7 @@ import { Guid } from "../../components/utils.tsx";
 import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
 import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
-import { createNewConfiguration } from '../../sampleConfigurationDb.ts';
+import { createNewConfiguration } from '../../sampleConfigurationApi.ts';
 
 
 const AddSamples: React.FC = () => {
@@ -115,18 +115,16 @@ const AddSamples: React.FC = () => {
         if (parameterType) { parameters.set(parameterType.id, parameterType.default ?? ""); }
       });
 
-      const result = await createNewConfiguration(thisSet.id, uniqueNames[count-1], description, scanTypeValue!.name);
+      const result = await createNewConfiguration(
+                      thisSet.id,
+                      uniqueNames[count-1],
+                      description,
+                      scanTypeValue!.name,
+                      openLocations[count-1],
+                      parameters);
 
       if (result.success) {
-        const newSample = new SampleConfiguration({
-          id: result.response!.id,
-          mmFromLeftEdge: openLocations[count-1],
-          name: uniqueNames[count-1],
-          description: description,
-          scanType: scanTypeValue!.name,
-          parameters: parameters
-        });
-        newSamples.push(newSample);
+        newSamples.push(result.response!);
       } else {
         error = result.message || "";
       }

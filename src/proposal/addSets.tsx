@@ -4,7 +4,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
 import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx';
-import { createNewSet } from '../sampleConfigurationDb.ts';
+import { createNewSet } from '../sampleConfigurationApi.ts';
 
 
 const AddSamples: React.FC = () => {
@@ -94,7 +94,7 @@ const AddSamples: React.FC = () => {
     while (count > 0 && (error === null)) {
       const result = await createNewSet(uniqueNames[count-1], description);
       if (result.success) {
-        sampleSetContext.sets.add(result.response!.id, uniqueNames[count-1], description);
+        sampleSetContext.sets.add([result.response!]);
       } else {
         error = result.message || "";
       }
