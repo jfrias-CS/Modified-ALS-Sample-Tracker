@@ -7,6 +7,7 @@ import { SampleConfigurationContext, ProviderLoadingState } from '../../sampleCo
 import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
 import SampleTable from './sampleTable.tsx';
 import { InputEditable, EditFunctions, ValidationStatus } from '../../components/inputEditable.tsx';
+import { updateSet } from './../../sampleConfigurationApi.ts';
 
 
 const Set: React.FC = () => {
@@ -59,13 +60,24 @@ const Set: React.FC = () => {
   }
 
 
+  async function descriptionEditSubmit(value: string) {
+    const oldDescription = set!.description;
+    set!.description = value;
+    const result = await updateSet(set!);
+    if (result.success) {
+      setDescription(value);
+      return { status: ValidationStatus.Success };
+    } else {
+      set!.description = oldDescription;
+      setDescription(oldDescription);
+      return { status: ValidationStatus.Failure, message: result.message };
+    }
+  }
+
+
   const descriptionEditFunctions: EditFunctions = {
     validator: async () => { return { status: ValidationStatus.Success } },
-    submit: async (value: string) => {
-              set!.description = value;
-              setDescription(value);
-              return { status: ValidationStatus.Success }
-            },
+    submit: descriptionEditSubmit
   };
 
 
