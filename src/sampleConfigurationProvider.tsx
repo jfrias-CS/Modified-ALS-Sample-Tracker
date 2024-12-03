@@ -3,7 +3,7 @@ import { createContext, useState, useEffect, PropsWithChildren } from "react";
 import { Guid } from "./components/utils.tsx";
 import { ScanTypes, getScanTypes } from './scanTypes.ts';
 import { SampleConfigurationSets } from './sampleConfiguration.ts';
-import { RecordsFromServer, whoAmI, readConfigsForProposalId } from './sampleConfigurationApi.ts';
+import { RecordsFromServer, readConfigsForProposalId } from './sampleConfigurationApi.ts';
 
 
 // This is a "context provider" React component for a SampleConfigurationSets instance.

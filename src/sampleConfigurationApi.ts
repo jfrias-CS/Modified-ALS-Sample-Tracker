@@ -1,6 +1,6 @@
 import { Guid } from "./components/utils.tsx";
-import { ResponseWrapper, sciCatGet, sciCatPost } from "./generalApi.ts";
-import { ScanTypeName } from './scanTypes.ts';
+import { ResponseWrapper, sciCatGet, sciCatPost, sciCatPatch } from "./generalApi.ts";
+import { ScanTypeName, ScanTypes } from './scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from './sampleConfiguration.ts';
 
 
@@ -77,7 +77,7 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
     if (!s.sampleCharacteristics) { return; }
     // Skip any records that claim to be invalid.
     // These may be detritus from incomplete undo purging in a previous session.
-    if (!(s.sampleCharacteristics.lbnl_config_meta_valid)) { return; }
+//    if (!(s.sampleCharacteristics.lbnl_config_meta_valid)) { return; }
     // Separate the records into "set" and "configuration" buckets
     if (s.sampleCharacteristics.lbnl_config_meta_type == 'set') { rawSetRecords.push(s); }
     else if (s.sampleCharacteristics.lbnl_config_meta_type == 'configuration') { rawConfigRecords.push(s); }
@@ -87,8 +87,8 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
   const sets = rawSetRecords.map((r) => {
     return new SampleConfigurationSet(
                     r.id as Guid,
-                    r.sampleCharacteristics.lbnl_config_meta_description || "",
-                    r.description );
+                    r.description,
+                    r.sampleCharacteristics.lbnl_config_meta_description || "" );
   });
 
   var configs: SampleConfiguration[] = []; 
@@ -113,8 +113,9 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
     const newConfig = new SampleConfiguration({
       id: r.id as Guid,
       setId: setId,
-      mmFromLeftEdge: sc.lbnl_config_meta_mm_from_left_edge,
       name: r.description,
+      isValid: true,
+      mmFromLeftEdge: sc.lbnl_config_meta_mm_from_left_edge,
       description: sc.lbnl_config_meta_description,
       scanType: sc.lbnl_config_meta_scan_type,
       parameters: parameters
@@ -190,8 +191,9 @@ async function createNewConfiguration(setId: Guid, name: string, description: st
     const newConfig = new SampleConfiguration({
       id: newRecord.id as Guid,
       setId: setId,
-      mmFromLeftEdge: mmFromLeftEdge,
       name: name,
+      isValid: true,
+      mmFromLeftEdge: mmFromLeftEdge,
       description: description,
       scanType: scanType as ScanTypeName,
       parameters: parameters
@@ -203,5 +205,69 @@ async function createNewConfiguration(setId: Guid, name: string, description: st
 }
 
 
+// Updates the record on the server that matches the given SampleConfigurationSet's Id,
+// making their fields match.
+// That this does not update the SampleConfigurations the set contains.
+async function updateSet(set: SampleConfigurationSet): Promise<ResponseWrapper<SampleConfigurationSet>> {
+
+  // All sampleCharacteristics values need to be specified here.
+  // The server will erase any that are left out of the patch operation.
+  const body = {
+    "description": set.name,
+    "sampleCharacteristics": {
+      "lbnl_config_meta_type": "set",
+      "lbnl_config_meta_description": set.description,
+      "lbnl_config_meta_valid": true
+    }
+  };
+
+  const result = await sciCatPatch(`samples/${set.id}`, JSON.stringify(body));
+  console.log("patch result");
+  console.log(result);
+
+  if (result.success) {
+    const body:any = await result.response!.json();
+    console.log(body);
+    return { success: true, response: set };
+  }
+  return { success: false, message: result.message };
+}
+
+
+// Updates the record on the server that matches the given SampleConfiguration's Id,
+// making their fields match.
+async function updateConfig(config: SampleConfiguration): Promise<ResponseWrapper<SampleConfiguration>> {
+
+  // All sampleCharacteristics values need to be specified in the patch operation.
+  // The server will erase any that are left out.
+  var sampleCharacteristics: { [key: string]: string|null|boolean } = {
+    "lbnl_config_meta_type": "configuration",
+    "lbnl_config_meta_description": config.description,
+    "lbnl_config_meta_set_id": config.setId,
+    "lbnl_config_meta_scan_type": config.scanType,
+    "lbnl_config_meta_valid": config.isValid
+  };
+  config.parameters.forEach((v, k) => {
+    sampleCharacteristics['lbnl_config_' + k] = v;
+  });
+
+  const body = {
+    "description": config.name,
+    "sampleCharacteristics": sampleCharacteristics
+  };
+
+  const result = await sciCatPatch(`samples/${config.id}`, JSON.stringify(body));
+  console.log("patch result");
+  console.log(result);
+
+  if (result.success) {
+    const body:any = await result.response!.json();
+    console.log(body);
+    return { success: true, response: config };
+  }
+  return { success: false, message: result.message };
+}
+
+
 export type { RecordsFromServer }
-export { whoAmI, readConfigsForProposalId, createNewSet, createNewConfiguration }
+export { whoAmI, readConfigsForProposalId, createNewSet, createNewConfiguration, updateSet, updateConfig }
