@@ -13,6 +13,9 @@ export interface NewSampleConfigurationParameters {
   setId: Guid;
   // Intended to be short and unique, but this is not strictly enforced.
   name: string;
+  // If set to false, this SampleConfiguration should be ignored in the UI,
+  // and should be deleted on the server as soon as undo history is purged.
+  isValid: boolean;
   // Intended to be a unique number, but not enforced, for editing convenience.
   mmFromLeftEdge: number;
   // Meant to be longer than the name.  Can be blank.
@@ -34,6 +37,9 @@ export class SampleConfiguration {
   setId: Guid;
   // Intended to be short and unique, but this is not strictly enforced.
   name: string;
+  // If set to false, this SampleConfiguration should be ignored in the UI,
+  // and should be deleted on the server as soon as undo history is purged.
+  isValid: boolean;
   // Intended to be a unique number, but not enforced, for editing convenience.
   mmFromLeftEdge: number;
   // Meant to be longer than the name.  Can be blank.
@@ -48,6 +54,7 @@ export class SampleConfiguration {
 		this.id = p.id;
 		this.setId = p.setId;
 		this.name = p.name;
+    this.isValid = p.isValid;
 		this.mmFromLeftEdge = p.mmFromLeftEdge || 0;
 		this.description = p.description || "";
 		this.scanType = p.scanType;
@@ -59,10 +66,11 @@ export class SampleConfiguration {
       id: this.id,
       setId: this.setId,
       name: this.name,
+      isValid: this.isValid,
       mmFromLeftEdge: this.mmFromLeftEdge,
       description: this.description,
       scanType: this.scanType,
-      parameters: this.parameters
+      parameters: this.parameters // Copied during creation
   	});
   }
 }
