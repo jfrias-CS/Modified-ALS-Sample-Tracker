@@ -17,7 +17,7 @@ interface ResponseWrapper<Data> {
 //    window.location.href = loginUrl.toString();
 
 
-const jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJzY2ljYXRhZG1pbkB5b3VyLnNpdGUiLCJhdXRoU3RyYXRlZ3kiOiJsb2NhbCIsIl9fdiI6MCwiaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJpYXQiOjE3MzMyNjM5NzAsImV4cCI6MTczMzI2NzU3MH0.YeOiXgylctym3v4toncCGUFdiQi-p3BdRhZhf6oiIGU';
+const jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJzY2ljYXRhZG1pbkB5b3VyLnNpdGUiLCJhdXRoU3RyYXRlZ3kiOiJsb2NhbCIsIl9fdiI6MCwiaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJpYXQiOjE3MzMyNjc2OTEsImV4cCI6MTczMzI3MTI5MX0.UdaSkSnMQ3TKWpdMBCqOk7B66ag0_kALB1vcHzdmQPo';
 
 
 async function sciCatGet(url: string, params: Record<string, string>): Promise<ResponseWrapper<Response>> {
@@ -44,11 +44,18 @@ async function sciCatGet(url: string, params: Record<string, string>): Promise<R
 }
 
 
-async function sciCatPost(url: string, body: string): Promise<ResponseWrapper<Response>> {
-  try {
+async function sciCatPatch(url: string, body: string): Promise<ResponseWrapper<Response>> {
+  return sciCatPostOrPatch(url, body, "PATCH");
+}
 
+async function sciCatPost(url: string, body: string): Promise<ResponseWrapper<Response>> {
+  return sciCatPostOrPatch(url, body, "POST");
+}
+
+async function sciCatPostOrPatch(url: string, body: string, method: string): Promise<ResponseWrapper<Response>> {
+  try {
     const requestInit: RequestInit = {
-      method: "POST",
+      method: method,
       headers: {
         'Authorization': "Bearer " + jwt,
         'Content-Type': 'application/json'
@@ -73,4 +80,4 @@ async function sciCatPost(url: string, body: string): Promise<ResponseWrapper<Re
 
 
 export type { ResponseWrapper }
-export { sciCatGet, sciCatPost }
+export { sciCatGet, sciCatPost, sciCatPatch }
