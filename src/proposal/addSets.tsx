@@ -9,7 +9,7 @@ import { createNewSet } from '../sampleConfigurationApi.ts';
 
 const AddSamples: React.FC = () => {
 
-  const sampleSetContext = useContext(SampleConfigurationContext);
+  const configContext = useContext(SampleConfigurationContext);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<string>("1");
@@ -27,7 +27,7 @@ const AddSamples: React.FC = () => {
   function clickedOpen() {
     if (!inProgress && !isOpen) {
       setIsOpen(true);
-      const goodNames = sampleSetContext.sets.generateUniqueNames(newName, 1);
+      const goodNames = configContext.sets.generateUniqueNames(newName, 1);
       setNewName(goodNames[0]);
       validate(quantity, goodNames[0]);
     }
@@ -72,7 +72,7 @@ const AddSamples: React.FC = () => {
     const trimmed = name.toString().trim();
     if (trimmed.length < 1) {
       validName = false;
-    } else if (sampleSetContext.sets.all().some((c) => c.name == trimmed)) {
+    } else if (configContext.sets.all().some((c) => c.name == trimmed)) {
       validName = false;
       uniqueName = false;
     }
@@ -86,7 +86,7 @@ const AddSamples: React.FC = () => {
   async function pressedSubmit() {
 
     var count = Math.max(parseInt(quantity, 10), 1);
-    var uniqueNames = sampleSetContext.sets.generateUniqueNames(newName, count);
+    var uniqueNames = configContext.sets.generateUniqueNames(newName, count);
     var error: string | null = null;
 
     setSubmitErrorMessage(null);
@@ -94,13 +94,13 @@ const AddSamples: React.FC = () => {
     while (count > 0 && (error === null)) {
       const result = await createNewSet(uniqueNames[count-1], description);
       if (result.success) {
-        sampleSetContext.sets.add([result.response!]);
+        configContext.sets.add([result.response!]);
       } else {
         error = result.message || "";
       }
       count--;
     }
-    sampleSetContext.changed();
+    configContext.changed();
     setInProgress(false);
 
     if (error !== null) {

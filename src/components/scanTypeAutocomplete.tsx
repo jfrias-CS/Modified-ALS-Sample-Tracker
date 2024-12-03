@@ -31,11 +31,11 @@ interface ScanTypeAutocompleteParameters {
 
 function ScanTypeAutocomplete(settings:ScanTypeAutocompleteParameters) {
 
-  const sampleSetContext = useContext(SampleConfigurationContext);
+  const configContext = useContext(SampleConfigurationContext);
 
   async function searchScanTypes(searchString: string): Promise<SearchResult<ScanType>> {
     const searchStringLower = searchString.toLowerCase();
-    const toTest = sampleSetContext.scanTypes.typeNamesInDisplayOrder.map((t) => sampleSetContext.scanTypes.typesByName.get(t)!);
+    const toTest = configContext.scanTypes.typeNamesInDisplayOrder.map((t) => configContext.scanTypes.typesByName.get(t)!);
     const matches = toTest.filter((s) =>
                       s.name.toLowerCase().includes(searchStringLower) ||
                       s.description.toLowerCase().includes(searchStringLower));

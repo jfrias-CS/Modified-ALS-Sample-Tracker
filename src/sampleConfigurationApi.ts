@@ -26,20 +26,48 @@ interface RecordsFromServer {
 }
 
 
+// Everything else in the sampleCharacteristics object that's prefixed with "lbnl_config_",
+// but not mentioned here, is treated as the name of a Scan Type parameter.
+const characeristicsToIgnore: Set<string> = new Set(
+  ["lbnl_config_meta_type", "lbnl_config_meta_valid", "lbnl_config_meta_description", "lbnl_config_meta_set_id",
+    "lbnl_config_meta_scan_type", "lbnl_config_meta_mm_from_left_edge"]
+);
+
+
+// Test function.  SciCat returns '{}' from this, which is not very useful.
+async function whoAmI(): Promise<ResponseWrapper<string>> {
+  const result = await sciCatGet('auth/whoami',{});
+  if (!result.success) {
+    return { success: false, message: result.message };
+  }
+  const rawRecords:any = await result.response!.text();
+  console.log("whoAmI result");
+  console.log(rawRecords);
+  return { success: true, response: rawRecords };
+}
+
+
+// Fetch all the Set/Sample records that are owned up the given proposalId (i.e. ownerGroup),
+// and instantiate them into SampleConfigurationSet and SampleConfiguration records.
+// Note that if the user is not authenticated, SciCat quietly succeeds with an empty list,
+// so authentication status need to be confirmed before this call is useful.
 async function readConfigsForProposalId(proposalId: string): Promise<ResponseWrapper<RecordsFromServer>> {
 
   const params = {
     filter: `{"where":{"ownerGroup": "${proposalId}" }}`
   };
-
   const result = await sciCatGet('samples', params);
+
+  // More sophisticated query structure - not needed
+//  const params = {
+//    fields: `{"characteristics": [{"lhs":"ownerGroup","relation":"EQUAL_TO_STRING","rhs":"${proposalId}"}]}`
+//  };
+//  const result = await sciCatGet('samples', params);
+
   if (!result.success) {
     return { success: false, message: result.message };
   }
-
   const rawRecords:any = await result.response!.json();
-  console.log("readConfigsForProposalId result");
-  console.log(rawRecords);
 
   var rawSetRecords:RawRecordFromServer[] = [];
   var rawConfigRecords:RawRecordFromServer[] = [];
@@ -64,13 +92,6 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
   });
 
   var configs: SampleConfiguration[] = []; 
-
-  // Everything else in the sampleCharacteristics object that's prefixed with "lbnl_config_" will
-  // be treated as the name of a Scan Type parameter.
-  const characeristicsToIgnore:Set<string> = new Set(
-    ["lbnl_config_meta_type", "lbnl_config_meta_valid", "lbnl_config_meta_description", "lbnl_config_meta_set_id",
-     "lbnl_config_meta_scan_type", "lbnl_config_meta_mm_from_left_edge"]
-  );
 
   rawConfigRecords.forEach((r) => {
     const sc = r.sampleCharacteristics;
@@ -111,6 +132,8 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
 }
 
 
+// Create a new Sample record on the server, with sampleCharacteristics set to identify it as
+// a sample configuration set.
 async function createNewSet(name: string, description: string): Promise<ResponseWrapper<SampleConfigurationSet>> {
 
   const body = {
@@ -141,6 +164,8 @@ async function createNewSet(name: string, description: string): Promise<Response
 }
 
 
+// Create a new Sample record on the server, with sampleCharacteristics set to identify it as
+// a sample configuration.
 async function createNewConfiguration(setId: Guid, name: string, description: string, scanType: string, mmFromLeftEdge: number, parameters: Map<Guid, string|null>): Promise<ResponseWrapper<SampleConfiguration>> {
 
   const body = {
@@ -162,7 +187,7 @@ async function createNewConfiguration(setId: Guid, name: string, description: st
 
   if (result.success) {
     const newRecord:any = await result.response!.json();
-    const newSample = new SampleConfiguration({
+    const newConfig = new SampleConfiguration({
       id: newRecord.id as Guid,
       setId: setId,
       mmFromLeftEdge: mmFromLeftEdge,
@@ -172,11 +197,11 @@ async function createNewConfiguration(setId: Guid, name: string, description: st
       parameters: parameters
     });
 
-    return { success: true, response: newSample };
+    return { success: true, response: newConfig };
   }
   return { success: false, message: result.message };
 }
 
 
 export type { RecordsFromServer }
-export { readConfigsForProposalId, createNewSet, createNewConfiguration }
+export { whoAmI, readConfigsForProposalId, createNewSet, createNewConfiguration }

@@ -15,7 +15,7 @@ const ImportSamples: React.FC = () => {
 
   const { setId } = useParams();
 
-  const sampleSetContext = useContext(SampleConfigurationContext);
+  const configContext = useContext(SampleConfigurationContext);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [validAllInput, setValidAllInput] = useState<boolean>(true);
@@ -24,7 +24,7 @@ const ImportSamples: React.FC = () => {
 
   function getSet(): SampleConfigurationSet | undefined {
     if (!setId) { return undefined; }
-    return sampleSetContext.sets.getById(setId as Guid);
+    return configContext.sets.getById(setId as Guid);
   }
 
   function clickedOpen() {
@@ -83,7 +83,7 @@ const ImportSamples: React.FC = () => {
       parameters: new Map()
     });
     thisSet.addOrReplaceWithHistory([newConfig]);
-    sampleSetContext.changed();
+    configContext.changed();
   };
 
   function clickedClose() {

@@ -16,7 +16,7 @@ const AddSamples: React.FC = () => {
 
   const { setId } = useParams();
 
-  const sampleSetContext = useContext(SampleConfigurationContext);
+  const configContext = useContext(SampleConfigurationContext);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [newName, setNewName] = useState<string>("Sample");
@@ -34,7 +34,7 @@ const AddSamples: React.FC = () => {
 
   function getSet(): SampleConfigurationSet | undefined {
     if (!setId) { return undefined; }
-    return sampleSetContext.sets.getById(setId as Guid);
+    return configContext.sets.getById(setId as Guid);
   }
 
   function clickedOpen() {
@@ -105,13 +105,13 @@ const AddSamples: React.FC = () => {
     setSubmitErrorMessage(null);
     setInProgress(true);
 
-    var newSamples = [];
+    var newConfigs = [];
     while (count > 0 && (error === null)) {
 
       // Make a set of parameters for the chosen ScanType, with default or blank values.
       const parameters:Map<Guid, string|null> = new Map();
       scanTypeValue!.parameters.forEach((p) => {
-        const parameterType = sampleSetContext.scanTypes.parametersById.get(p);
+        const parameterType = configContext.scanTypes.parametersById.get(p);
         if (parameterType) { parameters.set(parameterType.id, parameterType.default ?? ""); }
       });
 
@@ -124,7 +124,7 @@ const AddSamples: React.FC = () => {
                       parameters);
 
       if (result.success) {
-        newSamples.push(result.response!);
+        newConfigs.push(result.response!);
       } else {
         error = result.message || "";
       }
@@ -132,8 +132,8 @@ const AddSamples: React.FC = () => {
       count--;
     }
 
-    thisSet.addOrReplaceWithHistory(newSamples);
-    sampleSetContext.changed();
+    thisSet.addOrReplaceWithHistory(newConfigs);
+    configContext.changed();
     setInProgress(false);
     if (error !== null) {
       setSubmitErrorMessage(error);

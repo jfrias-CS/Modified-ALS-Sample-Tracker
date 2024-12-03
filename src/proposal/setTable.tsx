@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
 import { SampleConfigurationSet } from '../sampleConfiguration.ts';
-import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx';
+import { SampleConfigurationContext, ProviderLoadingState } from '../sampleConfigurationProvider.tsx';
 import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
 import AddSet from './addSets.tsx';
 import './setTable.css';
@@ -13,26 +13,32 @@ const SetTable: React.FC = () => {
 
   const { proposalId } = useParams();
 
-  const sampleSetContext = useContext(SampleConfigurationContext);
+  const configContext = useContext(SampleConfigurationContext);
   const [sets, setSets] = useState<SampleConfigurationSet[]>([]);
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
   const [loadingMessage, setLoadingMessage] = useState("");
 
   useEffect(() => {
-    console.log(`setTable changeCounter:${sampleSetContext.changeCounter} setsLoaded:${sampleSetContext.setsLoaded} scanTypesLoaded:${sampleSetContext.scanTypesLoaded}`);
+    console.log(`setTable changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
 
-    if (!sampleSetContext.setsLoaded || !sampleSetContext.scanTypesLoaded) {
-      setLoading(LoadingState.Loading);
-      setLoadingMessage("");
+    if ((configContext.setsLoadingState != ProviderLoadingState.Succeeded) ||
+        (configContext.scanTypesLoadingState != ProviderLoadingState.Succeeded)) {
+      if (configContext.setsLoadingState == ProviderLoadingState.Failed) {
+        setLoading(LoadingState.Failure);
+        setLoadingMessage("Failed to load Sets. Are you sure you're still logged in?");
+      } else {
+        setLoading(LoadingState.Loading);
+        setLoadingMessage("");
+      }
       return;
     }
 
-    const sortedSets = sampleSetContext.sets.all().sort((a, b) => a.name.localeCompare(b.name));
+    const sortedSets = configContext.sets.all().sort((a, b) => a.name.localeCompare(b.name));
 
     setSets(sortedSets);
     setLoading(LoadingState.Success);
 
-  }, [sampleSetContext.changeCounter, sampleSetContext.setsLoaded, sampleSetContext.scanTypesLoaded]);
+  }, [configContext.changeCounter, configContext.setsLoadingState, configContext.scanTypesLoadingState]);
 
   // If we're in any loading state other than success,
   // display a loading banner instead of the content.
@@ -46,19 +52,12 @@ const SetTable: React.FC = () => {
       <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
         <ul>
           <li><Link to={ "/" }>Proposals</Link></li>
-          <li className="is-active"><Link to={ "/proposal/" + proposalId }>{ sampleSetContext.sets.name }</Link></li>
+          <li className="is-active"><Link to={ "/proposal/" + proposalId }>{ configContext.sets.name }</Link></li>
         </ul>
       </nav>
 
       <nav className="level">
         <div className="level-left">
-          <div className="level-item">
-            <div className="field has-addons">
-              <div className="control">
-                <input className="input" type="text" placeholder="Search" />
-              </div>
-            </div>
-          </div>
           <div className="level-item">
             <p className="subtitle is-5"><strong>{ sets.length }</strong> sets</p>
           </div>
@@ -71,27 +70,34 @@ const SetTable: React.FC = () => {
         </div>
       </nav>
 
-      <table className="settable">
-        <thead>
-          <tr key="headers">
-            <th key="name" scope="col">Name</th>
-            <th key="description" scope="col">Description</th>
-            <th key="samplecount" scope="col">Samples</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            sets.map((set) => {
-              return (
-                <tr key={set["id"]}>
-                    <th scope="row"><Link to={ "set/" + set.id }>{ set.name }</Link></th>
-                    <td>{ set.description }</td>
-                    <td>{ set.configurationsById.size }</td>
-                </tr>);
-            })
-          }
-        </tbody>
-      </table>
+      <div className="block">
+        { sets.length == 0 ? (
+          <p>( Use the Add button on the right to add Sets. )</p>
+        ) : (
+
+        <table className="settable">
+          <thead>
+            <tr key="headers">
+              <th key="name" scope="col">Name</th>
+              <th key="description" scope="col">Description</th>
+              <th key="samplecount" scope="col">Samples</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              sets.map((set) => {
+                return (
+                  <tr key={set["id"]}>
+                      <th scope="row"><Link to={ "set/" + set.id }>{ set.name }</Link></th>
+                      <td>{ set.description }</td>
+                      <td>{ set.configurationsById.size }</td>
+                  </tr>);
+              })
+            }
+          </tbody>
+        </table>
+        )}
+      </div>
     </>
   )
 }

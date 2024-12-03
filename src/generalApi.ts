@@ -1,6 +1,4 @@
 
-const jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJzY2ljYXRhZG1pbkB5b3VyLnNpdGUiLCJhdXRoU3RyYXRlZ3kiOiJsb2NhbCIsIl9fdiI6MCwiaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJpYXQiOjE3MzMxODQ3MDcsImV4cCI6MTczMzE4ODMwN30._d_7mi3IxtYM9PCNhjkgVseuKmw-Xayiq2q-ohwyTLY';
-
 
 interface ResponseWrapper<Data> {
   success: boolean;
@@ -17,6 +15,9 @@ interface ResponseWrapper<Data> {
 //    const loginUrl = new URL(urls.ALS_AUTH_URL + "/login");
 //    loginUrl.searchParams.append("return_to", window.location.toString());
 //    window.location.href = loginUrl.toString();
+
+
+const jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJzY2ljYXRhZG1pbkB5b3VyLnNpdGUiLCJhdXRoU3RyYXRlZ3kiOiJsb2NhbCIsIl9fdiI6MCwiaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJpYXQiOjE3MzMyNjM5NzAsImV4cCI6MTczMzI2NzU3MH0.YeOiXgylctym3v4toncCGUFdiQi-p3BdRhZhf6oiIGU';
 
 
 async function sciCatGet(url: string, params: Record<string, string>): Promise<ResponseWrapper<Response>> {

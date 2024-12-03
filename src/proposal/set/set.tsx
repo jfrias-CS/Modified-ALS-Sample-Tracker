@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
 import { Guid } from '../../components/utils.tsx';
-import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
+import { SampleConfigurationContext, ProviderLoadingState } from '../../sampleConfigurationProvider.tsx';
 import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
 import SampleTable from './sampleTable.tsx';
 import { InputEditable, EditFunctions, ValidationStatus } from '../../components/inputEditable.tsx';
@@ -13,7 +13,7 @@ const Set: React.FC = () => {
 
   const { proposalId, setId } = useParams();
 
-  const sampleSetContext = useContext(SampleConfigurationContext);
+  const configContext = useContext(SampleConfigurationContext);
   const [description, setDescription] = useState<string>("");
 
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
@@ -21,7 +21,7 @@ const Set: React.FC = () => {
 
 
   useEffect(() => {
-    console.log(`set setId:${setId} changeCounter:${sampleSetContext.changeCounter} setsLoaded:${sampleSetContext.setsLoaded} scanTypesLoaded:${sampleSetContext.scanTypesLoaded}`);
+    console.log(`set setId:${setId} changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
 
     if ((setId === undefined) || (!setId.trim())) {
       setLoading(LoadingState.Failure);
@@ -29,13 +29,14 @@ const Set: React.FC = () => {
       return;
     }
 
-    if (!sampleSetContext.setsLoaded || !sampleSetContext.scanTypesLoaded) {
+    if ((configContext.setsLoadingState != ProviderLoadingState.Succeeded) ||
+        (configContext.scanTypesLoadingState != ProviderLoadingState.Succeeded)) {
       setLoading(LoadingState.Loading);
       setLoadingMessage("");
       return;
     }
 
-    const thisSet = sampleSetContext.sets.getById(setId.trim() as Guid);
+    const thisSet = configContext.sets.getById(setId.trim() as Guid);
 
     if (thisSet === undefined) {
       setLoading(LoadingState.Failure);
@@ -47,9 +48,9 @@ const Set: React.FC = () => {
 
     setLoading(LoadingState.Success);
 
-  }, [setId, sampleSetContext.changeCounter, sampleSetContext.setsLoaded, sampleSetContext.scanTypesLoaded]);
+  }, [setId, configContext.changeCounter, configContext.setsLoadingState, configContext.scanTypesLoadingState]);
 
-  const set = sampleSetContext.sets.getById(setId!.trim() as Guid)
+  const set = configContext.sets.getById(setId!.trim() as Guid)
 
   // If we're in any loading state other than success, or we can't find our set,
   // display a loading banner instead of the content.
@@ -74,7 +75,7 @@ const Set: React.FC = () => {
       <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
         <ul>
           <li><Link to={ "/" }>Proposals</Link></li>
-          <li><Link to={ "/proposal/" + proposalId }>{ sampleSetContext.sets.name }</Link></li>
+          <li><Link to={ "/proposal/" + proposalId }>{ configContext.sets.name }</Link></li>
           <li className="is-active"><Link to={ "/proposal/" + proposalId + "/set/" + setId }>{ set.name }</Link></li>
         </ul>
       </nav>

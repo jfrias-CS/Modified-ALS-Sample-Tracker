@@ -3,7 +3,7 @@ import { createContext, useState, useEffect, PropsWithChildren } from "react";
 import { Guid } from "./components/utils.tsx";
 import { ScanTypes, getScanTypes } from './scanTypes.ts';
 import { SampleConfigurationSets } from './sampleConfiguration.ts';
-import { RecordsFromServer, readConfigsForProposalId } from './sampleConfigurationApi.ts';
+import { RecordsFromServer, whoAmI, readConfigsForProposalId } from './sampleConfigurationApi.ts';
 
 
 // This is a "context provider" React component for a SampleConfigurationSets instance.
@@ -18,7 +18,7 @@ import { RecordsFromServer, readConfigsForProposalId } from './sampleConfigurati
 // in one SampleConfiguration and it's not the value being sorted on, which would
 // require us to only update a single table cell in the DOM, this design
 // invalidates the content of the entire table, forcing both a re-sort and a re-draw.
-// If we're dealing with sample sets larger than, say, 1000, with dozens of parameters,
+// If we're dealing with config sets larger than, say, 1000, with dozens of parameters,
 // we might need to redesign.
 
 
@@ -29,16 +29,18 @@ interface ProviderProps {
   proposalId: string | undefined;
 }
 
+enum ProviderLoadingState { NotTriggered, Pending, Succeeded, Failed };
+
 // The structure we are providing to components in the hierarchy below the provider
 interface SampleConfigurationInterface {
   // Access to the current instance of SampleConfigurationSets
   sets: SampleConfigurationSets;
-  // Set to true when the server responds with good data from a request.
-  setsLoaded: boolean;
+  // Track the status of loading all the sets.
+  setsLoadingState: ProviderLoadingState;
   // Essential metadata for interpreting SampleConfiguration objects.
   scanTypes: ScanTypes;
   // Set to true when successfully loaded, which should happen automatically after this comoponent is mounted.
-  scanTypesLoaded: boolean;
+  scanTypesLoadingState: ProviderLoadingState;
   // A callback for when a child component makes a change to the SampleConfigurationSets instance.
   changed: () => void;
   // This counter is incremented whenever the SampleConfigurationSets data is changed.
@@ -51,8 +53,8 @@ interface SampleConfigurationInterface {
 const SampleConfigurationContext = createContext<SampleConfigurationInterface>({
                     sets: new SampleConfigurationSets("empty", "0" as Guid), // Should never be reached
                     scanTypes: {typesByName:new Map(),typeNamesInDisplayOrder:[],parametersById:new Map()},
-                    setsLoaded: false,
-                    scanTypesLoaded: false,
+                    setsLoadingState: ProviderLoadingState.NotTriggered,
+                    scanTypesLoadingState: ProviderLoadingState.NotTriggered,
                     changed: () => {},
                     changeCounter: 0
                   });
@@ -63,8 +65,8 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
   const [sampleConfigurationsObject, setSampleConfigurationsObject] = useState<SampleConfigurationSets>(new SampleConfigurationSets("empty", "0" as Guid));
   const [scanTypes, setScanTypes] = useState<ScanTypes>({typesByName:new Map(),typeNamesInDisplayOrder:[],parametersById:new Map()});
 
-  const [setsLoaded, setSetsLoaded] = useState<boolean>(false);
-  const [scanTypesLoaded, setScanTypesLoaded] = useState<boolean>(false);
+  const [setsLoadingState, setSetsLoadingState] = useState<ProviderLoadingState>(ProviderLoadingState.NotTriggered);
+  const [scanTypesLoadingState, setScanTypesLoadingState] = useState<ProviderLoadingState>(ProviderLoadingState.NotTriggered);
 
   const [changeCounter, setChangeCounter] = useState<number>(0);
 
@@ -74,7 +76,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
 
     // Will eventually be an asynchronous call.
     setScanTypes(getScanTypes());
-    setScanTypesLoaded(true);
+    setScanTypesLoadingState(ProviderLoadingState.Succeeded);
     return () => {
       console.log('SampleConfigurationProvider unmounted');
     };
@@ -88,23 +90,29 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
     }
     console.log('SampleConfigurationProvider given proposalId ' + proposalId);
     
-    setSetsLoaded(false);
+    setSetsLoadingState(ProviderLoadingState.NotTriggered);
 
     const fetchData = async () => {
       try {
         if (proposalId === undefined) { throw new Error("ProposalId not defined"); }
 
         const p = proposalId.trim()
-        if (!p) { throw new Error("ProposalId is blank"); }
+        if (!p) {
+          setSetsLoadingState(ProviderLoadingState.Failed);
+          throw new Error("ProposalId is blank");
+        }
+
+        setSetsLoadingState(ProviderLoadingState.Pending);
 
         const result = await readConfigsForProposalId(p);
-        console.log(result);
         if (result.success) {
           ingestFromServer(result.response!);
+          return;
         }
       } catch (error) {
         console.error('Error fetching data:', error);
       }
+      setSetsLoadingState(ProviderLoadingState.Failed);
     };
 
     // Call fetchData when the component mounts
@@ -123,6 +131,9 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
   };
 
 
+  // Take the given Set and Config objects, combine them
+  // together under a SampleConfigurationSets object, and set that as the current
+  // working data.
   function ingestFromServer(records: RecordsFromServer) {
     console.log("Calling ingestFromServer");
     console.log(records);
@@ -139,7 +150,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
     });
 
     setSampleConfigurationsObject(setContainer);
-    setSetsLoaded(true);
+    setSetsLoadingState(ProviderLoadingState.Succeeded);
   };
 
 
@@ -154,8 +165,8 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
     <SampleConfigurationContext.Provider value={{
         sets: sampleConfigurationsObject,
         scanTypes: scanTypes,
-        setsLoaded: setsLoaded,
-        scanTypesLoaded: scanTypesLoaded,
+        setsLoadingState: setsLoadingState,
+        scanTypesLoadingState: scanTypesLoadingState,
         changed: changed,
         changeCounter: changeCounter
     }}>
@@ -164,4 +175,4 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
   )
 }
 
-export {SampleConfigurationContext, SampleConfigurationProvider}
+export {SampleConfigurationContext, SampleConfigurationProvider, ProviderLoadingState}

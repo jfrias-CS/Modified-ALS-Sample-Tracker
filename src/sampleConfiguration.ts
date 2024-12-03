@@ -272,7 +272,7 @@ export class SampleConfigurationSet {
 
 
   // Generate bar locations that are at least 10mm beyond the current
-  // rightmost sample location, and 10mm apart from each other.
+  // rightmost config location, and 10mm apart from each other.
   generateOpenLocations(quantity?: number) {
     var chosenQuantity = Math.max(quantity||1, 1);
 

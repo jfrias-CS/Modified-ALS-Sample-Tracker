@@ -3,7 +3,7 @@ import 'bulma/css/bulma.min.css';
 
 import { Guid } from '../../components/utils.tsx';
 import { SampleConfiguration } from '../../sampleConfiguration.ts';
-import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
+import { SampleConfigurationContext, ProviderLoadingState } from '../../sampleConfigurationProvider.tsx';
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
 import { SampleCell, CellFunctions, CellValidationStatus, CellValidationResult } from './sampleCell.tsx';
@@ -41,7 +41,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
   const setId = props.setid;
 
-  const sampleSetContext = useContext(SampleConfigurationContext);
+  const configContext = useContext(SampleConfigurationContext);
   const [sampleConfigurations, setSampleConfigurations] = useState<SampleConfiguration[]>([]);
 
   const [tableHasFocus, setTableHasFocus] = useState<boolean>(false);
@@ -50,18 +50,19 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
 
   useEffect(() => {
-    console.log(`sampleTable setId:${setId} changeCounter:${sampleSetContext.changeCounter} setsLoaded:${sampleSetContext.setsLoaded} scanTypesLoaded:${sampleSetContext.scanTypesLoaded}`);
+    console.log(`sampleTable setId:${setId} changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
 
     if ((setId === undefined) || (!setId.trim())) { return; }
 
-    if (!sampleSetContext.setsLoaded || !sampleSetContext.scanTypesLoaded) { return; }
+    if (configContext.setsLoadingState != ProviderLoadingState.Succeeded) { return; }
+    if (configContext.scanTypesLoadingState != ProviderLoadingState.Succeeded) { return; }
 
-    const thisSet = sampleSetContext.sets.getById(setId.trim() as Guid);
+    const thisSet = configContext.sets.getById(setId.trim() as Guid);
     if (thisSet === undefined) { return; }
 
     const sortedSamples = thisSet.all().sort((a, b) => a.mmFromLeftEdge - b.mmFromLeftEdge);
     setSampleConfigurations(sortedSamples);
-  }, [setId, sampleSetContext.changeCounter, sampleSetContext.setsLoaded, sampleSetContext.scanTypesLoaded]);
+  }, [setId, configContext.changeCounter, configContext.setsLoadingState, configContext.scanTypesLoadingState]);
 
 
   // Triggered one time only, whenever the input is blurred.
@@ -100,14 +101,14 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
-  const set = sampleSetContext.sets.getById(setId!.trim() as Guid)
+  const set = configContext.sets.getById(setId!.trim() as Guid)
   if (!set) {
     return (<div></div>)
   }
 
 
-  const displayedParameterIds = set.relevantParameters.filter((p) => sampleSetContext.scanTypes.parametersById.has(p));
-  const displayedParameters = displayedParameterIds.map((p) => sampleSetContext.scanTypes.parametersById.get(p)!);
+  const displayedParameterIds = set.relevantParameters.filter((p) => configContext.scanTypes.parametersById.has(p));
+  const displayedParameters = displayedParameterIds.map((p) => configContext.scanTypes.parametersById.get(p)!);
 
 
   // Add the vector to the given currentPosition until it points to a table cell that is
@@ -129,9 +130,9 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     // The only thing to ask now is whether the cell is for a ScanParameterType that's
     // _actually_used_ by the ScanType set by that row's SampleConfiguration.
     const thisParameter = displayedParameters[nextPosition.x - 4];
-    const thisSample = sampleConfigurations[nextPosition.y];
+    const thisConfig = sampleConfigurations[nextPosition.y];
 
-    const allowedParameters = sampleSetContext.scanTypes.typesByName.get(thisSample.scanType)!.parameters;
+    const allowedParameters = configContext.scanTypes.typesByName.get(thisConfig.scanType)!.parameters;
     if (allowedParameters.some((p) => p == thisParameter.id)) {
       return nextPosition;
     }
@@ -234,12 +235,12 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   // It relies on the displayedParameters constant, calculated just above.
   function cellSave(x: number, y: number, inputString: string): CellValidationResult {
 
-    const thisSample = sampleConfigurations[y];
-    if (!thisSample) {
+    const thisConfig = sampleConfigurations[y];
+    if (!thisConfig) {
       return { status: CellValidationStatus.Failure, message: "Error: SampleConfiguration does not exist!" }
     }
 
-    var editedConfig = thisSample.clone();
+    var editedConfig = thisConfig.clone();
 
     // "mm From Left Edge"
     if (x === 0) {
@@ -259,7 +260,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       editedConfig.parameters.set(paramType.id, inputString);
     }
 
-    const thisSet = sampleSetContext.sets.getById(setId!.trim() as Guid)!;
+    const thisSet = configContext.sets.getById(setId!.trim() as Guid)!;
     thisSet.addOrReplaceWithHistory([editedConfig]);
 
     // This may not be the right behavior
@@ -313,7 +314,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
       <div className="block">
         { sampleConfigurations.length == 0 ? (
-          <p>( Set is empty. )</p>
+          <p>( Use the buttons on the right to add Samples. )</p>
         ) : (
           <table className="sampletable"
                   tabIndex={0}
@@ -332,7 +333,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                   var cells: JSX.Element[] = [];
 
                   const cellFocusOnThisY = (cellFocusY === sampleIndex);
-                  const allowedParameters = new Set(sampleSetContext.scanTypes.typesByName.get(sample.scanType)!.parameters);
+                  const allowedParameters = new Set(configContext.scanTypes.typesByName.get(sample.scanType)!.parameters);
 
                   displayedParameters.forEach((p, paramIndex) => {
                     const unused = !allowedParameters.has(p.id);
