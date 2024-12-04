@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { faExclamationTriangle, faSpinner, faCheck, faX } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
