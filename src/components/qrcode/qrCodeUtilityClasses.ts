@@ -285,7 +285,7 @@ class QrUtil {
 
 		var lostPoint = 0;
 
-		// LEVEL1
+		// LEVEL 1
 
 		for (var row = 0; row < moduleCount; row += 1) {
 			for (var col = 0; col < moduleCount; col += 1) {
@@ -293,24 +293,22 @@ class QrUtil {
 				var dark = isDarkFunc(row, col);
 
 				for (var r = -1; r <= 1; r += 1) {
-
 					if (row + r < 0 || moduleCount <= row + r) {
-					continue;
+						continue;
 					}
 
 					for (var c = -1; c <= 1; c += 1) {
+						if (col + c < 0 || moduleCount <= col + c) {
+							continue;
+						}
 
-					if (col + c < 0 || moduleCount <= col + c) {
-						continue;
-					}
+						if (r == 0 && c == 0) {
+							continue;
+						}
 
-					if (r == 0 && c == 0) {
-						continue;
-					}
-
-					if (dark == isDarkFunc(row + r, col + c) ) {
-						sameCount += 1;
-					}
+						if (dark == isDarkFunc(row + r, col + c) ) {
+							sameCount += 1;
+						}
 					}
 				}
 
@@ -320,7 +318,7 @@ class QrUtil {
 			}
 		}
 
-		// LEVEL2
+		// LEVEL 2
 
 		for (var row = 0; row < moduleCount - 1; row += 1) {
 			for (var col = 0; col < moduleCount - 1; col += 1) {
@@ -335,7 +333,7 @@ class QrUtil {
 			}
 		}
 
-		// LEVEL3
+		// LEVEL 3
 
 		for (var row = 0; row < moduleCount; row += 1) {
 			for (var col = 0; col < moduleCount - 6; col += 1) {
@@ -381,7 +379,7 @@ class QrUtil {
 		lostPoint += ratio * 10;
 
 		return lostPoint;
-	};
+	}
 }
 
 

@@ -7,17 +7,12 @@
 //  http://www.denso-wave.com/qrcode/faqpatent-e.html
 
 import { QrPolynomial, QrUtil, QrEncoding, QrErrorCorrectionLevel } from './qrCodeUtilityClasses.ts';
+import { DataWriter, QrCodeBitBuffer, NumericData, AlphanumericData, ByteData } from './qrCodeDataTypes.ts';
 import { QrRsBlock, RsBlock } from './qrCodeRsBlock.ts';
 
 
 // Local instance for internal use
 const qrUtil = new QrUtil();
-
-interface DataWriter {
-	getMode: () => QrEncoding;
-	getLength: () => number;
-	write: (b: QrCodeBitBuffer) => void;
-}
 
 
 export class QrCode {
@@ -47,166 +42,19 @@ export class QrCode {
 		var newData = null;
 		switch (dataType) {
 			case QrEncoding.Numeric:
-				newData = this.generateNumericData(dataToAdd);
+				newData = new NumericData(dataToAdd);
 				break;
 			case QrEncoding.Alphanumeric:
-				newData = this.generateAlphanumericData(dataToAdd);
+				newData = new AlphanumericData(dataToAdd);
 				break;
 			case QrEncoding.Byte:
-				newData = this.generateByteData(dataToAdd);
+				newData = new ByteData(dataToAdd);
 				break;
 			default:
 				throw "Unknown data type: " + dataType;
 		}
 		this._dataList.push(newData);	//	g = _dataList
 		this._dataCache = null;	// s = _dataCache
-	}
-
-
-	generateNumericData(t: string): DataWriter {
-		var o = t;
-		function toDigit(c: string) {
-			if ("0" <= c && c <= "9")
-				return c.charCodeAt(0) - "0".charCodeAt(0);
-			throw "illegal char :" + c
-		};
-
-		function toDigits(input: string) {
-			for (var o = 0, e = 0; e < input.length; e += 1)
-				o = (10 * o) + toDigit(input.charAt(e));
-			return o
-		};
-
-		var e = {
-				getMode: function(): QrEncoding {
-					return QrEncoding.Numeric;
-				},
-				getLength: function() {
-					return o.length
-				},
-				write: function(b: QrCodeBitBuffer) {
-					for (var e = o, a = 0; a + 2 < e.length;)
-						b.put(toDigits(e.substring(a, a + 3)), 10),
-						a += 3;
-					if (a < e.length) {
-						e.length - a == 1 ?
-							b.put(toDigits(e.substring(a, a + 1)), 4) :
-							e.length - a == 2 &&
-								b.put(toDigits(e.substring(a, a + 2)), 7)
-					}
-				}
-			};
-		return e
-	}
-
-
-	generateAlphanumericData(t: string): DataWriter {
-		var o = t;
-		function toAlphanumeric(t: string) {
-			if ("0" <= t && t <= "9")
-				return t.charCodeAt(0) - "0".charCodeAt(0);
-			if ("A" <= t && t <= "Z")
-				return t.charCodeAt(0) - "A".charCodeAt(0) + 10;
-			if ("a" <= t && t <= "z")
-				return t.charCodeAt(0) - "a".charCodeAt(0) + 10;
-			switch (t) {
-				case " ":
-					return 36;
-				case "$":
-					return 37;
-				case "%":
-					return 38;
-				case "*":
-					return 39;
-				case "+":
-					return 40;
-				case "-":
-					return 41;
-				case ".":
-					return 42;
-				case "/":
-					return 43;
-				case ":":
-					return 44;
-				default:
-					throw "illegal char: " + t;
-			}
-		};
-
-		var e = {
-				getMode: function(): QrEncoding {
-					return QrEncoding.Alphanumeric;
-				},
-				getLength: function() {
-					return o.length
-				},
-				write: function(b: QrCodeBitBuffer) {
-					for (var e = o, a = 0; a + 1 < e.length;)
-						b.put(45 * toAlphanumeric(e.charAt(a)) + toAlphanumeric(e.charAt(a + 1)), 11),
-						a += 2;
-					a < e.length && b.put(toAlphanumeric(e.charAt(a)), 6)
-				}
-			};
-		return e;
-	}
-
-
-	generateByteData(o: string): DataWriter {
-
-		function stringToBytes(t: string) {
-			var o = [];
-			for (var e = 0; e < t.length; e += 1) {
-				var n = t.charCodeAt(e);
-				o.push(255 & n);
-			}
-			return o;
-		}
-
-		function stringToBytesUTF8(str: string) {
-		// http://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
-			var utf8 = [];
-			for (var i=0; i < str.length; i++) {
-				var charcode = str.charCodeAt(i);
-				if (charcode < 0x80) utf8.push(charcode);
-				else if (charcode < 0x800) {
-				utf8.push(0xc0 | (charcode >> 6),
-					0x80 | (charcode & 0x3f));
-				}
-				else if (charcode < 0xd800 || charcode >= 0xe000) {
-				utf8.push(0xe0 | (charcode >> 12),
-					0x80 | ((charcode>>6) & 0x3f),
-					0x80 | (charcode & 0x3f));
-				}
-				// surrogate pair
-				else {
-				i++;
-				// UTF-16 encodes 0x10000-0x10FFFF by
-				// subtracting 0x10000 and splitting the
-				// 20 bits of 0x0-0xFFFFF into two halves
-				charcode = 0x10000 + (((charcode & 0x3ff)<<10)
-					| (str.charCodeAt(i) & 0x3ff));
-				utf8.push(0xf0 | (charcode >>18),
-					0x80 | ((charcode>>12) & 0x3f),
-					0x80 | ((charcode>>6) & 0x3f),
-					0x80 | (charcode & 0x3f));
-				}
-			}
-			return utf8;
-		}
-
-		var asBytes = stringToBytesUTF8(o);
-		return {
-			getMode: function(): QrEncoding {
-				return QrEncoding.Byte;
-			},
-			getLength: function() {
-				return asBytes.length;
-			},
-			write: function(b: QrCodeBitBuffer) {
-				for (var o = 0; o < asBytes.length; o += 1)
-					b.put(asBytes[o], 8)
-			}
-		}
 	}
 
 
@@ -403,11 +251,8 @@ export class QrCode {
 							dark = ( ( (data[byteIndex] >>> bitIndex) & 1) == 1);
 						}
 
-						var mask = maskFunc(row, col - c);
-
-						if (mask) {
-							dark = !dark;
-						}
+						const mask = maskFunc(row, col - c);
+						if (mask) { dark = !dark; }
 
 						this._modules![row]![col - c] = dark;
 						bitIndex -= 1;
@@ -498,7 +343,7 @@ export class QrCode {
 		var buffer = new QrCodeBitBuffer();
 
 		for (var i = 0; i < dataList.length; i += 1) {
-			var data = dataList[i];
+			const data = dataList[i];
 
 			const mode = data.getMode();
 			var num: number = 1 << 0;
@@ -662,51 +507,3 @@ export class QrCode {
 		ctx.translate(-translateX, -translateY);
 	}
 }
-
-
-class QrCodeBitBuffer {
-
-	_buffer: number[];
-	_length: number;
-
-
-	constructor () {
-		this._buffer = [];
-		this._length = 0;
-	}
-
-	getBuffer() {
-		return this._buffer;
-	}
-
-	getAt(index: number) {
-		var bufIndex = Math.floor(index / 8);
-		return ( (this._buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
-	}
-
-	put(num: number, length: number) {		
-		for (var i = 0; i < length; i += 1) {
-			this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
-		}
-	}
-
-	getLengthInBits() {
-		return this._length;
-	}
-
-	putBit(bit: boolean) {
-		var bufIndex = Math.floor(this._length / 8);
-		if (this._buffer.length <= bufIndex) {
-			this._buffer.push(0);
-		}
-
-		if (bit) {
-			this._buffer[bufIndex] |= (0x80 >>> (this._length % 8) );
-		}
-
-		this._length += 1;
-	}
-}
-
-
-
