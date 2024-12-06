@@ -22,8 +22,7 @@ const SetLabels: React.FC = () => {
   useEffect(() => {
     console.log(`setLabels changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
 
-    if ((configContext.setsLoadingState != ProviderLoadingState.Succeeded) ||
-        (configContext.scanTypesLoadingState != ProviderLoadingState.Succeeded)) {
+    if (configContext.loadingState != ProviderLoadingState.Succeeded) {
       if (configContext.setsLoadingState == ProviderLoadingState.Failed) {
         setLoading(LoadingState.Failure);
         setLoadingMessage("Failed to load Sets. Are you sure you're still logged in?");
@@ -39,7 +38,7 @@ const SetLabels: React.FC = () => {
     setSets(sortedSets);
     setLoading(LoadingState.Success);
 
-  }, [configContext.changeCounter, configContext.setsLoadingState, configContext.scanTypesLoadingState]);
+  }, [configContext.changeCounter, configContext.setsLoadingState, configContext.loadingState]);
 
   // If we're in any loading state other than success,
   // display a loading banner instead of the content.
@@ -53,14 +52,10 @@ const SetLabels: React.FC = () => {
       <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
         <ul>
           <li><Link to={ "/" }>Proposals</Link></li>
-          <li className="is-active"><Link to={ "/proposal/" + proposalId }>{ configContext.sets.name }</Link></li>
+          <li><Link to={ "/proposal/" + proposalId }>{ configContext.sets.name }</Link></li>
+          <li className="is-active"><Link to={ "/proposal/" + proposalId + "/labels" }>Printable Labels</Link></li>
         </ul>
       </nav>
-
-        <QrCodeImage size="5em"
-          mode={QrEncoding.Alphanumeric}
-          errorCorrectionLevel={QrErrorCorrectionLevel.L}
-          content="hello" />
 
       <nav className="level">
         <div className="level-left">
@@ -68,39 +63,34 @@ const SetLabels: React.FC = () => {
             <p className="subtitle is-5"><strong>{ sets.length }</strong> sets</p>
           </div>
         </div>
-
-        <div className="level-right">
-          <div className="level-item">
-          </div>
-        </div>
       </nav>
 
       <div className="block">
         { sets.length == 0 ? (
-          <p>( Use the Add button on the right to add Sets. )</p>
+          <p>( There are no Sets defined for this proposal yet, so there are no labels to print. )</p>
         ) : (
-
-        <table className="setLabels">
-          <thead>
-            <tr key="headers">
-              <th key="name" scope="col">Name</th>
-              <th key="description" scope="col">Description</th>
-              <th key="samplecount" scope="col">Samples</th>
-            </tr>
-          </thead>
-          <tbody>
+          <>
             {
               sets.map((set) => {
+                const qrContent = `set/${set.id}`.toUpperCase(); 
+
                 return (
-                  <tr key={set["id"]}>
-                      <th scope="row"><Link to={ "set/" + set.id }>{ set.name }</Link></th>
-                      <td>{ set.description }</td>
-                      <td>{ set.configurationsById.size }</td>
-                  </tr>);
+                  <div className="setLabel">
+                    <div className="qrCode">
+                      <QrCodeImage size="5em"
+                        mode={QrEncoding.Alphanumeric}
+                        errorCorrectionLevel={QrErrorCorrectionLevel.L}
+                        content={qrContent} />
+                    </div>
+                    <div className="textArea">
+                      <div>{ configContext.sets.name }</div>
+                      <div>{ set.name }</div>
+                    </div>
+                  </div>
+                );
               })
             }
-          </tbody>
-        </table>
+          </>
         )}
       </div>
     </>
