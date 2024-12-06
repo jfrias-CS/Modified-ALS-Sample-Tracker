@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
 import { Guid } from "./components/utils.tsx";
+import { QrCodeImage } from './components/qrcode/qrCodeImage.tsx';
 import './homePage.css';
 
 
@@ -27,6 +28,8 @@ const HomePage: React.FC = () => {
             <li className="is-active"><Link to={ "/" }>Proposals</Link></li>
           </ul>
         </nav>
+
+        <QrCodeImage size="5em" content="hello" />
 
         <table className="proposals">
           <thead>
