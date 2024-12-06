@@ -11,7 +11,8 @@ import './setTable.css';
 
 const SetTable: React.FC = () => {
 
-  const { proposalId } = useParams();
+  var { proposalId } = useParams();
+  proposalId = proposalId ? proposalId.toLowerCase() : "";
 
   const configContext = useContext(SampleConfigurationContext);
   const [sets, setSets] = useState<SampleConfigurationSet[]>([]);
@@ -21,8 +22,7 @@ const SetTable: React.FC = () => {
   useEffect(() => {
     console.log(`setTable changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
 
-    if ((configContext.setsLoadingState != ProviderLoadingState.Succeeded) ||
-        (configContext.scanTypesLoadingState != ProviderLoadingState.Succeeded)) {
+    if (configContext.loadingState != ProviderLoadingState.Succeeded) {
       if (configContext.setsLoadingState == ProviderLoadingState.Failed) {
         setLoading(LoadingState.Failure);
         setLoadingMessage("Failed to load Sets. Are you sure you're still logged in?");
@@ -38,7 +38,7 @@ const SetTable: React.FC = () => {
     setSets(sortedSets);
     setLoading(LoadingState.Success);
 
-  }, [configContext.changeCounter, configContext.setsLoadingState, configContext.scanTypesLoadingState]);
+  }, [configContext.changeCounter, configContext.setsLoadingState, configContext.loadingState]);
 
   // If we're in any loading state other than success,
   // display a loading banner instead of the content.

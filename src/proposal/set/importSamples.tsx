@@ -6,6 +6,7 @@ import 'bulma/css/bulma.min.css';
 
 import { ScanTypeName, ScanType } from '../../scanTypes.ts';
 import { Guid } from '../../components/utils.tsx';
+import { ParamUid } from './../../scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
 import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
@@ -13,7 +14,8 @@ import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/
 
 const ImportSamples: React.FC = () => {
 
-  const { setId } = useParams();
+  var { setId } = useParams();
+  setId = setId ? setId.toLowerCase() : "";
 
   const configContext = useContext(SampleConfigurationContext);
 

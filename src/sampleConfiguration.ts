@@ -1,4 +1,4 @@
-import { ScanTypes, ScanTypeName, ScanType } from './scanTypes.ts';
+import { ScanTypes, ParamUid, ScanTypeName, ScanType } from './scanTypes.ts';
 import { Guid, generateUniqueNames } from "./components/utils.tsx";
 
 // Class definitions to represent sample configurations,
@@ -24,7 +24,7 @@ export interface NewSampleConfigurationParameters {
   // Key/value parameter set. Keys should only be valid for the chosen ScanType.
   // This is not strictly enforced, so old inapplicable values can be preserved
   // in case a previous ScanType selection is re-selected.
-  parameters: Map<Guid, string|null>
+  parameters: Map<ParamUid, string|null>
 }
 
 
@@ -48,7 +48,7 @@ export class SampleConfiguration {
   // Key/value parameter set. Keys should only be valid for the chosen ScanType.
   // This is not strictly enforced, so old inapplicable values can be preserved
   // in case a previous ScanType selection is re-selected.
-  parameters: Map<Guid, string|null>
+  parameters: Map<ParamUid, string|null>
 
 	constructor (p: NewSampleConfigurationParameters) {
 		this.id = p.id;
@@ -192,7 +192,7 @@ export class SampleConfigurationSet {
   configurationsById: Map<string, SampleConfiguration>;
   // An array of identifiers of all parameters used
   // by the ScanTypes of all current SampleConfigurations.
-  relevantParameters: Array<Guid>;
+  relevantParameters: Array<ParamUid>;
   // Undo/redo history tracker
   history: UndoHistory;
   // A cached value used as a reference by e.g. findRelevantParameters.
@@ -218,8 +218,8 @@ export class SampleConfigurationSet {
   // Used for deciding which parameter columns to render in the interface.
   findRelevantParameters() {
     const scanTypesByName = this.scanTypesByName;
-    let workingSet: Set<Guid> = new Set();
-    let relevantParameters: Guid[] = [];
+    let workingSet: Set<ParamUid> = new Set();
+    let relevantParameters: ParamUid[] = [];
 
     // Start from the SampleConfiguration closest to the left edge,
     // since that's the default sort when displaying them.

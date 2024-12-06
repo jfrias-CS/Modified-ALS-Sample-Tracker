@@ -12,7 +12,9 @@ import { updateSet } from './../../sampleConfigurationApi.ts';
 
 const Set: React.FC = () => {
 
-  const { proposalId, setId } = useParams();
+  var { proposalId, setId } = useParams();
+  proposalId = proposalId ? proposalId.toLowerCase() : "";
+  setId = setId ? setId.toLowerCase() : "";
 
   const configContext = useContext(SampleConfigurationContext);
   const [description, setDescription] = useState<string>("");
@@ -30,8 +32,7 @@ const Set: React.FC = () => {
       return;
     }
 
-    if ((configContext.setsLoadingState != ProviderLoadingState.Succeeded) ||
-        (configContext.scanTypesLoadingState != ProviderLoadingState.Succeeded)) {
+    if (configContext.loadingState != ProviderLoadingState.Succeeded) {
       setLoading(LoadingState.Loading);
       setLoadingMessage("");
       return;
@@ -49,7 +50,7 @@ const Set: React.FC = () => {
 
     setLoading(LoadingState.Success);
 
-  }, [setId, configContext.changeCounter, configContext.setsLoadingState, configContext.scanTypesLoadingState]);
+  }, [setId, configContext.changeCounter, configContext.loadingState]);
 
   const set = configContext.sets.getById(setId!.trim() as Guid)
 

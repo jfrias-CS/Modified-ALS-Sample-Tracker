@@ -1,6 +1,6 @@
 import { Guid } from "./components/utils.tsx";
 import { ResponseWrapper, sciCatGet, sciCatPost, sciCatPatch } from "./generalApi.ts";
-import { ScanTypeName, ScanTypes } from './scanTypes.ts';
+import { ScanTypeName, ParamUid } from './scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from './sampleConfiguration.ts';
 
 
@@ -98,14 +98,14 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
     const setId = sc.lbnl_config_meta_set_id as Guid;
     if (!setId) { return; }
 
-    const parameters:Map<Guid, string|null> = new Map();
+    const parameters:Map<ParamUid, string|null> = new Map();
 
     // Anything in sampleCharacteristics that starts with lbnl_config_ and not lbnl_config_meta_
     // is treated as a Scan Type parameter and its value is added to the parameter set.
     for (const [key, value] of Object.entries(sc)) {
       if (key.startsWith('lbnl_config_')) {
         if (!characeristicsToIgnore.has(key)) { 
-          parameters.set(key.replace(/lbnl_config_/, '') as Guid, value as string);
+          parameters.set(key.replace(/lbnl_config_/, '') as ParamUid, value as string);
         }
       }
     }
@@ -167,17 +167,24 @@ async function createNewSet(name: string, description: string): Promise<Response
 
 // Create a new Sample record on the server, with sampleCharacteristics set to identify it as
 // a sample configuration.
-async function createNewConfiguration(setId: Guid, name: string, description: string, scanType: string, mmFromLeftEdge: number, parameters: Map<Guid, string|null>): Promise<ResponseWrapper<SampleConfiguration>> {
+async function createNewConfiguration(setId: Guid, name: string, description: string, scanType: string, mmFromLeftEdge: number, parameters: Map<ParamUid, string|null>): Promise<ResponseWrapper<SampleConfiguration>> {
+
+  // All sampleCharacteristics values need to be specified in the patch operation.
+  // The server will erase any that are left out.
+  var sampleCharacteristics: { [key: string]: string|null|boolean } = {
+    "lbnl_config_meta_type": "configuration",
+    "lbnl_config_meta_description": description,
+    "lbnl_config_meta_set_id": setId,
+    "lbnl_config_meta_scan_type": scanType,
+    "lbnl_config_meta_valid": true
+  };
+  parameters.forEach((v, k) => {
+    sampleCharacteristics['lbnl_config_' + k] = v;
+  });
 
   const body = {
     "description": name,
-    "sampleCharacteristics": {
-      "lbnl_config_meta_type": "configuration",
-      "lbnl_config_meta_description": description,
-      "lbnl_config_meta_set_id": setId,
-      "lbnl_config_meta_scan_type": scanType,
-      "lbnl_config_meta_valid": true
-    },
+    "sampleCharacteristics": sampleCharacteristics,
     "isPublished": false,
     ownerGroup: "group1",
   };

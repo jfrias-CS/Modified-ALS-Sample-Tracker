@@ -54,15 +54,14 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     if ((setId === undefined) || (!setId.trim())) { return; }
 
-    if (configContext.setsLoadingState != ProviderLoadingState.Succeeded) { return; }
-    if (configContext.scanTypesLoadingState != ProviderLoadingState.Succeeded) { return; }
+    if (configContext.loadingState != ProviderLoadingState.Succeeded) { return; }
 
     const thisSet = configContext.sets.getById(setId.trim() as Guid);
     if (thisSet === undefined) { return; }
 
     const sortedSamples = thisSet.all().sort((a, b) => a.mmFromLeftEdge - b.mmFromLeftEdge);
     setSampleConfigurations(sortedSamples);
-  }, [setId, configContext.changeCounter, configContext.setsLoadingState, configContext.scanTypesLoadingState]);
+  }, [setId, configContext.changeCounter, configContext.loadingState]);
 
 
   // Triggered one time only, whenever the input is blurred.
@@ -106,10 +105,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     return (<div></div>)
   }
 
-
   const displayedParameterIds = set.relevantParameters.filter((p) => configContext.scanTypes.parametersById.has(p));
   const displayedParameters = displayedParameterIds.map((p) => configContext.scanTypes.parametersById.get(p)!);
-
 
   // Add the vector to the given currentPosition until it points to a table cell that is
   // valid for editing, then return that position, or return null if we run off the edge of the table.

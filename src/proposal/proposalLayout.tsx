@@ -7,7 +7,8 @@ import { SampleConfigurationProvider } from './../sampleConfigurationProvider.ts
 
 const ProposalLayout: React.FC<PropsWithChildren> = () => {
 
-  const { proposalId } = useParams();
+  var { proposalId } = useParams();
+  proposalId = proposalId ? proposalId.toLowerCase() : "";
 
   useEffect(() => {
 

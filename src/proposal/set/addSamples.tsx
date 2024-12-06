@@ -6,6 +6,7 @@ import 'bulma/css/bulma.min.css';
 
 import { ScanType } from '../../scanTypes.ts';
 import { Guid } from "../../components/utils.tsx";
+import { ParamUid } from './../../scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
 import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
@@ -14,7 +15,8 @@ import { createNewConfiguration } from '../../sampleConfigurationApi.ts';
 
 const AddSamples: React.FC = () => {
 
-  const { setId } = useParams();
+  var { setId } = useParams();
+  setId = setId ? setId.toLowerCase() : "";
 
   const configContext = useContext(SampleConfigurationContext);
 
@@ -109,7 +111,7 @@ const AddSamples: React.FC = () => {
     while (count > 0 && (error === null)) {
 
       // Make a set of parameters for the chosen ScanType, with default or blank values.
-      const parameters:Map<Guid, string|null> = new Map();
+      const parameters:Map<ParamUid, string|null> = new Map();
       scanTypeValue!.parameters.forEach((p) => {
         const parameterType = configContext.scanTypes.parametersById.get(p);
         if (parameterType) { parameters.set(parameterType.id, parameterType.default ?? ""); }

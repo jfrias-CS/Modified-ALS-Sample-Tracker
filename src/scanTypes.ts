@@ -1,14 +1,16 @@
-import { Guid } from "./components/utils.tsx";
+
 
 // Definitions and code for scan types
 
 
 export type ScanTypeName = string & { __brand: 'Scan Type Name' };
+
+export type ParamUid = string & { __brand: 'ParamUID' };
 export type ScanParameterName = string & { __brand: 'Scan Parameter Name' };
 
 
 export interface ScanParameterType {
-  id: Guid;
+  id: ParamUid;
   name: ScanParameterName;
   description: string;
   // If a choices field is present, we provide a pulldown isntead of a text field and restrict the choices to this array.
@@ -27,14 +29,14 @@ export interface ScanType {
   description: string;
   referenceUrl?: string;
   // Which parameters are valid for this ScanType. Given in order meant to be displayed.
-  parameters: Array<Guid>;
+  parameters: Array<ParamUid>;
 }
 
 
 export interface ScanTypes {
   typesByName: Map<ScanTypeName, ScanType>;
   typeNamesInDisplayOrder: ScanTypeName[];
-  parametersById: Map<Guid, ScanParameterType>;
+  parametersById: Map<ParamUid, ScanParameterType>;
 }
 
 
@@ -54,7 +56,7 @@ export function getScanTypes(): ScanTypes {
 
   const parameters: ScanParameterType[] = [
 
-    { id: "incangles" as Guid,
+    { id: "incangles" as ParamUid,
       name: "Incident Angles" as ScanParameterName,
       description: "A list of incident angles to use, between -30 and 30 degrees. For example 0.13, 0.15, 0.17. Or enter \"auto\" to use the auto-incident angle routine.",
       default: "auto",
@@ -64,7 +66,7 @@ export function getScanTypes(): ScanTypes {
         return "Must be either a comma-separated list of numbers, or \"auto\".";
       },
     },
-    { id: "exptime" as Guid,
+    { id: "exptime" as ParamUid,
       name: "Exposure Time" as ScanParameterName,
       description: "The number of exposure seconds needed, or enter \"auto\" if auto exposure is desired.",
       default: "auto",
@@ -74,7 +76,7 @@ export function getScanTypes(): ScanTypes {
         return "Must be either a number, or \"auto\".";
       },
     },
-    { id: "mspots" as Guid,
+    { id: "mspots" as ParamUid,
       name: "Measurement Spots" as ScanParameterName,
       description: "The number of measurement spots per sample (2 mm apart, around center of sample).",
       default: "1",
@@ -83,7 +85,7 @@ export function getScanTypes(): ScanTypes {
         return "Must be an integer, 1 or greater.";
       },
     },
-    { id: "expmax" as Guid,
+    { id: "expmax" as ParamUid,
       name: "Max Exposure Time" as ScanParameterName,
       description: "The upper limit for exposure time in seconds. Can be up to 120.",
       default: "120",
@@ -92,20 +94,20 @@ export function getScanTypes(): ScanTypes {
         return "Must be a number from 1 to 120.";
       },
     },
-    { id: "imgtype" as Guid,
+    { id: "imgtype" as ParamUid,
       name: "Image Type" as ScanParameterName,
       description: "The type of image to generate",
       required: true,
       choices: ["single", "tiled"],
       default: "tiled"
     },
-    { id: "testunused" as Guid,
+    { id: "testunused" as ParamUid,
       name: "Unused" as ScanParameterName,
       description: "This parameter is unused, except for the test ScanType",
     }
   ];
 
-  var parameterMap = new Map<Guid, ScanParameterType>();
+  var parameterMap = new Map<ParamUid, ScanParameterType>();
   parameters.forEach((p) => parameterMap.set(p.id, p));
 
   // Specified in the order they will be displayed and searched in the UI.
@@ -113,22 +115,22 @@ export function getScanTypes(): ScanTypes {
     {
       name: "GIWAXS" as ScanTypeName,
       description: "GIWAXS",
-      parameters: ["incangles" as Guid, "exptime" as Guid, "mspots" as Guid, "expmax" as Guid, "imgtype" as Guid]
+      parameters: ["incangles" as ParamUid, "exptime" as ParamUid, "mspots" as ParamUid, "expmax" as ParamUid, "imgtype" as ParamUid]
     },
     {
       name: "Test" as ScanTypeName,
       description: "Test ScanType. Not to be used in production. Has two parameters: \"testunused\" and \"imgtype\".",
-      parameters: ["testunused" as Guid, "imgtype" as Guid]
+      parameters: ["testunused" as ParamUid, "imgtype" as ParamUid]
     }
 //      {
 //        name: "GIWAXS with 3-parameter gpCAM" as ScanTypeName,
 //        description: "GIWAXS with gpCAM optimization. Not all samples may be scanned.",
-//        parameters: ["2" as Guid, "5" as Guid, "6" as Guid, "7" as Guid]
+//        parameters: ["2" as ParamUid, "5" as ParamUid, "6" as ParamUid, "7" as ParamUid]
 //      },
 //      {
 //        name: "GIWAXS with 6-parameter gpCAM" as ScanTypeName,
 //        description: "GIWAXS with gpCAM optimization. Not all samples may be scanned.",
-//        parameters: ["2" as Guid, "5" as Guid, "6" as Guid, "7" as Guid]
+//        parameters: ["2" as ParamUid, "5" as ParamUid, "6" as ParamUid, "7" as ParamUid]
 //      }
   ];
 

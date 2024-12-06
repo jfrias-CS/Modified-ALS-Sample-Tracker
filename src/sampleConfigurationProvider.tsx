@@ -35,12 +35,16 @@ enum ProviderLoadingState { NotTriggered, Pending, Succeeded, Failed };
 interface SampleConfigurationInterface {
   // Access to the current instance of SampleConfigurationSets
   sets: SampleConfigurationSets;
-  // Track the status of loading all the sets.
-  setsLoadingState: ProviderLoadingState;
   // Essential metadata for interpreting SampleConfiguration objects.
   scanTypes: ScanTypes;
+
+  // General loading state, succeeds when all others succeed.
+  loadingState: ProviderLoadingState;
+  // Track the status of loading all the sets.
+  setsLoadingState: ProviderLoadingState;
   // Set to true when successfully loaded, which should happen automatically after this comoponent is mounted.
   scanTypesLoadingState: ProviderLoadingState;
+
   // A callback for when a child component makes a change to the SampleConfigurationSets instance.
   changed: () => void;
   // This counter is incremented whenever the SampleConfigurationSets data is changed.
@@ -53,6 +57,7 @@ interface SampleConfigurationInterface {
 const SampleConfigurationContext = createContext<SampleConfigurationInterface>({
                     sets: new SampleConfigurationSets("empty", "0" as Guid), // Should never be reached
                     scanTypes: {typesByName:new Map(),typeNamesInDisplayOrder:[],parametersById:new Map()},
+                    loadingState: ProviderLoadingState.NotTriggered,
                     setsLoadingState: ProviderLoadingState.NotTriggered,
                     scanTypesLoadingState: ProviderLoadingState.NotTriggered,
                     changed: () => {},
@@ -65,6 +70,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
   const [sampleConfigurationsObject, setSampleConfigurationsObject] = useState<SampleConfigurationSets>(new SampleConfigurationSets("empty", "0" as Guid));
   const [scanTypes, setScanTypes] = useState<ScanTypes>({typesByName:new Map(),typeNamesInDisplayOrder:[],parametersById:new Map()});
 
+  const [loadingState, setLoadingState] = useState<ProviderLoadingState>(ProviderLoadingState.NotTriggered);
   const [setsLoadingState, setSetsLoadingState] = useState<ProviderLoadingState>(ProviderLoadingState.NotTriggered);
   const [scanTypesLoadingState, setScanTypesLoadingState] = useState<ProviderLoadingState>(ProviderLoadingState.NotTriggered);
 
@@ -83,14 +89,11 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
   }, []);
 
 
+
   useEffect(() => {
-    if (proposalId === undefined) {
-      console.log('SampleConfigurationProvider given undefined proposalId');
-      return;
-    }
-    console.log('SampleConfigurationProvider given proposalId ' + proposalId);
-    
-    setSetsLoadingState(ProviderLoadingState.NotTriggered);
+    // Proceed only if our watched values equal these:
+    if (setsLoadingState != ProviderLoadingState.Pending) { return; }
+    if (scanTypesLoadingState != ProviderLoadingState.Succeeded) { return; }
 
     const fetchData = async () => {
       try {
@@ -102,11 +105,26 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
           throw new Error("ProposalId is blank");
         }
 
-        setSetsLoadingState(ProviderLoadingState.Pending);
-
         const result = await readConfigsForProposalId(p);
         if (result.success) {
-          ingestFromServer(result.response!);
+          const records = result.response!;
+          console.log("ingesting records:");
+          console.log(records);
+
+          // Create a master container for all our sets
+          const setContainer = new SampleConfigurationSets(proposalId!, proposalId as Guid);
+          console.log(scanTypes);
+          setContainer.setScanTypes(scanTypes);
+          setContainer.add(records.sets);
+
+          records.configs.forEach((c) => {
+            const thisSet = setContainer.getById(c.setId);
+            if (!thisSet) { return; }
+            thisSet.add([c]);
+          });
+
+          setSampleConfigurationsObject(setContainer);
+          setSetsLoadingState(ProviderLoadingState.Succeeded);
           return;
         }
       } catch (error) {
@@ -115,10 +133,20 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
       setSetsLoadingState(ProviderLoadingState.Failed);
     };
 
-    // Call fetchData when the component mounts
+    // Call fetchData when the proposalId changes
     fetchData();
     console.log('Called fetchData');
 
+  }, [setsLoadingState, scanTypesLoadingState]);
+
+
+  useEffect(() => {
+    if (proposalId === undefined) {
+      console.log('SampleConfigurationProvider given undefined proposalId');
+      return;
+    }
+    console.log('SampleConfigurationProvider given proposalId: ' + proposalId);
+    setSetsLoadingState(ProviderLoadingState.Pending);
   }, [proposalId]);
 
 
@@ -131,40 +159,21 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
   };
 
 
-  // Take the given Set and Config objects, combine them
-  // together under a SampleConfigurationSets object, and set that as the current
-  // working data.
-  function ingestFromServer(records: RecordsFromServer) {
-    console.log("Calling ingestFromServer");
-    console.log(records);
-
-    // Create a master container for all our sets
-    const setContainer = new SampleConfigurationSets(proposalId!, proposalId as Guid);
-    setContainer.setScanTypes(scanTypes);
-    setContainer.add(records.sets);
-
-    records.configs.forEach((c) => {
-      const thisSet = setContainer.getById(c.setId);
-      if (!thisSet) { return; }
-      thisSet.add([c]);
-    });
-
-    setSampleConfigurationsObject(setContainer);
-    setSetsLoadingState(ProviderLoadingState.Succeeded);
-  };
-
-
   useEffect(() => {
-    console.log('Updating scanTypes in sampleConfigurationsObject');
-    sampleConfigurationsObject.setScanTypes(scanTypes);
-    changed();
-  }, [scanTypes]);
+    var s = ProviderLoadingState.Pending;
+    if ((setsLoadingState == ProviderLoadingState.Succeeded) &&
+        (scanTypesLoadingState == ProviderLoadingState.Succeeded)) {
+      s = ProviderLoadingState.Succeeded;
+    }
+    setLoadingState(s);
+  }, [setsLoadingState, scanTypesLoadingState]);
 
 
   return (
     <SampleConfigurationContext.Provider value={{
         sets: sampleConfigurationsObject,
         scanTypes: scanTypes,
+        loadingState: loadingState,
         setsLoadingState: setsLoadingState,
         scanTypesLoadingState: scanTypesLoadingState,
         changed: changed,
