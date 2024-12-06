@@ -5,11 +5,12 @@ import 'bulma/css/bulma.min.css';
 import { SampleConfigurationSet } from '../sampleConfiguration.ts';
 import { SampleConfigurationContext, ProviderLoadingState } from '../sampleConfigurationProvider.tsx';
 import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
-import AddSet from './addSets.tsx';
-import './setTable.css';
+import { QrCodeImage } from './../components/qrcode/qrCodeImage.tsx';
+import { QrEncoding, QrErrorCorrectionLevel } from './../components/qrcode/qrCodeTypes.ts';
+import './setLabels.css';
 
 
-const SetTable: React.FC = () => {
+const SetLabels: React.FC = () => {
 
   const { proposalId } = useParams();
 
@@ -19,7 +20,7 @@ const SetTable: React.FC = () => {
   const [loadingMessage, setLoadingMessage] = useState("");
 
   useEffect(() => {
-    console.log(`setTable changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
+    console.log(`setLabels changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
 
     if ((configContext.setsLoadingState != ProviderLoadingState.Succeeded) ||
         (configContext.scanTypesLoadingState != ProviderLoadingState.Succeeded)) {
@@ -56,6 +57,11 @@ const SetTable: React.FC = () => {
         </ul>
       </nav>
 
+        <QrCodeImage size="5em"
+          mode={QrEncoding.Alphanumeric}
+          errorCorrectionLevel={QrErrorCorrectionLevel.L}
+          content="hello" />
+
       <nav className="level">
         <div className="level-left">
           <div className="level-item">
@@ -65,10 +71,6 @@ const SetTable: React.FC = () => {
 
         <div className="level-right">
           <div className="level-item">
-              <p className="subtitle is-5"><Link to={ "labels" }>Printable Labels</Link></p>
-          </div>
-          <div className="level-item">
-            <AddSet />
           </div>
         </div>
       </nav>
@@ -77,33 +79,32 @@ const SetTable: React.FC = () => {
         { sets.length == 0 ? (
           <p>( Use the Add button on the right to add Sets. )</p>
         ) : (
-          <>
-            <table className="settable">
-              <thead>
-                <tr key="headers">
-                  <th key="name" scope="col">Name</th>
-                  <th key="description" scope="col">Description</th>
-                  <th key="samplecount" scope="col">Samples</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  sets.map((set) => {
-                    return (
-                      <tr key={set["id"]}>
-                          <th scope="row"><Link to={ "set/" + set.id }>{ set.name }</Link></th>
-                          <td>{ set.description }</td>
-                          <td>{ set.configurationsById.size }</td>
-                      </tr>);
-                  })
-                }
-              </tbody>
-            </table>
-          </>
+
+        <table className="setLabels">
+          <thead>
+            <tr key="headers">
+              <th key="name" scope="col">Name</th>
+              <th key="description" scope="col">Description</th>
+              <th key="samplecount" scope="col">Samples</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              sets.map((set) => {
+                return (
+                  <tr key={set["id"]}>
+                      <th scope="row"><Link to={ "set/" + set.id }>{ set.name }</Link></th>
+                      <td>{ set.description }</td>
+                      <td>{ set.configurationsById.size }</td>
+                  </tr>);
+              })
+            }
+          </tbody>
+        </table>
         )}
       </div>
     </>
   )
 }
 
-export default SetTable
+export default SetLabels

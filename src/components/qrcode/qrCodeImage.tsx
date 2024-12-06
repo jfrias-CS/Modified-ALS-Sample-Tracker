@@ -35,7 +35,7 @@ function QrCodeImage(settings: QrCodeImageParameters) {
 	qr.make();
 
 	const cellSize = 4;
-	const margin = 2;
+	const margin = 4;
 	const qrEncoded = qr.createImg(cellSize, margin);
 	ref.current.src = qrEncoded;
   }, [content, ref]);
