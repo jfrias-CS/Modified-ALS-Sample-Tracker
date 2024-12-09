@@ -227,6 +227,7 @@ function InputEditable(settings: InputEditableParameters) {
                 readOnly={ settings.isReadOnly }
                 onKeyDown={ inputOnKeyDown }
                 onChange={ inputOnChange }
+                autoComplete="off"
                 autoCorrect="off"
 
                 aria-haspopup="listbox"
