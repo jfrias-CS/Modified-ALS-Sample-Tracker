@@ -20,24 +20,14 @@ const SetTable: React.FC = () => {
   const [loadingMessage, setLoadingMessage] = useState("");
 
   useEffect(() => {
-    console.log(`setTable changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
-
-    if (configContext.loadingState != ProviderLoadingState.Succeeded) {
-      if (configContext.setsLoadingState == ProviderLoadingState.Failed) {
-        setLoading(LoadingState.Failure);
-        setLoadingMessage("Failed to load Sets. Are you sure you're still logged in?");
-      } else {
-        setLoading(LoadingState.Loading);
-        setLoadingMessage("");
-      }
-      return;
+    if (configContext.setsLoadingState == ProviderLoadingState.Failed) {
+      setLoading(LoadingState.Failure);
+      setLoadingMessage("Failed to load Sets. Are you sure you're still logged in?");
+    } else if (configContext.loadingState == ProviderLoadingState.Succeeded) {
+      const sortedSets = configContext.sets.all().sort((a, b) => a.name.localeCompare(b.name));
+      setSets(sortedSets);
+      setLoading(LoadingState.Success);
     }
-
-    const sortedSets = configContext.sets.all().sort((a, b) => a.name.localeCompare(b.name));
-
-    setSets(sortedSets);
-    setLoading(LoadingState.Success);
-
   }, [configContext.changeCounter, configContext.setsLoadingState, configContext.loadingState]);
 
   // If we're in any loading state other than success,

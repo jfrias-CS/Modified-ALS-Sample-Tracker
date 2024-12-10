@@ -154,7 +154,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
   // Note: In the future it may be prudent to pass a set ID into this,
   // to trigger separate server data update calls for each set, since each will have its own history.
   function changed() {
-    console.log("Calling changed())");
+    console.log("Called changed())");
     setChangeCounter(changeCounter + 1);
   };
 

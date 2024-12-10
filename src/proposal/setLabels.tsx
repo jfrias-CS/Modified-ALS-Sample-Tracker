@@ -5,9 +5,7 @@ import 'bulma/css/bulma.min.css';
 import { SampleConfigurationSet } from '../sampleConfiguration.ts';
 import { SampleConfigurationContext, ProviderLoadingState } from '../sampleConfigurationProvider.tsx';
 import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
-import { QrCodeImage } from './../components/qrcode/qrCodeImage.tsx';
-import { QrEncoding, QrErrorCorrectionLevel } from './../components/qrcode/qrCodeTypes.ts';
-import './setLabels.css';
+import SetLabel from './setLabel.tsx';
 
 
 const SetLabels: React.FC = () => {
@@ -20,24 +18,14 @@ const SetLabels: React.FC = () => {
   const [loadingMessage, setLoadingMessage] = useState("");
 
   useEffect(() => {
-    console.log(`setLabels changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
-
-    if (configContext.loadingState != ProviderLoadingState.Succeeded) {
-      if (configContext.setsLoadingState == ProviderLoadingState.Failed) {
-        setLoading(LoadingState.Failure);
-        setLoadingMessage("Failed to load Sets. Are you sure you're still logged in?");
-      } else {
-        setLoading(LoadingState.Loading);
-        setLoadingMessage("");
-      }
-      return;
+    if (configContext.setsLoadingState == ProviderLoadingState.Failed) {
+      setLoading(LoadingState.Failure);
+      setLoadingMessage("Failed to load Sets. Are you sure you're still logged in?");
+    } else if (configContext.loadingState == ProviderLoadingState.Succeeded) {
+      const sortedSets = configContext.sets.all().sort((a, b) => a.name.localeCompare(b.name));
+      setSets(sortedSets);
+      setLoading(LoadingState.Success);
     }
-
-    const sortedSets = configContext.sets.all().sort((a, b) => a.name.localeCompare(b.name));
-
-    setSets(sortedSets);
-    setLoading(LoadingState.Success);
-
   }, [configContext.changeCounter, configContext.setsLoadingState, configContext.loadingState]);
 
   // If we're in any loading state other than success,
@@ -72,21 +60,12 @@ const SetLabels: React.FC = () => {
           <>
             {
               sets.map((set) => {
-                const qrContent = `set/${set.id}`.toUpperCase(); 
-
                 return (
-                  <div className="setLabel">
-                    <div className="qrCode">
-                      <QrCodeImage size="5em"
-                        mode={QrEncoding.Alphanumeric}
-                        errorCorrectionLevel={QrErrorCorrectionLevel.L}
-                        content={qrContent} />
-                    </div>
-                    <div className="textArea">
-                      <div>{ configContext.sets.name }</div>
-                      <div>{ set.name }</div>
-                    </div>
-                  </div>
+                  <SetLabel
+                    key={set.id}
+                    setId={set.id}
+                    setName={set.name}
+                    proposalName={configContext.sets.name} />
                 );
               })
             }
