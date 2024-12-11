@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faExclamationTriangle, faSpinner, faCheck } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
 import { Guid } from '../../components/utils.tsx';
 import { SampleConfiguration } from '../../sampleConfiguration.ts';
 import { SampleConfigurationContext, ProviderLoadingState } from '../../sampleConfigurationProvider.tsx';
+import { updateConfig } from './../../sampleConfigurationApi.ts';
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
 import { SampleCell, CellFunctions, CellValidationStatus, CellValidationResult } from './sampleCell.tsx';
@@ -13,6 +16,8 @@ import './sampleTable.css';
 interface SampleTableProps {
   setid: Guid;
 }
+
+enum SyncState { Idle, Pending, Requested, Failed, Completed };
 
 type Coordinates = {x: number, y: number};
 
@@ -47,6 +52,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   const [tableHasFocus, setTableHasFocus] = useState<boolean>(false);
   const [cellFocusX, setCellFocusX] = useState<number | null>(null);
   const [cellFocusY, setCellFocusY] = useState<number | null>(null);
+  const [syncTimer, setSyncTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [syncState, setSyncState] = useState<SyncState>(SyncState.Idle);
 
 
   useEffect(() => {
@@ -89,23 +96,23 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
   function tableOnClick(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     const foundEditableCell = findAnEditableCell(event.target as HTMLElement);
-    if (!foundEditableCell) {
-      setCellFocusX(null);
-      setCellFocusY(null);
-      return;
+    var x = null;
+    var y = null;
+    if (foundEditableCell) {
+      x = foundEditableCell.x;
+      y = foundEditableCell.y;
     }
-    setCellFocusX(foundEditableCell.x);
-    setCellFocusY(foundEditableCell.y);
-    console.log(foundEditableCell);
+    setCellFocusX(x);
+    setCellFocusY(y);
   }
 
 
-  const set = configContext.sets.getById(setId!.trim() as Guid)
-  if (!set) {
+  const thisSet = configContext.sets.getById(setId!.trim() as Guid)
+  if (!thisSet) {
     return (<div></div>)
   }
 
-  const displayedParameterIds = set.relevantParameters.filter((p) => configContext.scanTypes.parametersById.has(p));
+  const displayedParameterIds = thisSet.relevantParameters.filter((p) => configContext.scanTypes.parametersById.has(p));
   const displayedParameters = displayedParameterIds.map((p) => configContext.scanTypes.parametersById.get(p)!);
 
   // Add the vector to the given currentPosition until it points to a table cell that is
@@ -183,11 +190,11 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   // A function passed to every SampleCell (non-header table cell in samples table)
   // that validates the given input value based on its cell's x,y location in the table.
   // It relies on the displayedParameters constant, calculated just above.
-  function cellValidator(x: number, y: number, inputString: string): CellValidationResult {
+  function cellValidator(x: number, y: number, value: string): CellValidationResult {
 
     // Validate "mm From Left Edge"
     if (x === 0) {
-      const inputNumber = parseFloat(inputString);
+      const inputNumber = parseFloat(value);
       if (isNaN(inputNumber)) {
         return { status: CellValidationStatus.Failure, message: "Offset must be a number." };
       } else if (sampleConfigurations.some((sample) => sample.mmFromLeftEdge == inputNumber)) {
@@ -197,9 +204,9 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     // Validate Name
     } else if (x === 1) {
-      if (inputString == "") {
+      if (value == "") {
         return { status: CellValidationStatus.Failure, message: "Name cannot be blank." };
-      } else if (sampleConfigurations.some((sample) => sample.name == inputString)) {
+      } else if (sampleConfigurations.some((sample) => sample.name == value)) {
         return { status: CellValidationStatus.Failure, message: "Name must be unique on bar." };
       }
       return { status: CellValidationStatus.Success, message: null };
@@ -214,7 +221,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
       const paramType = displayedParameters[x - 4];
       if (paramType.validator !== undefined) {
-        const result = paramType.validator(inputString);
+        const result = paramType.validator(value);
         if (result !== null) {
           return { status: CellValidationStatus.Failure, message: result };
         }
@@ -230,7 +237,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   // that saves the given input value to the SampleConfiguration indicated by the
   // table cell at the given x,y location.
   // It relies on the displayedParameters constant, calculated just above.
-  function cellSave(x: number, y: number, inputString: string): CellValidationResult {
+  function cellSave(x: number, y: number, newValue: string): CellValidationResult {
 
     const thisConfig = sampleConfigurations[y];
     if (!thisConfig) {
@@ -241,24 +248,24 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     // "mm From Left Edge"
     if (x === 0) {
-      editedConfig.mmFromLeftEdge = parseFloat(inputString);
+      editedConfig.mmFromLeftEdge = parseFloat(newValue);
 
     // Name
     } else if (x === 1) {
-      editedConfig.name = inputString;
+      editedConfig.name = newValue;
 
     // Description
     } else if (x === 2) {
-      editedConfig.description = inputString;
+      editedConfig.description = newValue;
 
     // Validate scan parameters
     } else if ((x > 3) && ((x-4) < displayedParameters.length)) {
       const paramType = displayedParameters[x - 4];
-      editedConfig.parameters.set(paramType.id, inputString);
+      editedConfig.parameters.set(paramType.id, newValue);
     }
 
-    const thisSet = configContext.sets.getById(setId!.trim() as Guid)!;
-    thisSet.addOrReplaceWithHistory([editedConfig]);
+    thisSet!.addOrReplaceWithHistory([editedConfig]);
+    contentChanged();
 
     // This may not be the right behavior
     sampleConfigurations[y] = editedConfig;
@@ -267,6 +274,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
+  // At this point we've defined all the functions we need to pass
+  // to each editable cell in the table.
   const cellFunctions: CellFunctions = {
     validator: cellValidator,
     save: cellSave,
@@ -274,6 +283,51 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     down: goDown,
     left: goLeft,
     right: goRight
+  }
+
+
+  function contentChanged() {
+    if (syncTimer) { clearTimeout(syncTimer); }
+    setSyncTimer(setTimeout(() => syncTimerExpired(), 1000));
+    if (syncState != SyncState.Requested) {
+      setSyncState(SyncState.Pending);
+    }
+  }
+
+
+  async function syncTimerExpired() {
+    // If another save is pending while the previous one is still
+    // in progress, we renew the timer and exit, until the previous
+    // one reports either Completed or Failed.
+    if (syncState == SyncState.Requested) {
+      setSyncTimer(setTimeout(() => syncTimerExpired(), 1000));
+      return;
+    }
+
+    setSyncTimer(null);
+    const edits = thisSet!.getPendingEdits();
+    if (!edits) {
+      setSyncState(SyncState.Idle);
+      return;
+    }
+
+    setSyncState(SyncState.Requested);
+
+    const saveCalls = edits.edit.additions.map((e) => updateConfig(e as SampleConfiguration));
+    const deleteCalls = edits.edit.deletions.map((e) => {
+      const c = e as SampleConfiguration;
+      c.isValid = false;
+      return updateConfig(c as SampleConfiguration)
+    });
+
+    Promise.all(saveCalls.concat(deleteCalls)).then((responses) => {
+      if (responses.every((r) => r.success)) {
+        setSyncState(SyncState.Completed);
+        thisSet!.catchUpToEdit(edits.index);
+      } else {
+        setSyncState(SyncState.Failed);
+      }
+    });
   }
 
 
@@ -288,6 +342,15 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     tableHeaders.push((<th key={p.id} scope="col">{ p.name }</th>));
   });
 
+
+  var syncStatusIcon: JSX.Element | null = null;
+  if (syncState == SyncState.Requested) {
+    syncStatusIcon = (<FontAwesomeIcon icon={faSpinner} spin={true} />); 
+  } else if (syncState == SyncState.Completed) {
+    syncStatusIcon = (<FontAwesomeIcon icon={faCheck} />);
+  } else if (syncState == SyncState.Failed) {
+    syncStatusIcon = (<FontAwesomeIcon icon={faExclamationTriangle} color="darkred" />);
+  }
 
   return (
     <>
@@ -305,6 +368,11 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
           </div>
           <div className="level-item">
             <AddSamples />
+          </div>
+          <div className="level-item">
+              <span className="icon">
+                { syncStatusIcon }
+              </span>
           </div>
         </div>
       </nav>
