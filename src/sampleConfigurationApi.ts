@@ -173,6 +173,7 @@ async function createNewConfiguration(setId: Guid, name: string, description: st
   // The server will erase any that are left out.
   var sampleCharacteristics: { [key: string]: string|null|boolean } = {
     "lbnl_config_meta_type": "configuration",
+    "lbnl_config_meta_mm_from_left_edge": mmFromLeftEdge.toString(),
     "lbnl_config_meta_description": description,
     "lbnl_config_meta_set_id": setId,
     "lbnl_config_meta_scan_type": scanType,
