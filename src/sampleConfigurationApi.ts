@@ -251,6 +251,7 @@ async function updateConfig(config: SampleConfiguration): Promise<ResponseWrappe
   var sampleCharacteristics: { [key: string]: string|null|boolean } = {
     "lbnl_config_meta_type": "configuration",
     "lbnl_config_meta_description": config.description,
+    "lbnl_config_meta_mm_from_left_edge": config.mmFromLeftEdge.toString(),
     "lbnl_config_meta_set_id": config.setId,
     "lbnl_config_meta_scan_type": config.scanType,
     "lbnl_config_meta_valid": config.isValid
