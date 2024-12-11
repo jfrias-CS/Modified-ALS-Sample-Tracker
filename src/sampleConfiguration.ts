@@ -1,14 +1,13 @@
 import { ScanTypes, ParamUid, ScanTypeName, ScanType } from './scanTypes.ts';
 import { Guid, generateUniqueNames } from "./components/utils.tsx";
+import { ObjectWithGuid, EditQueueEntry, UndoHistory, UndoHistoryEntry } from "./undoHistory.ts";
 
 // Class definitions to represent sample configurations,
 // sets of sample configurations, and undo/redo history for changes
 // to those sets.
 
 
-export interface NewSampleConfigurationParameters {
-  // A unique identifier generated on the server.
-  id: Guid;
+export interface SampleConfigurationDto extends ObjectWithGuid {
   // Unique identifier of the set this config belongs to.
   setId: Guid;
   // Intended to be short and unique, but this is not strictly enforced.
@@ -29,7 +28,7 @@ export interface NewSampleConfigurationParameters {
 
 
 // Represents the configuration for one sample
-export class SampleConfiguration {
+export class SampleConfiguration implements SampleConfigurationDto {
 
   // A unique identifier generated on the server.
   id: Guid;
@@ -50,7 +49,7 @@ export class SampleConfiguration {
   // in case a previous ScanType selection is re-selected.
   parameters: Map<ParamUid, string|null>
 
-	constructor (p: NewSampleConfigurationParameters) {
+	constructor (p: SampleConfigurationDto) {
 		this.id = p.id;
 		this.setId = p.setId;
 		this.name = p.name;
@@ -73,114 +72,6 @@ export class SampleConfiguration {
       parameters: this.parameters // Copied during creation
   	});
   }
-}
-
-
-// Represents one set of changes to content of a SampleConfigurationSet
-class SampleConfigurationSetChanges {
-
-  preferNewer: boolean;
-  additions: Array<SampleConfiguration>;
-  deletions: Array<SampleConfiguration>;
-
-	constructor (preferNewer: boolean) {
-		this.preferNewer = preferNewer;
-    this.additions = [];
-    this.deletions = [];
-	}
-
-	newAddition(addition: SampleConfiguration) {
-		if (this.preferNewer) {
-			// Remove any previous change before pushing.
-			var c =
-				this.additions.filter((item) => (item.id != addition.id));
-			c.push(addition);
-			this.additions = c;
-		} else {
-			// Only push the change if there isn't one for that ID already
-			var s =
-				this.additions.some((item) => (item.id == addition.id));
-			if (!s) {
-				this.additions.push(addition);
-			}
-		}
-	}
-
-  newDeletion(deletion: SampleConfiguration) {
-    // Only push the change if there isn't one for that ID already
-    var s =
-      this.deletions.some((item) => (item.id == deletion.id));
-    if (!s) {
-      this.deletions.push(deletion);
-    }
-	}
-
-  asSelection() {
-		return this.additions.map(function(item) {
-	      return item.id;
-		});
-	}
-
-	isEmpty() {
-		if (this.additions.length > 0) { return false; }
-		if (this.deletions.length > 0) { return false; }
-		return true;
-	}
-}
-
-
-// Pairs one set of changes to a SampleConfigurationSet,
-// with a copy of the contents that were altered by the changes.
-// These can be used to move forward and backward in the history of edits.
-class UndoHistoryEntry {
-
-  oldChanges: SampleConfigurationSetChanges;
-  newChanges: SampleConfigurationSetChanges;
-
-	constructor () {
-    	this.oldChanges = new SampleConfigurationSetChanges(false);
-      this.newChanges = new SampleConfigurationSetChanges(true);
-	}
-
-  isEmpty() {
-		if (!this.oldChanges.isEmpty()) { return false; }
-		if (!this.newChanges.isEmpty()) { return false; }
-		return true;
-	}
-}
-
-
-// A history of modifications to a SampleConfigurationSet.
-// Contains a queue for sending modifications to a server, and stacks for undo/redo on the client.
-class UndoHistory {
-
-  undoHistory: UndoHistoryEntry[];
-  redoHistory: UndoHistoryEntry[];
-
-  constructor () {
-		this.undoHistory = [];
-		this.redoHistory = [];
-	}
-
-	addEvent(entry: UndoHistoryEntry) {
-		this.undoHistory.push(entry);
-		// Adding a new event (as opposed to Redo-ing one) always clears the Redo stack.
-		this.redoHistory = [];
-	}
-
-	undo() {
-		if (this.undoHistory.length < 1) { return null; }    
-    const u = this.undoHistory.pop()!;
-		this.redoHistory.push(u);
-		return u.oldChanges;
-	}
-
-  redo() {
-    if (this.redoHistory.length < 1) { return null; }
-    const r = this.redoHistory.pop()!;
-		this.undoHistory.push(r);
-		return r.newChanges;
-	}
 }
 
 
@@ -238,45 +129,12 @@ export class SampleConfigurationSet {
     this.relevantParameters = relevantParameters;
   }
 
-  addOrReplaceWithHistory(input: SampleConfiguration[]) {
-    const h = new UndoHistoryEntry();
-    const currentSet = this.configurationsById;
-
-    const newConfigs = input.filter((i) => !currentSet.has(i.id));
-    const conflictingConfigs = input.filter((i) => currentSet.has(i.id));
-
-    // Every given SampleConfiguration is a new change in forward history
-    input.forEach((i) => h.newChanges.newAddition(i));
-    // Every SampleConfiguration in the existing set that's replaced by a new one
-    // should be preserved and restored if we go backward in history (undo)
-    conflictingConfigs.forEach((i) => h.oldChanges.newAddition(currentSet.get(i.id)!));    
-    // Every given SampleConfiguration with a novel id (not seen in the current set)
-    // should be removed if we go backward in history (undo)
-    newConfigs.forEach((i) => h.oldChanges.newDeletion(i));
-    // Event construction is complete.
-    this.history.addEvent(h);
-
-    // Now that we've updated undo/redo history, write the changes.
-    input.forEach((i) => currentSet.set(i.id, i));
-    // The set of relevant parameters may have changed.
-    this.findRelevantParameters();
-  }
-
-  // Adds the given SampleConfiguration objects to the set without doing any checking.
-  // Used to build up an initial state.
-  add(input: SampleConfiguration[]) {
-    input.forEach((i) => this.configurationsById.set(i.id, i));
-    // The set of relevant parameters may have changed.
-    this.findRelevantParameters();
-  }
-
   generateUniqueNames(suggestedName: string, quantity?: number, startIndex?: number | null): string[] {
     let existingNames: string[] = [];
     this.configurationsById.forEach((v) => { existingNames.push(v.name) });
 
     return generateUniqueNames(existingNames, suggestedName, quantity, startIndex);
   }
-
 
   // Generate bar locations that are at least 10mm beyond the current
   // rightmost config location, and 10mm apart from each other.
@@ -301,6 +159,91 @@ export class SampleConfigurationSet {
 
   all() {
     return Array.from(this.configurationsById.values());
+  }
+
+
+  addOrReplaceWithHistory(input: SampleConfiguration[]) {
+    const h = new UndoHistoryEntry();
+    const currentSet = this.configurationsById;
+
+    // Every given SampleConfiguration is a new change in forward history
+    input.forEach((i) => h.forwardAdd(i));
+    // Every given SampleConfiguration with a novel id (not seen in the current set)
+    // should be removed if we go backward in history (undo)
+    const newConfigs = input.filter((i) => !currentSet.has(i.id));
+    newConfigs.forEach((i) => h.backwardDelete(i));
+    // Every SampleConfiguration in the existing set that's replaced by a new one
+    // should be preserved and restored if we go backward in history (undo)
+    const conflictingConfigs = input.filter((i) => currentSet.has(i.id));
+    conflictingConfigs.forEach((i) => h.backwardAdd(currentSet.get(i.id)!));
+
+    // Event construction is complete.
+    this.history.do(h);
+
+    // Now that we've updated undo/redo history, write the changes.
+    input.forEach((i) => currentSet.set(i.id, i));
+    // The set of relevant parameters may have changed.
+    this.findRelevantParameters();
+  }
+
+  // Adds the given SampleConfiguration objects to the set without doing any checking.
+  // Used to build up an initial state.
+  add(input: SampleConfiguration[]) {
+    input.forEach((i) => this.configurationsById.set(i.id, i));
+    // The set of relevant parameters may have changed.
+    this.findRelevantParameters();
+  }
+
+
+	undo() {
+    const edit = this.history.undo();
+    if (!edit) { return; }
+
+    const currentSet = this.configurationsById;
+    edit.additions.forEach((a) => {
+      const s = a as SampleConfiguration;
+      s.isValid = true;
+      currentSet.set(s.id, s)
+    });
+    edit.deletions.forEach((a) => { currentSet.delete(a.id) });
+
+    // The set of relevant parameters may have changed.
+    this.findRelevantParameters();
+	}
+
+  redo() {
+    const edit = this.history.redo();
+    if (!edit) { return; }
+
+    const currentSet = this.configurationsById;
+    edit.additions.forEach((a) => {
+      const s = a as SampleConfiguration;
+      s.isValid = true;
+      currentSet.set(s.id, s)
+    });
+    edit.deletions.forEach((a) => { currentSet.delete(a.id) });
+
+    // The set of relevant parameters may have changed.
+    this.findRelevantParameters();
+	}
+
+  canRedo(): boolean {
+    return this.history.canRedo();
+  }
+
+  canUndo(): boolean {
+    return this.history.canUndo();
+  }
+
+  getPendingEdits(): EditQueueEntry | null {
+    return this.history.getPendingEdits();
+  }
+
+  // Pulls items off the beginning of the edit queue
+  // up to and including the item with the given index,
+  // or just clears the whole queue is that index isn't present.
+  catchUpToEdit(index:number) {
+    return this.history.catchUpToEdit(index);
   }
 }
 
