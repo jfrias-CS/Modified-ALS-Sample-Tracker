@@ -1,0 +1,10 @@
+services:
+  sample_metadata_input_app:
+    image: lbnl_als_sample_metadata_input_app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      NODE_ENV: production
+    ports:
+      - 3000:3000
