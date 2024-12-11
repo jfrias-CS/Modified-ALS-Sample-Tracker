@@ -22,6 +22,7 @@ type Retriever<Item> = (searchString: string) => Promise<SearchResult<Item>>;
 type ItemToString<Item> = (item:Item) => string;
 
 
+// Callbacks a user of this component needs to provide
 interface SearchFunctions<Item> {
   itemToString: ItemToString<Item>;
   itemsRetriever: Retriever<Item>;
@@ -31,7 +32,7 @@ interface SearchFunctions<Item> {
 }
 
 
-// Settings passed in with the React component
+// Settings passed in with the component.  Most of these are optional.
 interface InputAutocompleteParameters<Item> {
   elementId: string;
   addedClass?: string;

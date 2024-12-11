@@ -15,9 +15,12 @@ interface SetLabelProps {
 }
 
 
+const sampleBaseUrl = "http://samples.als.lbl.gov/set/";
+
+
 const SetLabel: React.FC<SetLabelProps> = (props) => {
 
-    const qrContent = `http://samples.als.lbl.gov/set/${props.setId}`.toUpperCase(); 
+    const qrContent = `${sampleBaseUrl}${props.setId}`.toUpperCase(); 
 
     return (
       <div className="setLabel">
