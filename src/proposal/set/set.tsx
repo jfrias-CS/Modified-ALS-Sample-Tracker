@@ -24,7 +24,7 @@ const Set: React.FC = () => {
 
 
   useEffect(() => {
-    console.log(`set setId:${setId} changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
+//    console.log(`set setId:${setId} changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
 
     if ((setId === undefined) || (!setId.trim())) {
       setLoading(LoadingState.Failure);

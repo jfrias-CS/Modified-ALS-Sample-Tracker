@@ -78,13 +78,13 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
 
 
   useEffect(() => {
-    console.log('SampleConfigurationProvider mounted');
+//    console.log('SampleConfigurationProvider mounted');
 
     // Will eventually be an asynchronous call.
     setScanTypes(getScanTypes());
     setScanTypesLoadingState(ProviderLoadingState.Succeeded);
     return () => {
-      console.log('SampleConfigurationProvider unmounted');
+//      console.log('SampleConfigurationProvider unmounted');
     };
   }, []);
 
@@ -108,12 +108,12 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
         const result = await readConfigsForProposalId(p);
         if (result.success) {
           const records = result.response!;
-          console.log("ingesting records:");
-          console.log(records);
+//          console.log("ingesting records:");
+//          console.log(records);
 
           // Create a master container for all our sets
           const setContainer = new SampleConfigurationSets(proposalId!, proposalId as Guid);
-          console.log(scanTypes);
+//          console.log(scanTypes);
           setContainer.setScanTypes(scanTypes);
           setContainer.add(records.sets);
 
@@ -135,17 +135,17 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
 
     // Call fetchData when the proposalId changes
     fetchData();
-    console.log('Called fetchData');
+//    console.log('Called fetchData');
 
   }, [setsLoadingState, scanTypesLoadingState]);
 
 
   useEffect(() => {
     if (proposalId === undefined) {
-      console.log('SampleConfigurationProvider given undefined proposalId');
+//      console.log('SampleConfigurationProvider given undefined proposalId');
       return;
     }
-    console.log('SampleConfigurationProvider given proposalId: ' + proposalId);
+//    console.log('SampleConfigurationProvider given proposalId: ' + proposalId);
     setSetsLoadingState(ProviderLoadingState.Pending);
   }, [proposalId]);
 
@@ -154,7 +154,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
   // Note: In the future it may be prudent to pass a set ID into this,
   // to trigger separate server data update calls for each set, since each will have its own history.
   function changed() {
-    console.log("Called changed())");
+//    console.log("Called changed())");
     setChangeCounter(changeCounter + 1);
   };
 

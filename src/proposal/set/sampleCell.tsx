@@ -249,7 +249,7 @@ function SampleCell(settings: SampleCellParameters) {
     } else {
       reset();
     }
-    console.log(`Blurred ${settings.x} ${settings.y}`);
+//    console.log(`Blurred ${settings.x} ${settings.y}`);
   }
   
 

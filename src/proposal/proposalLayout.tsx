@@ -12,9 +12,9 @@ const ProposalLayout: React.FC<PropsWithChildren> = () => {
 
   useEffect(() => {
 
-    console.log('proposalLayout mounted');
+//    console.log('proposalLayout mounted');
     return () => {
-        console.log('proposalLayout unmounted');
+//        console.log('proposalLayout unmounted');
     };
   }, []);
 

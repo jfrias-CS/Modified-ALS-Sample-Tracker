@@ -41,8 +41,8 @@ async function whoAmI(): Promise<ResponseWrapper<string>> {
     return { success: false, message: result.message };
   }
   const rawRecords:any = await result.response!.text();
-  console.log("whoAmI result");
-  console.log(rawRecords);
+//  console.log("whoAmI result");
+//  console.log(rawRecords);
   return { success: true, response: rawRecords };
 }
 
@@ -149,8 +149,8 @@ async function createNewSet(name: string, description: string): Promise<Response
   };
  
   const result = await sciCatPost('samples', JSON.stringify(body));
-  console.log("create set result");
-  console.log(result);
+//  console.log("create set result");
+//  console.log(result);
 
   if (result.success) {
     const newRecord:any = await result.response!.json();
@@ -191,8 +191,8 @@ async function createNewConfiguration(setId: Guid, name: string, description: st
   };
 
   const result = await sciCatPost('samples', JSON.stringify(body));
-  console.log("create configuration result");
-  console.log(result);
+//  console.log("create configuration result");
+//  console.log(result);
 
   if (result.success) {
     const newRecord:any = await result.response!.json();
@@ -230,12 +230,12 @@ async function updateSet(set: SampleConfigurationSet): Promise<ResponseWrapper<S
   };
 
   const result = await sciCatPatch(`samples/${set.id}`, JSON.stringify(body));
-  console.log("patch result");
-  console.log(result);
+//  console.log("patch result");
+//  console.log(result);
 
   if (result.success) {
     const body:any = await result.response!.json();
-    console.log(body);
+//    console.log(body);
     return { success: true, response: set };
   }
   return { success: false, message: result.message };
@@ -266,12 +266,12 @@ async function updateConfig(config: SampleConfiguration): Promise<ResponseWrappe
   };
 
   const result = await sciCatPatch(`samples/${config.id}`, JSON.stringify(body));
-  console.log("patch result");
-  console.log(result);
+//  console.log("patch result");
+//  console.log(result);
 
   if (result.success) {
     const body:any = await result.response!.json();
-    console.log(body);
+  //  console.log(body);
     return { success: true, response: config };
   }
   return { success: false, message: result.message };

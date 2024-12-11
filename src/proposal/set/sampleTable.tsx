@@ -57,7 +57,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
 
   useEffect(() => {
-    console.log(`sampleTable setId:${setId} changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
+//    console.log(`sampleTable setId:${setId} changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
 
     if ((setId === undefined) || (!setId.trim())) { return; }
 
@@ -76,11 +76,11 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   // after a click event on a pulldown item.
   useEffect(() => {
     if (!tableHasFocus) {
-      console.log(`Table lost focus`);
+//      console.log(`Table lost focus`);
       setCellFocusX(null);
       setCellFocusY(null);
     } else {
-      console.log(`Table got focus`);
+//      console.log(`Table got focus`);
     }
   }, [tableHasFocus]);
 
