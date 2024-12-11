@@ -61,11 +61,13 @@ const SetLabels: React.FC = () => {
             {
               sets.map((set) => {
                 return (
-                  <SetLabel
-                    key={set.id}
-                    setId={set.id}
-                    setName={set.name}
-                    proposalName={configContext.sets.name} />
+                  <Link to={ "../set/" + set.id }>
+                    <SetLabel
+                      key={set.id}
+                      setId={set.id}
+                      setName={set.name}
+                      proposalName={configContext.sets.name} />
+                  </Link>
                 );
               })
             }

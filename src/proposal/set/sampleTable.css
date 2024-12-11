@@ -8,8 +8,8 @@ table.sampletable tr th {
   padding: 0.3rem 0.6rem;
 }
 
-table.sampletable tr:nth-child(even) {
-  background-color: hsl(221, 10%, calc(11%));
+table.sampletable tbody tr:nth-child(odd) {
+  background-color: hsl(221, 10%, calc(15%));
 }
 
 table.sampletable tr:hover {

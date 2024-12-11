@@ -6,8 +6,8 @@ table.settable tr th {
   padding: .375rem 1rem;
 }
 
-table.settable tr:nth-child(even) {
-  background-color: hsl(221, 10%, calc(11%));
+table.settable tbody tr:nth-child(odd) {
+  background-color: hsl(221, 10%, calc(15%));
 }
 
 table.settable tr:hover {
