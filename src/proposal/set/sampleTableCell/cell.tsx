@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheck, faX } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
 
@@ -12,17 +10,17 @@ interface CellValidationResult {
   message: string | null;
 }
 
-type Validator = (x: number, y: number, inputString: string) => CellValidationResult;
-type Navigation = (x: number, y: number) => CellValidationStatus;
+type CellValidator = (x: number, y: number, inputString: string) => CellValidationResult;
+type CellNavigation = (x: number, y: number) => CellValidationStatus;
 
 
 interface CellFunctions {
-  validator: Validator;
-  save: Validator;
-  up: Navigation;
-  down: Navigation;
-  left: Navigation;
-  right: Navigation;
+  validator: CellValidator;
+  save: CellValidator;
+  up: CellNavigation;
+  down: CellNavigation;
+  left: CellNavigation;
+  right: CellNavigation;
 }
 
 
@@ -154,10 +152,7 @@ function SampleCell(settings: SampleCellParameters) {
     // revealed the input field, and the value element would have width of 0
     // since it's hidden by "display: none".
     setJustActivated(settings.isActivated);
-    //    document.addEventListener("mousedown", clickedElsewhere)
-    return () => {
-//      document.removeEventListener("mousedown", clickedElsewhere)
-    };
+    return () => {};
   }, [settings.isActivated]);
 
 

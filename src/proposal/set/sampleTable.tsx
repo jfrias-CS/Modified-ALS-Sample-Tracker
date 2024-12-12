@@ -6,10 +6,10 @@ import 'bulma/css/bulma.min.css';
 import { Guid } from '../../components/utils.tsx';
 import { SampleConfiguration } from '../../sampleConfiguration.ts';
 import { SampleConfigurationContext, ProviderLoadingState } from '../../sampleConfigurationProvider.tsx';
-import { updateConfig } from './../../sampleConfigurationApi.ts';
+import { updateConfig } from '../../sampleConfigurationApi.ts';
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
-import { SampleCell, CellFunctions, CellValidationStatus, CellValidationResult } from './sampleCell.tsx';
+import { SampleCell, CellFunctions, CellValidationStatus, CellValidationResult } from './sampleTableCell/cell.tsx';
 import './sampleTable.css';
 
 
