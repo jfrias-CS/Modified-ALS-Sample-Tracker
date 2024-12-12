@@ -1,31 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import 'bulma/css/bulma.min.css';
 
-
-// Internal state tracking
-enum CellValidationStatus { Success, Failure };
-
-interface CellValidationResult {
-  status: CellValidationStatus;
-  message: string | null;
-}
-
-type CellValidator = (x: number, y: number, inputString: string) => CellValidationResult;
-type CellNavigation = (x: number, y: number) => CellValidationStatus;
-
-
-interface CellFunctions {
-  validator: CellValidator;
-  save: CellValidator;
-  up: CellNavigation;
-  down: CellNavigation;
-  left: CellNavigation;
-  right: CellNavigation;
-}
+import { CellFunctions, CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellNavigationDirection, CellSubcomponentFunctions } from './cellDto.ts';
+import { CellTextfield } from './cellTextfield.tsx';
 
 
 // Settings passed in with the React component
-interface SampleCellParameters {
+interface EditableCellParameters {
   cellKey: string;
   x: number;
   y: number;
@@ -35,11 +16,6 @@ interface SampleCellParameters {
   isUnused?: boolean;
   cellFunctions: CellFunctions;
 }
-
-
-// Internal state tracking
-enum InputTypingState { NotTyping, IsTyping, StoppedTyping };
-enum InputValidationState { NotTriggered, Succeeded, Failed };
 
 
 // Just a small helper function to concatenate CSS class names
@@ -71,51 +47,60 @@ function findWidth(node: HTMLElement): number {
 }
 
 
-function SampleCell(settings: SampleCellParameters) {
+function SampleTableCell(settings: EditableCellParameters) {
 
-  // Value in the DOM input element
-  const [inputValue, setInputValue] = useState<string>(settings.value);
-  const [typingState, setTypingState] = useState<InputTypingState>(InputTypingState.NotTyping);
-  const [validationState, setValidationState] = useState<InputValidationState>(InputValidationState.NotTriggered);
-  const [validationMessage, setValidationMessage] = useState<string | null>(null);
-  const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [justActivated, setJustActivated] = useState<boolean>(settings.isActivated);
   const [lastMinimumWidth, setLastMinimumWidth] = useState<string>("23px");
+  const [helpMessage, setHelpMessage] = useState<CellHelpMessage>({status: CellHelpStatus.Hide });
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef<HTMLDivElement>(null);
 
 
-  // This handles keyboard-based navigation or actions in the input field.
-  // Changes to the input value are handled in inputOnChange.
-  function inputOnKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  function validate(value: string): CellValidationResult {
+    return settings.cellFunctions.validate(settings.x, settings.y, value);
+  }
+
+
+  function save(inputValue: string): CellValidationResult {
+    // If the save is successful we expect settings.value to change
+    // which will update the control.
+    var value = inputValue.replace(/&nbsp;|\u202F|\u00A0/g, ' ');
+    value = value.replace(/\n/g, '');
+    value = value.trim();
+    return settings.cellFunctions.save(settings.x, settings.y, value);
+  }
+
+
+  function setHelp(help: CellHelpMessage) {
+    setHelpMessage(help);
+  }
+
+
+  // This handles keyboard-based navigation for the table cell.
+  // It's meant to be called after the specific input component does its own business.
+  // Returns true if the outcome is a move to another cell, false otherwise.
+  function testKeyForMovement(event: React.KeyboardEvent<HTMLInputElement>, useArrows: boolean): boolean {
     var didMove: CellValidationStatus = CellValidationStatus.Failure;
 
     switch (event.key) {
-      case "Escape":
-        reset();
-        // Defocus
-        if (inputRef.current) {
-          inputRef.current.blur();
-        }
-        break;
       case "Enter":
-        settings.cellFunctions.down(settings.x, settings.y);
-        // In the case of "Enter" we always want to save,
-        // whether we've successfully moved or not.
-        didMove = CellValidationStatus.Success;
+        didMove = settings.cellFunctions.move(settings.x, settings.y, CellNavigationDirection.Down);
         break;
       case "ArrowDown":
-        didMove = settings.cellFunctions.down(settings.x, settings.y);
+        if (useArrows) {
+          didMove = settings.cellFunctions.move(settings.x, settings.y, CellNavigationDirection.Down);
+        }
         break;
       case "ArrowUp":
-        didMove = settings.cellFunctions.up(settings.x, settings.y);
+        if (useArrows) {
+          didMove = settings.cellFunctions.move(settings.x, settings.y, CellNavigationDirection.Up);
+        }
         break;
       case "Tab":
         if (event.shiftKey) {
-          didMove = settings.cellFunctions.left(settings.x, settings.y);
+          didMove = settings.cellFunctions.move(settings.x, settings.y, CellNavigationDirection.Left);
         } else {
-          didMove = settings.cellFunctions.right(settings.x, settings.y);
+          didMove = settings.cellFunctions.move(settings.x, settings.y, CellNavigationDirection.Right);
         }
         if (didMove == CellValidationStatus.Success) {
           event.preventDefault();
@@ -124,13 +109,11 @@ function SampleCell(settings: SampleCellParameters) {
     }
 
     if (didMove == CellValidationStatus.Success) {
-      if (inputValue == settings.value) {
-        reset();
-      } else if (validationState == InputValidationState.Succeeded) {
-        save();
-      }
+      return true;
     }
+    return false;
   }
+
 
   useEffect(() => {
     // When the state goes from inactive to active,
@@ -156,121 +139,28 @@ function SampleCell(settings: SampleCellParameters) {
   }, [settings.isActivated]);
 
 
-  // We want to give the input element focus when we enter editing mode,
-  // but we can only do so after it's been revealed on the page by removing
-  // "display:none" from the parent div.  Trying to .focus() on an element that
-  // isn't being displayed does nothing.  So we watch justActivated for a delayed effect. 
-  useEffect(() => {
-    if (justActivated) {
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.setSelectionRange(0, inputRef.current.value.length)
-      }
-    }
-  }, [justActivated]);
-
-
-  // Deal with changes to the input value.
-  // We trigger a short delay before validating,
-  // and in the meantime we hide the feedback panel.
-  function inputOnChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const value = event.target.value;
-    if (debounceTimer) { clearTimeout(debounceTimer); }
-    setDebounceTimer(setTimeout(() => inputCompleted(value), 100));
-    setInputValue(value);
-    setTypingState(InputTypingState.IsTyping);
-    setValidationState(InputValidationState.NotTriggered);
-    setValidationMessage(null);
+  // Now we have all the functions we need 
+  const cellSubcomponentFunctions: CellSubcomponentFunctions = {
+    validate: validate,
+    save: save,
+    setHelp: setHelp,
+    testKeyForMovement: testKeyForMovement
   }
 
-
-  function inputCompleted(value: string) {
-    setTypingState(InputTypingState.StoppedTyping);
-    value = value.replace(/&nbsp;|\u202F|\u00A0/g, ' ');
-    value = value.replace(/\n/g, '');
-    value = value.trim();
-    if (value != settings.value) {
-      const result = settings.cellFunctions.validator(settings.x, settings.y, value);
-      gotValidationResult(result);
-    }
-  }
-
-
-  function gotValidationResult(result: CellValidationResult) {
-    setTypingState(InputTypingState.NotTyping);
-    if (result.status == CellValidationStatus.Success) {
-      setValidationState(InputValidationState.Succeeded);
-      setValidationMessage(null);
-    } else if (result.status == CellValidationStatus.Failure) {
-      setValidationState(InputValidationState.Failed);
-      setValidationMessage(result.message ?? "Invalid value");
-    }
-  }
-
-
-  function save() {
-    // If the save is successful we expect settings.value to change
-    // which will update the control.
-    var value = inputValue.replace(/&nbsp;|\u202F|\u00A0/g, ' ');
-    value = value.replace(/\n/g, '');
-    value = value.trim();
-    const result = settings.cellFunctions.save(settings.x, settings.y, value);
-    if (result.status == CellValidationStatus.Success) {
-      setValidationState(InputValidationState.NotTriggered);
-      setValidationMessage(null);
-    } else {
-      reset();
-    }
-  }
-
-
-  function reset() {
-    setInputValue(settings.value);
-    setValidationState(InputValidationState.NotTriggered);
-    setValidationMessage(null);
-  }
-
-
-  function inputOnFocus() {
-//    setValidationState(InputValidationState.NotTriggered);
-//    setValidationMessage(null);
-//    inputCompleted(inputValue);
-  }
-
-
-  function inputOnBlur(e: React.FocusEvent<HTMLInputElement, Element>) {
-    if ((validationState == InputValidationState.Succeeded) && (inputValue != settings.value)) {
-      save();
-    } else {
-      reset();
-    }
-//    console.log(`Blurred ${settings.x} ${settings.y}`);
-  }
-  
 
   var inputColor = "";
   var help: JSX.Element | null = null;
+  if (helpMessage.status != CellHelpStatus.Hide && helpMessage.message) {
 
-  if (typingState != InputTypingState.IsTyping) {
+    if (helpMessage.status == CellHelpStatus.Info) {
+      help = (<p className="help is-info">{ helpMessage.message }</p>);
 
-    // Show a description of the value, if available, but only if the user isn't typing.
-    help = settings.description ? (<p className="help is-info">{ settings.description }</p>) : null;
+    } else if (helpMessage.status == CellHelpStatus.Danger) {
+      help = (<p className="help is-danger">{ helpMessage.message }</p>);
+      inputColor = "is-danger";
 
-    // Only show validation if the value has been edited (differs from value specified in settings)
-    if (inputValue != settings.value) {
-
-      help = (<p className="help">Press Enter to save. Press Esc to cancel.</p>);
-      if (validationMessage) {
-        if (validationState == InputValidationState.Failed) {
-          help = (<p className="help is-danger">{ validationMessage }</p>);
-        } else {
-          help = (<p className="help">{ validationMessage }</p>);
-        }
-      }
-
-      if (validationState == InputValidationState.Failed) {
-        inputColor = "is-danger";
-      }
+    } else {
+      help = (<p className="help">{ helpMessage.message }</p>);
     }
   }
 
@@ -287,17 +177,14 @@ function SampleCell(settings: SampleCellParameters) {
       <div>
         <div className="value" ref={ valueRef }>{ settings.isUnused ? (<span>&nbsp;</span>) : settings.value }</div>
         <div className="cellTableInput">
-          <input type="text"
-            placeholder={ "Enter value" }
-            onChange={ inputOnChange }
-            autoCorrect="off"
-            value={ inputValue }
-            ref={ inputRef }
-            onKeyDown={ inputOnKeyDown }
-            onFocus={ inputOnFocus }
-            onBlur={ inputOnBlur }
-            style={ {width: lastMinimumWidth} }
-          />
+
+          <CellTextfield
+            isActivated={justActivated}
+            value={settings.value}
+            description={settings.description}
+            lastMinimumWidth={lastMinimumWidth}
+            cellFunctions={cellSubcomponentFunctions} />
+
           <div className={ helpClass }> 
             <div className="notify-content">
               { help }
@@ -310,5 +197,5 @@ function SampleCell(settings: SampleCellParameters) {
 }
 
 
-export { SampleCell, CellValidationStatus }
-export type { CellFunctions, CellValidationResult  }
+export { SampleTableCell }
+export type { CellFunctions }

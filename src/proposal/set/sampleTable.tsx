@@ -9,7 +9,8 @@ import { SampleConfigurationContext, ProviderLoadingState } from '../../sampleCo
 import { updateConfig } from '../../sampleConfigurationApi.ts';
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
-import { SampleCell, CellFunctions, CellValidationStatus, CellValidationResult } from './sampleTableCell/cell.tsx';
+import { SampleTableCell } from './sampleTableCell/cell.tsx';
+import { CellFunctions, CellValidationStatus, CellValidationResult, CellNavigationDirection } from './sampleTableCell/cellDto.ts';
 import './sampleTable.css';
 
 
@@ -159,35 +160,31 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
-  // Seek upward in the table for a nearby editable cell and switch to it if available.
-  function goUp(x: number, y: number): CellValidationStatus {
-    const travelVector: Coordinates = {x: 0, y: -1};
+  function moveBetweenCells(x: number, y: number, d: CellNavigationDirection): CellValidationStatus {
+    var travelVector: Coordinates;
+    switch (d) {
+      // Seek upward in the table for a nearby editable cell and switch to it if available.
+      case CellNavigationDirection.Up:
+        travelVector = {x: 0, y: -1};
+        break;
+      // Seek downward in the table for a nearby editable cell and switch to it if available.
+      case CellNavigationDirection.Down:
+        travelVector = {x: 0, y: 1};
+        break;
+      // Seek left in the table for a nearby editable cell and switch to it if available.
+      case CellNavigationDirection.Left:
+        travelVector = {x: -1, y: 0};
+        break;
+      // Seek right in the table for a nearby editable cell and switch to it if available.
+      case CellNavigationDirection.Right:
+        travelVector = {x: 1, y: 0};
+        break;
+    }
     return switchEditingToNearbyCell({x: x, y: y}, travelVector);
   }
 
 
-  // Seek downward in the table for a nearby editable cell and switch to it if available.
-  function goDown(x: number, y: number): CellValidationStatus {
-    const travelVector: Coordinates = {x: 0, y: 1};
-    return switchEditingToNearbyCell({x: x, y: y}, travelVector);
-  }
-
-
-  // Seek left in the table for a nearby editable cell and switch to it if available.
-  function goLeft(x: number, y: number): CellValidationStatus {
-    const travelVector: Coordinates = {x: -1, y: 0};
-    return switchEditingToNearbyCell({x: x, y: y}, travelVector);
-  }
-
-
-  // Seek right in the table for a nearby editable cell and switch to it if available.
-  function goRight(x: number, y: number): CellValidationStatus {
-    const travelVector: Coordinates = {x: 1, y: 0};
-    return switchEditingToNearbyCell({x: x, y: y}, travelVector);
-  }
-
-
-  // A function passed to every SampleCell (non-header table cell in samples table)
+  // A function passed to every SampleTableCell (non-header table cell in samples table)
   // that validates the given input value based on its cell's x,y location in the table.
   // It relies on the displayedParameters constant, calculated just above.
   function cellValidator(x: number, y: number, value: string): CellValidationResult {
@@ -233,7 +230,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
-  // A function passed to every SampleCell (non-header table cell in samples table)
+  // A function passed to every SampleTableCell (non-header table cell in samples table)
   // that saves the given input value to the SampleConfiguration indicated by the
   // table cell at the given x,y location.
   // It relies on the displayedParameters constant, calculated just above.
@@ -277,12 +274,9 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   // At this point we've defined all the functions we need to pass
   // to each editable cell in the table.
   const cellFunctions: CellFunctions = {
-    validator: cellValidator,
+    validate: cellValidator,
     save: cellSave,
-    up: goUp,
-    down: goDown,
-    left: goLeft,
-    right: goRight
+    move: moveBetweenCells
   }
 
 
@@ -403,7 +397,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                   displayedParameters.forEach((p, paramIndex) => {
                     const unused = !allowedParameters.has(p.id);
                     const activated = (cellFocusX === (paramIndex+4)) && cellFocusOnThisY;
-                    const td = (<SampleCell x={paramIndex+4} y={sampleIndex}
+                    const td = (<SampleTableCell x={paramIndex+4} y={sampleIndex}
                                   key={ p.id }
                                   cellKey={ p.id }
                                   isUnused={unused}
@@ -416,25 +410,25 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
                   return (
                     <tr key={sample["id"]}>
-                      <SampleCell x={0} y={sampleIndex}
+                      <SampleTableCell x={0} y={sampleIndex}
                           key="mm"
                           cellKey="mm"
                           isActivated={(cellFocusX === 0) && cellFocusOnThisY}
                           cellFunctions={cellFunctions}
                           value={ sample.mmFromLeftEdge.toString() } />
-                      <SampleCell x={1} y={sampleIndex}
+                      <SampleTableCell x={1} y={sampleIndex}
                           key="name"
                           cellKey="name"
                           isActivated={(cellFocusX === 1) && cellFocusOnThisY}
                           cellFunctions={cellFunctions}
                           value={ sample.name } />
-                      <SampleCell x={2} y={sampleIndex}
+                      <SampleTableCell x={2} y={sampleIndex}
                           key="description"
                           cellKey="description"
                           isActivated={(cellFocusX === 2) && cellFocusOnThisY}
                           cellFunctions={cellFunctions}
                           value={ sample.description } />
-                      <SampleCell x={3} y={sampleIndex}
+                      <SampleTableCell x={3} y={sampleIndex}
                           key="scantype"
                           cellKey="scantype"
                           isActivated={(cellFocusX === 3) && cellFocusOnThisY}
