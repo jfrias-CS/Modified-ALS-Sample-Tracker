@@ -25,7 +25,7 @@ const SetLabel: React.FC<SetLabelProps> = (props) => {
     return (
       <div className="setLabel">
         <div className="qrCode">
-          <QrCodeImage size="0.5in"
+          <QrCodeImage size="0.4in"
             mode={QrEncoding.Alphanumeric}
             errorCorrectionLevel={QrErrorCorrectionLevel.L}
             content={qrContent} />
