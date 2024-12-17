@@ -1,3 +1,4 @@
+import { appConfiguration } from './appConfiguration.ts';
 
 
 interface ResponseWrapper<Data> {
@@ -27,7 +28,7 @@ async function sciCatGet(url: string, params: Record<string, string>): Promise<R
       headers: { 'Authorization': "Bearer " + jwt }
     };
     const queryString = new URLSearchParams(params);
-    const requestInfo: RequestInfo = new Request(`http://backend.localhost/api/v3/${url}?${queryString}`, requestInit );
+    const requestInfo: RequestInfo = new Request(`${appConfiguration.config.scicatAppUrl}${appConfiguration.config.scicatApiPath}${url}?${queryString}`, requestInit );
     const response = await fetch(requestInfo);
 
     if (response.status == 201 || response.status == 200) {
@@ -62,7 +63,7 @@ async function sciCatPostOrPatch(url: string, body: string, method: string): Pro
       },
       body: body
     };
-    const requestInfo: RequestInfo = new Request('http://backend.localhost/api/v3/' + url, requestInit );
+    const requestInfo: RequestInfo = new Request(`${appConfiguration.config.scicatAppUrl}${appConfiguration.config.scicatApiPath}${url}`, requestInit );
     const response = await fetch(requestInfo);
 
     if (response.status == 201 || response.status == 200) {
