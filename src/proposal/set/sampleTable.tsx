@@ -5,8 +5,8 @@ import 'bulma/css/bulma.min.css';
 
 import { Guid } from '../../components/utils.tsx';
 import { SampleConfiguration } from '../../sampleConfiguration.ts';
-import { SampleConfigurationContext, ProviderLoadingState } from '../../sampleConfigurationProvider.tsx';
-import { updateConfig } from '../../sampleConfigurationApi.ts';
+import { MetadataContext, ProviderLoadingState } from '../../metadataProvider.tsx';
+import { updateConfig } from '../../matadataApi.ts';
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
 import { SampleTableCell } from './sampleTableCell/cell.tsx';
@@ -47,7 +47,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
   const setId = props.setid;
 
-  const configContext = useContext(SampleConfigurationContext);
+  const metadataContext = useContext(MetadataContext);
   const [sampleConfigurations, setSampleConfigurations] = useState<SampleConfiguration[]>([]);
 
   const [tableHasFocus, setTableHasFocus] = useState<boolean>(false);
@@ -58,18 +58,18 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
 
   useEffect(() => {
-//    console.log(`sampleTable setId:${setId} changeCounter:${configContext.changeCounter} setsLoadingState:${configContext.setsLoadingState} scanTypesLoadingState:${configContext.scanTypesLoadingState}`);
+//    console.log(`sampleTable setId:${setId} changeCounter:${metadataContext.changeCounter} setsLoadingState:${metadataContext.setsLoadingState} scanTypesLoadingState:${metadataContext.scanTypesLoadingState}`);
 
     if ((setId === undefined) || (!setId.trim())) { return; }
 
-    if (configContext.loadingState != ProviderLoadingState.Succeeded) { return; }
+    if (metadataContext.loadingState != ProviderLoadingState.Succeeded) { return; }
 
-    const thisSet = configContext.sets.getById(setId.trim() as Guid);
+    const thisSet = metadataContext.sets.getById(setId.trim() as Guid);
     if (thisSet === undefined) { return; }
 
     const sortedSamples = thisSet.all().sort((a, b) => a.mmFromLeftEdge - b.mmFromLeftEdge);
     setSampleConfigurations(sortedSamples);
-  }, [setId, configContext.changeCounter, configContext.loadingState]);
+  }, [setId, metadataContext.changeCounter, metadataContext.loadingState]);
 
 
   // Triggered one time only, whenever the input is blurred.
@@ -108,13 +108,13 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
-  const thisSet = configContext.sets.getById(setId!.trim() as Guid)
+  const thisSet = metadataContext.sets.getById(setId!.trim() as Guid)
   if (!thisSet) {
     return (<div></div>)
   }
 
-  const displayedParameterIds = thisSet.relevantParameters.filter((p) => configContext.scanTypes.parametersById.has(p));
-  const displayedParameters = displayedParameterIds.map((p) => configContext.scanTypes.parametersById.get(p)!);
+  const displayedParameterIds = thisSet.relevantParameters.filter((p) => metadataContext.scanTypes.parametersById.has(p));
+  const displayedParameters = displayedParameterIds.map((p) => metadataContext.scanTypes.parametersById.get(p)!);
 
   // Add the vector to the given currentPosition until it points to a table cell that is
   // valid for editing, then return that position, or return null if we run off the edge of the table.
@@ -137,7 +137,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     const thisParameter = displayedParameters[nextPosition.x - 4];
     const thisConfig = sampleConfigurations[nextPosition.y];
 
-    const allowedParameters = configContext.scanTypes.typesByName.get(thisConfig.scanType)!.parameters;
+    const allowedParameters = metadataContext.scanTypes.typesByName.get(thisConfig.scanType)!.parameters;
     if (allowedParameters.some((p) => p == thisParameter.id)) {
       return nextPosition;
     }
@@ -392,7 +392,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                   var cells: JSX.Element[] = [];
 
                   const cellFocusOnThisY = (cellFocusY === sampleIndex);
-                  const allowedParameters = new Set(configContext.scanTypes.typesByName.get(sample.scanType)!.parameters);
+                  const allowedParameters = new Set(metadataContext.scanTypes.typesByName.get(sample.scanType)!.parameters);
 
                   displayedParameters.forEach((p, paramIndex) => {
                     const unused = !allowedParameters.has(p.id);

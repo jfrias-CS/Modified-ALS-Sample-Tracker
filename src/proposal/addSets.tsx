@@ -3,13 +3,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx';
-import { createNewSet } from '../sampleConfigurationApi.ts';
+import { MetadataContext } from '../metadataProvider.tsx';
+import { createNewSet } from '../matadataApi.ts';
 
 
 const AddSamples: React.FC = () => {
 
-  const configContext = useContext(SampleConfigurationContext);
+  const metadataContext = useContext(MetadataContext);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<string>("1");
@@ -27,7 +27,7 @@ const AddSamples: React.FC = () => {
   function clickedOpen() {
     if (!inProgress && !isOpen) {
       setIsOpen(true);
-      const goodNames = configContext.sets.generateUniqueNames(newName, 1);
+      const goodNames = metadataContext.sets.generateUniqueNames(newName, 1);
       setNewName(goodNames[0]);
       validate(quantity, goodNames[0]);
     }
@@ -72,7 +72,7 @@ const AddSamples: React.FC = () => {
     const trimmed = name.toString().trim();
     if (trimmed.length < 1) {
       validName = false;
-    } else if (configContext.sets.all().some((c) => c.name == trimmed)) {
+    } else if (metadataContext.sets.all().some((c) => c.name == trimmed)) {
       validName = false;
       uniqueName = false;
     }
@@ -86,7 +86,7 @@ const AddSamples: React.FC = () => {
   async function pressedSubmit() {
 
     var count = Math.max(parseInt(quantity, 10), 1);
-    var uniqueNames = configContext.sets.generateUniqueNames(newName, count);
+    var uniqueNames = metadataContext.sets.generateUniqueNames(newName, count);
     var error: string | null = null;
 
     setSubmitErrorMessage(null);
@@ -94,13 +94,13 @@ const AddSamples: React.FC = () => {
     while (count > 0 && (error === null)) {
       const result = await createNewSet(uniqueNames[count-1], description);
       if (result.success) {
-        configContext.sets.add([result.response!]);
+        metadataContext.sets.add([result.response!]);
       } else {
         error = result.message || "";
       }
       count--;
     }
-    configContext.changed();
+    metadataContext.changed();
     setInProgress(false);
 
     if (error !== null) {

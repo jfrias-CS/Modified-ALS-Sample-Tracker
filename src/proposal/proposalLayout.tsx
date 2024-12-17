@@ -2,7 +2,7 @@ import { useEffect, PropsWithChildren } from 'react';
 import { useParams, Outlet } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
-import { SampleConfigurationProvider } from './../sampleConfigurationProvider.tsx';
+import { MetadataProvider } from './../metadataProvider.tsx';
 
 
 const ProposalLayout: React.FC<PropsWithChildren> = () => {
@@ -23,9 +23,9 @@ const ProposalLayout: React.FC<PropsWithChildren> = () => {
       <div className="block">
         <h1 className="title">Beamline Sample Set Configuration</h1>
       </div>
-      <SampleConfigurationProvider proposalId={proposalId}>
+      <MetadataProvider proposalId={proposalId}>
         <Outlet />
-      </SampleConfigurationProvider>
+      </MetadataProvider>
     </>
   )
 }

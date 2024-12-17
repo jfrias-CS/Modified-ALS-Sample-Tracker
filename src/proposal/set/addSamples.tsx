@@ -8,9 +8,9 @@ import { ScanType } from '../../scanTypes.ts';
 import { Guid } from "../../components/utils.tsx";
 import { ParamUid } from './../../scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
-import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
+import { MetadataContext } from '../../metadataProvider.tsx';
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
-import { createNewConfiguration } from '../../sampleConfigurationApi.ts';
+import { createNewConfiguration } from '../../matadataApi.ts';
 
 
 const AddSamples: React.FC = () => {
@@ -18,7 +18,7 @@ const AddSamples: React.FC = () => {
   var { setId } = useParams();
   setId = setId ? setId.toLowerCase() : "";
 
-  const configContext = useContext(SampleConfigurationContext);
+  const metadataContext = useContext(MetadataContext);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [newName, setNewName] = useState<string>("Sample");
@@ -36,7 +36,7 @@ const AddSamples: React.FC = () => {
 
   function getSet(): SampleConfigurationSet | undefined {
     if (!setId) { return undefined; }
-    return configContext.sets.getById(setId as Guid);
+    return metadataContext.sets.getById(setId as Guid);
   }
 
   function clickedOpen() {
@@ -113,7 +113,7 @@ const AddSamples: React.FC = () => {
       // Make a set of parameters for the chosen ScanType, with default or blank values.
       const parameters:Map<ParamUid, string|null> = new Map();
       scanTypeValue!.parameters.forEach((p) => {
-        const parameterType = configContext.scanTypes.parametersById.get(p);
+        const parameterType = metadataContext.scanTypes.parametersById.get(p);
         if (parameterType) { parameters.set(parameterType.id, parameterType.default ?? ""); }
       });
 
@@ -135,7 +135,7 @@ const AddSamples: React.FC = () => {
     }
 
     thisSet.addOrReplaceWithHistory(newConfigs);
-    configContext.changed();
+    metadataContext.changed();
     setInProgress(false);
     if (error !== null) {
       setSubmitErrorMessage(error);

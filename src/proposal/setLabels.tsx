@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
 import { SampleConfigurationSet } from '../sampleConfiguration.ts';
-import { SampleConfigurationContext, ProviderLoadingState } from '../sampleConfigurationProvider.tsx';
+import { MetadataContext, ProviderLoadingState } from '../metadataProvider.tsx';
 import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
 import SetLabel from './setLabel.tsx';
 
@@ -12,21 +12,21 @@ const SetLabels: React.FC = () => {
 
   const { proposalId } = useParams();
 
-  const configContext = useContext(SampleConfigurationContext);
+  const metadataContext = useContext(MetadataContext);
   const [sets, setSets] = useState<SampleConfigurationSet[]>([]);
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
   const [loadingMessage, setLoadingMessage] = useState("");
 
   useEffect(() => {
-    if (configContext.setsLoadingState == ProviderLoadingState.Failed) {
+    if (metadataContext.setsLoadingState == ProviderLoadingState.Failed) {
       setLoading(LoadingState.Failure);
       setLoadingMessage("Failed to load Sets. Are you sure you're still logged in?");
-    } else if (configContext.loadingState == ProviderLoadingState.Succeeded) {
-      const sortedSets = configContext.sets.all().sort((a, b) => a.name.localeCompare(b.name));
+    } else if (metadataContext.loadingState == ProviderLoadingState.Succeeded) {
+      const sortedSets = metadataContext.sets.all().sort((a, b) => a.name.localeCompare(b.name));
       setSets(sortedSets);
       setLoading(LoadingState.Success);
     }
-  }, [configContext.changeCounter, configContext.setsLoadingState, configContext.loadingState]);
+  }, [metadataContext.changeCounter, metadataContext.setsLoadingState, metadataContext.loadingState]);
 
   // If we're in any loading state other than success,
   // display a loading banner instead of the content.
@@ -40,7 +40,7 @@ const SetLabels: React.FC = () => {
       <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
         <ul>
           <li><Link to={ "/" }>Proposals</Link></li>
-          <li><Link to={ "/proposal/" + proposalId }>{ configContext.sets.name }</Link></li>
+          <li><Link to={ "/proposal/" + proposalId }>{ metadataContext.sets.name }</Link></li>
           <li className="is-active"><Link to={ "/proposal/" + proposalId + "/labels" }>Printable Labels</Link></li>
         </ul>
       </nav>
@@ -66,7 +66,7 @@ const SetLabels: React.FC = () => {
                       key={set.id}
                       setId={set.id}
                       setName={set.name}
-                      proposalName={configContext.sets.name} />
+                      proposalName={metadataContext.sets.name} />
                   </Link>
                 );
               })

@@ -1,9 +1,10 @@
-import { createContext, useState, useEffect, PropsWithChildren } from "react";
+import { createContext, useContext, useState, useEffect, PropsWithChildren } from "react";
 
 import { Guid } from "./components/utils.tsx";
 import { ScanTypes, getScanTypes } from './scanTypes.ts';
 import { SampleConfigurationSets } from './sampleConfiguration.ts';
-import { RecordsFromServer, readConfigsForProposalId } from './sampleConfigurationApi.ts';
+import { AppConfigurationContext } from './appConfigurationProvider.tsx';
+import { RecordsFromServer, readConfigsForProposalId } from './matadataApi.ts';
 
 
 // This is a "context provider" React component for a SampleConfigurationSets instance.
@@ -54,7 +55,7 @@ interface SampleConfigurationInterface {
   changeCounter: number;
 }
 
-const SampleConfigurationContext = createContext<SampleConfigurationInterface>({
+const MetadataContext = createContext<SampleConfigurationInterface>({
                     sets: new SampleConfigurationSets("empty", "0" as Guid), // Should never be reached
                     scanTypes: {typesByName:new Map(),typeNamesInDisplayOrder:[],parametersById:new Map()},
                     loadingState: ProviderLoadingState.NotTriggered,
@@ -64,9 +65,11 @@ const SampleConfigurationContext = createContext<SampleConfigurationInterface>({
                     changeCounter: 0
                   });
 
-const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => {
+const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => {
   const [proposalId, setProposalId] = useState<string | undefined>(props.proposalId);
 
+  const appConfig = useContext(AppConfigurationContext);
+  
   const [sampleConfigurationsObject, setSampleConfigurationsObject] = useState<SampleConfigurationSets>(new SampleConfigurationSets("empty", "0" as Guid));
   const [scanTypes, setScanTypes] = useState<ScanTypes>({typesByName:new Map(),typeNamesInDisplayOrder:[],parametersById:new Map()});
 
@@ -78,13 +81,13 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
 
 
   useEffect(() => {
-//    console.log('SampleConfigurationProvider mounted');
+    appConfig.log('MetadataProvider mounted');
 
     // Will eventually be an asynchronous call.
     setScanTypes(getScanTypes());
     setScanTypesLoadingState(ProviderLoadingState.Succeeded);
     return () => {
-//      console.log('SampleConfigurationProvider unmounted');
+      appConfig.log('MetadataProvider unmounted');
     };
   }, []);
 
@@ -108,12 +111,11 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
         const result = await readConfigsForProposalId(p);
         if (result.success) {
           const records = result.response!;
-//          console.log("ingesting records:");
-//          console.log(records);
+          appConfig.log('Ingesting records:', records);
 
           // Create a master container for all our sets
           const setContainer = new SampleConfigurationSets(proposalId!, proposalId as Guid);
-//          console.log(scanTypes);
+          appConfig.log('Scan Types:', scanTypes);
           setContainer.setScanTypes(scanTypes);
           setContainer.add(records.sets);
 
@@ -135,17 +137,17 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
 
     // Call fetchData when the proposalId changes
     fetchData();
-//    console.log('Called fetchData');
+    appConfig.log('Called fetchData');
 
   }, [setsLoadingState, scanTypesLoadingState]);
 
 
   useEffect(() => {
     if (proposalId === undefined) {
-//      console.log('SampleConfigurationProvider given undefined proposalId');
+      appConfig.log('MetadataProvider given undefined proposalId');
       return;
     }
-//    console.log('SampleConfigurationProvider given proposalId: ' + proposalId);
+    appConfig.log('MetadataProvider given proposalId: ' + proposalId);
     setSetsLoadingState(ProviderLoadingState.Pending);
   }, [proposalId]);
 
@@ -154,7 +156,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
   // Note: In the future it may be prudent to pass a set ID into this,
   // to trigger separate server data update calls for each set, since each will have its own history.
   function changed() {
-//    console.log("Called changed())");
+    appConfig.log("Called changed() in MetadataProvider.");
     setChangeCounter(changeCounter + 1);
   };
 
@@ -170,7 +172,7 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
 
 
   return (
-    <SampleConfigurationContext.Provider value={{
+    <MetadataContext.Provider value={{
         sets: sampleConfigurationsObject,
         scanTypes: scanTypes,
         loadingState: loadingState,
@@ -180,8 +182,8 @@ const SampleConfigurationProvider: React.FC<PropsWithChildren<ProviderProps>> = 
         changeCounter: changeCounter
     }}>
     {props.children}
-    </SampleConfigurationContext.Provider>
+    </MetadataContext.Provider>
   )
 }
 
-export {SampleConfigurationContext, SampleConfigurationProvider, ProviderLoadingState}
+export { MetadataContext, MetadataProvider, ProviderLoadingState }

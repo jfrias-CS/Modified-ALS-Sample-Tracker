@@ -3,7 +3,7 @@ import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import 'bulma/css/bulma.min.css';
 
 import { ScanType } from '../scanTypes.ts'
-import { SampleConfigurationContext } from '../sampleConfigurationProvider.tsx'
+import { MetadataContext } from '../metadataProvider.tsx'
 import { InputAutocomplete, SearchFunctions, SearchResult } from './inputAutocomplete.tsx'
 import { highlightSearchTermsInString } from "./utils.tsx";
 import './scanTypeAutocomplete.css';
@@ -31,11 +31,11 @@ interface ScanTypeAutocompleteParameters {
 
 function ScanTypeAutocomplete(settings:ScanTypeAutocompleteParameters) {
 
-  const configContext = useContext(SampleConfigurationContext);
+  const metadataContext = useContext(MetadataContext);
 
   async function searchScanTypes(searchString: string): Promise<SearchResult<ScanType>> {
     const searchStringLower = searchString.toLowerCase();
-    const toTest = configContext.scanTypes.typeNamesInDisplayOrder.map((t) => configContext.scanTypes.typesByName.get(t)!);
+    const toTest = metadataContext.scanTypes.typeNamesInDisplayOrder.map((t) => metadataContext.scanTypes.typesByName.get(t)!);
     const matches = toTest.filter((s) =>
                       s.name.toLowerCase().includes(searchStringLower) ||
                       s.description.toLowerCase().includes(searchStringLower));

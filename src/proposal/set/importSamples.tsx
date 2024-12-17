@@ -8,7 +8,7 @@ import { ScanTypeName, ScanType } from '../../scanTypes.ts';
 import { Guid } from '../../components/utils.tsx';
 import { ParamUid } from './../../scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
-import { SampleConfigurationContext } from '../../sampleConfigurationProvider.tsx';
+import { MetadataContext } from '../../metadataProvider.tsx';
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
 
 
@@ -17,7 +17,7 @@ const ImportSamples: React.FC = () => {
   var { setId } = useParams();
   setId = setId ? setId.toLowerCase() : "";
 
-  const configContext = useContext(SampleConfigurationContext);
+  const metadataContext = useContext(MetadataContext);
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [validAllInput, setValidAllInput] = useState<boolean>(true);
@@ -26,7 +26,7 @@ const ImportSamples: React.FC = () => {
 
   function getSet(): SampleConfigurationSet | undefined {
     if (!setId) { return undefined; }
-    return configContext.sets.getById(setId as Guid);
+    return metadataContext.sets.getById(setId as Guid);
   }
 
   function clickedOpen() {
@@ -87,7 +87,7 @@ const ImportSamples: React.FC = () => {
       parameters: new Map()
     });
     thisSet.addOrReplaceWithHistory([newConfig]);
-    configContext.changed();
+    metadataContext.changed();
   };
 
   function clickedClose() {
