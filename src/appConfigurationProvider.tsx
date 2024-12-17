@@ -105,7 +105,7 @@ const AppConfigurationProvider: React.FC<PropsWithChildren> = (props) => {
 
 
   function logger(...args: any[]) {
-    if (appConfigurationsObject.debugLogginginEnabled) {
+    if (appConfigurationsObject.debugLoggingingEnabled) {
       console.log(...args);
     }
   }

@@ -4,6 +4,6 @@
     "externalAuthUrl": "http://localhost:3000/",
     "externalAuthSucessUrl": "http://localhost:3000/",
     "loginEnabled": true,
-    "debugLogginginEnabled": true,
+    "debugLoggingingEnabled": true,
     "defaultProjectId": "group1"
 }
