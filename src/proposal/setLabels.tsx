@@ -6,6 +6,7 @@ import { SampleConfigurationSet } from '../sampleConfiguration.ts';
 import { MetadataContext, ProviderLoadingState } from '../metadataProvider.tsx';
 import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
 import SetLabel from './setLabel.tsx';
+import './setLabels.css';
 
 
 const SetLabels: React.FC = () => {
@@ -37,7 +38,7 @@ const SetLabels: React.FC = () => {
   return (
     <>
 
-      <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
+      <nav className="breadcrumb is-medium do-not-print" aria-label="breadcrumbs">
         <ul>
           <li><Link to={ "/" }>Proposals</Link></li>
           <li><Link to={ "/proposal/" + proposalId }>{ metadataContext.sets.name }</Link></li>
@@ -45,7 +46,7 @@ const SetLabels: React.FC = () => {
         </ul>
       </nav>
 
-      <nav className="level">
+      <nav className="level do-not-print">
         <div className="level-left">
           <div className="level-item">
             <p className="subtitle is-5"><strong>{ sets.length }</strong> sets</p>

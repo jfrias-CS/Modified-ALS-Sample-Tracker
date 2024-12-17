@@ -1,6 +1,6 @@
 services:
-  sample_metadata_input_app:
-    image: lbnl_als_sample_metadata_input_app
+  sample_metadata_app-frontend:
+    image: ghcr.io/als-computing/sample_metadata_app-frontend
     build:
       context: .
       dockerfile: ./Dockerfile

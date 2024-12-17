@@ -1,0 +1,10 @@
+@media print {
+  .do-not-print {
+    display: none;
+  }
+
+  @page {
+    size: a4 portrait;
+    margin: 0.75in;
+  }
+}
