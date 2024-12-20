@@ -4,7 +4,7 @@ A browser application for quickly creating and submitting sets of sample metadat
 
 Design document <a href="https://github.com/als-computing/software_requirements/blob/main/docs/sample_metadata_input_app/index.md">can be found here.</a>
 
-![Interface Demo Video](https://github.com/user-attachments/assets/4e5b5b65-0226-46c3-a1e7-af781cbadd49)
+![Interface Demo Video](docs/demo_movie.mp4)
 
 To get started developing, check out this repo and `cd` into it, then:
 ```
