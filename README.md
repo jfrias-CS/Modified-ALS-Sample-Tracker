@@ -105,6 +105,7 @@ These may at some point be broken out into a general component repository.
 
 #### `inputEditable.tsx`
 
+![Inline Editable Input Component Demo Video](https://github.com/user-attachments/assets/78befb1a-0ff6-4274-bfba-87c8fc383408)
 
 #### `inputAutocomplete.tsx`
 
