@@ -7,12 +7,16 @@ table.settable tr th {
 }
 
 table.settable tbody tr:nth-child(odd) {
-  background-color: hsl(221, 10%, calc(15%));
+  background-color: rgba(130, 143, 167, 0.07);
 }
 
 table.settable tbody tr:hover {
-  color: #9ea3f3;
-  background-color: rgba(83, 91, 242, 0.3);
-  cursor: pointer;
-  user-select: none;
+  color: rgba(7, 73, 251, 1);
+  background-color: rgba(90, 105, 255, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  table.settable tbody tr:hover {
+    color: rgba(156, 165, 241, 1);
+  }
 }

@@ -9,12 +9,12 @@ table.sampletable tr th {
 }
 
 table.sampletable tbody tr:nth-child(odd) {
-  background-color: hsl(221, 10%, calc(15%));
+  background-color: rgba(130, 143, 167, 0.07);
 }
 
 table.sampletable tbody tr:hover {
-  color: #9ea3f3;
-  background-color: rgba(83, 91, 242, 0.3);
+  color: rgba(7, 73, 251, 1);
+  background-color: rgba(90, 105, 255, 0.2);
   cursor: pointer;
   user-select: none;
 }
@@ -99,6 +99,10 @@ table.sampletable td.samplecell > div > div.cellTableInput > div.notify > div.no
 }
 
 @media (prefers-color-scheme: dark) {
+  table.sampletable tbody tr:hover {
+    color: rgba(156, 165, 241, 1);
+  }
+
   table.sampletable td.samplecell > div > div.cellTableInput > div.notify > div.notify-content {
     background-color: #080808;
     box-shadow: 0 2px 3px rgba(120, 120, 120, 0.2), 0 0 0 1px rgba(120, 120, 120, 0.2);

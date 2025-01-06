@@ -211,7 +211,7 @@ function InputEditable(settings: InputEditableParameters) {
   const inputClass = classNames("input", inputColor, settings.inputSize || "is-normal");
 
   return (
-    <div className={ classNames("editable", "field", settings.addedClass) }>
+    <div className={ classNames("editableinput", "field", settings.addedClass) }>
       { (settings.label && (
           <label className="label">{ settings.label }</label>)
       ) }
@@ -251,8 +251,8 @@ function InputEditable(settings: InputEditableParameters) {
               ) }
             </div>
             { showCancelButton && (
-                <div className="control">
-                  <button className="button has-background-danger-dark" onClick={ () => { reset() }}>
+                <div className="control reset">
+                  <button className="button" onClick={ () => { reset() }}>
                     <span className={ classNames( "icon", "is-right", "is-small") }>
                       <FontAwesomeIcon icon={faX} />
                     </span>
@@ -261,10 +261,10 @@ function InputEditable(settings: InputEditableParameters) {
               )
             }
             { showSaveButton && (
-              <div className="control">
-                <button className="button has-background-primary-dark" onClick={ () => { save() }}>
+              <div className="control save">
+                <button className="button" onClick={ () => { save() }}>
                   <span className={ classNames( "icon", "is-right", "is-small") }>
-                    <FontAwesomeIcon icon={faCheck} color="lightgreen" />
+                    <FontAwesomeIcon icon={faCheck} />
                   </span>
                 </button>
               </div>
