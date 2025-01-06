@@ -102,7 +102,7 @@ export function getScanTypes(): ScanTypes {
       default: "tiled"
     },
     { id: "testunused" as ParamUid,
-      name: "Unused" as ScanParameterName,
+      name: "Demo" as ScanParameterName,
       description: "This parameter is unused, except for the test ScanType",
     }
   ];

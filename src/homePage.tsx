@@ -20,7 +20,7 @@ const HomePage: React.FC = () => {
   return (
 
       <div style={{padding: ".375rem 1rem"}}>
-        <h1 className="title">Beamline Sample Set Configuration</h1>
+        <h1 className="title">Beamline Sample Bar Configuration</h1>
 
         <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
           <ul>

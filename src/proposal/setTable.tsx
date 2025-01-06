@@ -49,7 +49,7 @@ const SetTable: React.FC = () => {
       <nav className="level">
         <div className="level-left">
           <div className="level-item">
-            <p className="subtitle is-5"><strong>{ sets.length }</strong> sets</p>
+            <p className="subtitle is-5"><strong>{ sets.length }</strong> bars</p>
           </div>
         </div>
 
@@ -65,7 +65,7 @@ const SetTable: React.FC = () => {
 
       <div className="block">
         { sets.length == 0 ? (
-          <p>( Use the Add button on the right to add Sets. )</p>
+          <p>( Use the Add button on the right to add Bars. )</p>
         ) : (
           <>
             <table className="settable">

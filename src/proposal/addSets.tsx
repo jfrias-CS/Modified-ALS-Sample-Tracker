@@ -117,14 +117,14 @@ const AddSamples: React.FC = () => {
   return (
     <div>
 
-      <button className="button" onClick={ clickedOpen }>Add Sets</button>
+      <button className="button" onClick={ clickedOpen }>Add Bars</button>
 
       <div id="modal-add-sample" className={ isOpen ? "modal is-active" : "modal" }>
         <div className="modal-background"></div>
 
         <div className="modal-card">
           <header className="modal-card-head">
-            <p className="modal-card-title">Add Sets</p>
+            <p className="modal-card-title">Add Bars</p>
             <button className="delete" aria-label="close" onClick={ clickedClose }></button>
 
           </header>
