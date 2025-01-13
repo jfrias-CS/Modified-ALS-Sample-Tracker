@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useParams } from "react-router-dom";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGear, faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
 import { Guid } from '../../components/utils.tsx';
@@ -8,7 +10,7 @@ import { MetadataContext, ProviderLoadingState } from '../../metadataProvider.ts
 import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
 import DeleteSet from './deleteSet.tsx';
 import SampleTable from './sampleTable.tsx';
-import { InputEditable, EditFunctions, ValidationStatus } from '../../components/inputEditable.tsx';
+import { InputEditable, ValidationStatus } from '../../components/inputEditable.tsx';
 import { updateSet } from '../../metadataApi.ts';
 
 
@@ -21,6 +23,7 @@ const Set: React.FC = () => {
   const appConfig = useContext(AppConfigurationContext);
   const metadataContext = useContext(MetadataContext);
 
+  const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
 
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
@@ -50,6 +53,7 @@ const Set: React.FC = () => {
       return;
     }
 
+    setName(thisSet.name);
     setDescription(thisSet.description);
 
     setLoading(LoadingState.Success);
@@ -62,6 +66,32 @@ const Set: React.FC = () => {
   // display a loading banner instead of the content.
   if ((loading != LoadingState.Success) || !set) {
     return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
+  }
+
+
+  async function nameEditValidate(value: string) {
+   const trimmed = value.toString().trim();
+    if (trimmed.length < 1) {
+      return { status: ValidationStatus.Failure, message: "Name cannot be blank." };
+    } else if (metadataContext.sets.all().some((c) => c.name == trimmed)) {
+      return { status: ValidationStatus.Failure, message: "Name must be unique for proposal." };
+    }
+    return { status: ValidationStatus.Success };
+  }
+
+
+  async function nameEditSubmit(value: string) {
+    const oldName = set!.name;
+    set!.name = value;
+    const result = await updateSet(set!);
+    if (result.success) {
+      setName(value);
+      return { status: ValidationStatus.Success };
+    } else {
+      set!.name = oldName;
+      setName(oldName);
+      return { status: ValidationStatus.Failure, message: result.message };
+    }
   }
 
 
@@ -78,12 +108,6 @@ const Set: React.FC = () => {
       return { status: ValidationStatus.Failure, message: result.message };
     }
   }
-
-
-  const descriptionEditFunctions: EditFunctions = {
-    validator: async () => { return { status: ValidationStatus.Success } },
-    submit: descriptionEditSubmit
-  };
 
 
   return (
@@ -129,11 +153,25 @@ const Set: React.FC = () => {
 
       <div className="block">
         <InputEditable
+            elementId="sampletable-name"
+            value={set.name}
+            placeholder="Name of this bar"
+            showHelp={true}
+            editFunctions={{
+              validator: nameEditValidate,
+              submit: nameEditSubmit
+            }} />
+        <InputEditable
             elementId="sampletable-description"
             value={set.description}
-            placeholder="Describe this sample"
+            placeholder="Describe this bar"
+            isTextArea={true}
             showHelp={true}
-            editFunctions={descriptionEditFunctions} />
+            textAreaRows={2}
+            editFunctions={{
+              validator: async () => { return { status: ValidationStatus.Success } },
+              submit: descriptionEditSubmit
+            }} />
       </div>
 
       <SampleTable setid={setId! as Guid} />
