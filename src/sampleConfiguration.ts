@@ -194,6 +194,14 @@ export class SampleConfigurationSet {
     this.findRelevantParameters();
   }
 
+  // Removes SampleConfigurations without doing any checking.
+  // Note that if there is pending redo or edit history to catch up with,
+  // this will have unpredictable effects.
+  remove(ids: Guid[]) {
+    ids.forEach((id) => { this.configurationsById.delete(id); });
+    // The set of relevant parameters may have changed.
+    this.findRelevantParameters();
+  }
 
 	undo() {
     const edit = this.history.undo();
@@ -275,6 +283,12 @@ export class SampleConfigurationSets {
       if (t) { c.setScanTypes(t); }
       this.setsById.set(c.id, c);
     });
+  }
+
+  // Removes SampleConfigurationSets without doing any checking.
+  remove(ids: Guid[]) {
+    const t = this.scanTypesCache;
+    ids.forEach((id) => { this.setsById.delete(id); });
   }
 
   getById(id: Guid): SampleConfigurationSet | undefined {
