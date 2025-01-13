@@ -79,15 +79,17 @@ function InputEditable(settings: InputEditableParameters) {
 
   // This handles keyboard-based actions in the input field.
   // Changes to the input value are handled in inputOnChange.
-  function inputOnKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  function inputOnKeyDown(event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
     if (event.key == "Escape") {
       reset();
       // Defocus?
     } else if (event.key == "Enter") {
-      if (inputValue == settings.value) {
-        reset();
-      } else if (validationState == InputValidationState.Succeeded) {
-        save();
+      if (!settings.isTextArea || event.ctrlKey) {
+        if (inputValue == settings.value) {
+          reset();
+        } else if (validationState == InputValidationState.Succeeded) {
+          save();
+        }
       }
     }
   }
@@ -95,7 +97,7 @@ function InputEditable(settings: InputEditableParameters) {
   
   // Deal with changes to the input value.
   // We trigger a short delay before validating.
-  function inputOnChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function inputOnChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const value = event.target.value;
     if (debounceTimer) { clearTimeout(debounceTimer); }
     setDebounceTimer(setTimeout(() => inputCompleted(value), settings.debounceTime || 150));
@@ -208,7 +210,6 @@ function InputEditable(settings: InputEditableParameters) {
   }
 
   const controlClass = classNames("control", "is-expanded", inputIcon ? "has-icons-left" : "", statusIcon ? "has-icons-right" : "");
-  const inputClass = classNames("input", inputColor, settings.inputSize || "is-normal");
 
   return (
     <div className={ classNames("editableinput", "field", settings.addedClass) }>
@@ -219,26 +220,55 @@ function InputEditable(settings: InputEditableParameters) {
         <div className="field is-expanded">
           <div className="field has-addons">
             <div className={ controlClass }>
-              <input type="text"
-                className={ inputClass }
-                id={ "debouncer-editable-" + (settings.elementId || "default") }
-                placeholder={ settings.placeholder || "Enter value" }
-                value={ inputValue }
-                readOnly={ settings.isReadOnly }
-                onKeyDown={ inputOnKeyDown }
-                onChange={ inputOnChange }
-                autoComplete="off"
-                autoCorrect="off"
+              { (settings.isTextArea ? (
 
-                aria-haspopup="listbox"
+                  <textarea
+                    className={ classNames("textarea", inputColor, settings.inputSize || "is-normal") }
+                    id={ "debouncer-editable-" + (settings.elementId || "default") }
+                    placeholder={ settings.placeholder || "Enter value" }
+                    value={ inputValue }
+                    rows={ settings.textAreaRows || 1 }
+                    readOnly={ settings.isReadOnly }
+                    onKeyDown={ inputOnKeyDown }
+                    onChange={ inputOnChange }
+                    autoComplete="off"
+                    autoCorrect="off"
 
-                onFocus={ inputOnFocus }
-                onBlur={ () => {
-                  // The onblur event may happen because of some external event.
-                  // Wait a bit to give precedence to that event in that case.
-                  setTimeout( inputOnBlur, 200);
-                } }
-              />
+                    aria-haspopup="listbox"
+
+                    onFocus={ inputOnFocus }
+                    onBlur={ () => {
+                      // The onblur event may happen because of some external event.
+                      // Wait a bit to give precedence to that event in that case.
+                      setTimeout( inputOnBlur, 200);
+                    } }
+                  />
+
+                ) : (
+
+                  <input type="text"
+                    className={ classNames("input", inputColor, settings.inputSize || "is-normal") }
+                    id={ "debouncer-editable-" + (settings.elementId || "default") }
+                    placeholder={ settings.placeholder || "Enter value" }
+                    value={ inputValue }
+                    readOnly={ settings.isReadOnly }
+                    onKeyDown={ inputOnKeyDown }
+                    onChange={ inputOnChange }
+                    autoComplete="off"
+                    autoCorrect="off"
+    
+                    aria-haspopup="listbox"
+    
+                    onFocus={ inputOnFocus }
+                    onBlur={ () => {
+                      // The onblur event may happen because of some external event.
+                      // Wait a bit to give precedence to that event in that case.
+                      setTimeout( inputOnBlur, 200);
+                    } }
+                  />
+  
+                ))
+              }
               { (inputIcon && (
                   <span className={ classNames( "icon", "is-left", settings.iconSize) }>
                     { inputIcon }
