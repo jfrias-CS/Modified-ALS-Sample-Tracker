@@ -6,7 +6,7 @@ import 'bulma/css/bulma.min.css';
 import { Guid } from '../../components/utils.tsx';
 import { SampleConfiguration } from '../../sampleConfiguration.ts';
 import { MetadataContext, ProviderLoadingState } from '../../metadataProvider.tsx';
-import { updateConfig } from '../../matadataApi.ts';
+import { updateConfig } from '../../metadataApi.ts';
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
 import { SampleTableCell } from './sampleTableCell/cell.tsx';

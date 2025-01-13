@@ -10,7 +10,7 @@ import { ParamUid } from './../../scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
 import { MetadataContext } from '../../metadataProvider.tsx';
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
-import { createNewConfiguration } from '../../matadataApi.ts';
+import { createNewConfiguration } from '../../metadataApi.ts';
 
 
 const AddSamples: React.FC = () => {

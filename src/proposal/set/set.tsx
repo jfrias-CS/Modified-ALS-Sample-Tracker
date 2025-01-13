@@ -8,7 +8,7 @@ import { MetadataContext, ProviderLoadingState } from '../../metadataProvider.ts
 import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
 import SampleTable from './sampleTable.tsx';
 import { InputEditable, EditFunctions, ValidationStatus } from '../../components/inputEditable.tsx';
-import { updateSet } from '../../matadataApi.ts';
+import { updateSet } from '../../metadataApi.ts';
 
 
 const Set: React.FC = () => {
