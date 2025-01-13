@@ -106,7 +106,17 @@ export function getScanTypes(): ScanTypes {
     { id: "testunused" as ParamUid,
       name: "Demo" as ScanParameterName,
       description: "This parameter is unused, except for the test ScanType",
-    }
+    },
+    { id: "gpcam_params" as ParamUid,
+      name: "gpCAM %" as ScanParameterName,
+      description: "gpCAM input parameter percentages, totaling 100%. For example 70, 20, 10.",
+      required: true,
+      default: "50, 50",
+      validator: (v) => {
+        if (commaList(isNumber, v) && listSumsTo(100, v)) { return null; }
+        return "Must be a comma-separated list of numbers that add up to 100.";
+      }
+    },
   ];
 
   var parameterMap = new Map<ParamUid, ScanParameterType>();
@@ -116,8 +126,13 @@ export function getScanTypes(): ScanTypes {
   const types: ScanType[] = [
     {
       name: "GIWAXS" as ScanTypeName,
-      description: "GIWAXS",
+      description: "Standard GIWAXS.  All samples will be measured.",
       parameters: ["incangles" as ParamUid, "exptime" as ParamUid, "mspots" as ParamUid, "expmax" as ParamUid, "imgtype" as ParamUid]
+    },
+    {
+      name: "GIWAXS with gpCAM" as ScanTypeName,
+      description: "Search for the best sample based on a percentage mixture of components.  Some samples may be skipped during the search.",
+      parameters: ["incangles" as ParamUid, "exptime" as ParamUid, "expmax" as ParamUid, "imgtype" as ParamUid, "gpcam_params" as ParamUid]
     },
     {
       name: "Test" as ScanTypeName,
