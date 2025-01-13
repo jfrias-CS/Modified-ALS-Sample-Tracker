@@ -48,7 +48,9 @@ function isNumber(v:string):boolean { return !isNaN(v as any); };
 function above(a:number, v:string):boolean { const n = parseFloat(v); return !isNaN(n) && (n > a); };
 function atOrAbove(a:number, v:string):boolean { const n = parseFloat(v); return !isNaN(n) && (n >= a); };
 function atOrBelow(a:number, v:string):boolean { const n = parseFloat(v); return !isNaN(n) && (n <= a); };
+function atOrBetween(a:number, b:number, v:string):boolean { return atOrAbove(a, v) && atOrBelow(b, v); };
 function commaList(test:(v:string) => boolean, c:string):boolean { return c.split(",").every(test) };
+function listSumsTo(a:number, v:string):boolean { return v.split(",").map(parseFloat).reduce((acc, cur) => acc+cur, 0) == a };
 
 
 // This may eventually have to be an asynchronous function
@@ -78,7 +80,7 @@ export function getScanTypes(): ScanTypes {
     },
     { id: "mspots" as ParamUid,
       name: "Measurement Spots" as ScanParameterName,
-      description: "The number of measurement spots per sample (2 mm apart, around center of sample).",
+      description: "The number of measurement spots per sample (2 mm apart, around center of sample, including center spot.)",
       default: "1",
       validator: (v) => {
         if (isInt(v) && atOrAbove(1, v)) { return null; }
@@ -90,7 +92,7 @@ export function getScanTypes(): ScanTypes {
       description: "The upper limit for exposure time in seconds. Can be up to 120.",
       default: "120",
       validator: (v) => {
-        if (atOrAbove(1, v) && atOrBelow(120, v)) { return null; }
+        if (atOrBetween(1, 120, v)) { return null; }
         return "Must be a number from 1 to 120.";
       },
     },
