@@ -6,6 +6,7 @@ import { Guid } from '../../components/utils.tsx';
 import { AppConfigurationContext } from '../../appConfigurationProvider.tsx';
 import { MetadataContext, ProviderLoadingState } from '../../metadataProvider.tsx';
 import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
+import DeleteSet from './deleteSet.tsx';
 import SampleTable from './sampleTable.tsx';
 import { InputEditable, EditFunctions, ValidationStatus } from '../../components/inputEditable.tsx';
 import { updateSet } from '../../metadataApi.ts';
@@ -88,12 +89,42 @@ const Set: React.FC = () => {
   return (
     <>
 
-      <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
-        <ul>
-          <li><Link to={ "/" }>Proposals</Link></li>
-          <li><Link to={ "/proposal/" + proposalId }>{ metadataContext.sets.name }</Link></li>
-          <li className="is-active"><Link to={ "/proposal/" + proposalId + "/set/" + setId }>{ set.name }</Link></li>
-        </ul>
+      <nav className="level">
+        <div className="level-left">
+          <div className="level-item">
+
+            <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
+              <ul>
+                <li><Link to={ "/" }>Proposals</Link></li>
+                <li><Link to={ "/proposal/" + proposalId }>{ metadataContext.sets.name }</Link></li>
+                <li className="is-active"><Link to={ "/proposal/" + proposalId + "/set/" + setId }>{ set.name }</Link></li>
+              </ul>
+            </nav>
+
+          </div>
+        </div>
+        <div className="level-right">
+          <div className="level-item">
+
+            <div className="dropdown is-right is-hoverable">
+              <div className="dropdown-trigger">
+                <button className="button" aria-haspopup="true" aria-controls="dropdown-menu-howto">
+                  <FontAwesomeIcon icon={faGear} />
+                  <span className="icon is-small">
+                    <FontAwesomeIcon icon={faAngleDown} />
+                  </span>
+                </button>
+              </div>
+              <div className="dropdown-menu" id="dropdown-menu-howto" role="menu">
+                <div className="dropdown-content">
+                  <DeleteSet />
+                  <a className="dropdown-item">Clone Bar</a>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
       </nav>
 
       <div className="block">
