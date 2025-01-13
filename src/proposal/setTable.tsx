@@ -5,7 +5,7 @@ import 'bulma/css/bulma.min.css';
 import { SampleConfigurationSet } from '../sampleConfiguration.ts';
 import { MetadataContext, ProviderLoadingState } from '../metadataProvider.tsx';
 import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
-import AddSet from './addSets.tsx';
+import AddSets from './addSets.tsx';
 import './setTable.css';
 
 
@@ -58,7 +58,7 @@ const SetTable: React.FC = () => {
               <p className="subtitle is-5"><Link to={ "labels" }>Printable Labels</Link></p>
           </div>
           <div className="level-item">
-            <AddSet />
+            <AddSets />
           </div>
         </div>
       </nav>

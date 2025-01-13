@@ -7,7 +7,7 @@ import { MetadataContext } from '../metadataProvider.tsx';
 import { createNewSet } from '../metadataApi.ts';
 
 
-const AddSamples: React.FC = () => {
+const AddSets: React.FC = () => {
 
   const metadataContext = useContext(MetadataContext);
 
@@ -202,4 +202,4 @@ const AddSamples: React.FC = () => {
     </div>
   )
 }
-export default AddSamples
+export default AddSets
