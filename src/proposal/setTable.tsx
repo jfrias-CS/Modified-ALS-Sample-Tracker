@@ -81,7 +81,7 @@ const SetTable: React.FC = () => {
                   sets.map((set) => {
                     return (
                       <tr key={set["id"]}>
-                          <th scope="row"><Link to={ "set/" + set.id }>{ set.name }</Link></th>
+                          <th className="barname" scope="row"><Link to={ "set/" + set.id }>{ set.name }</Link></th>
                           <td>{ set.description }</td>
                           <td>{ set.configurationsById.size }</td>
                       </tr>);
