@@ -16,7 +16,7 @@ npm run dev
 ```
 Open a browser and go to `http://localhost:8080/` to see the app running.
 
-This is a client-side browser app, which depends on a <a href="https://github.com/SciCatProject">SciCat</a> instance to store data, so he first thing it's likely to do is complain that it can't connect to a database.
+This is a client-side browser app, which depends on a <a href="https://github.com/SciCatProject">SciCat</a> instance to store data, so the first thing it's likely to do is complain that it can't connect to a database.
 
 The quickest way to get SciCat running locally is to check out and launch the <a href="https://github.com/SciCatProject/scicatlive">SciCatLive</a> project.  This project has default settings in `public/config.json` that will try to connect to a server at `http://backend.localhost/`, which is where SciCatLive makes itself available.
 
