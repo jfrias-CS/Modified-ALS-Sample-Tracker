@@ -1,3 +1,15 @@
+div.editableinput div.control.reset button {
+  background-color: rgba(255, 60, 60, 0.1);
+}
+
+div.editableinput div.control.save button {
+  background-color: rgba(30, 255, 140, 0.1);
+}
+
+div.editableinput div.control button span.icon {
+  opacity: 0.5;
+}
+
 div.inputeditable-notify {
   display: none;
   padding-top: 0;

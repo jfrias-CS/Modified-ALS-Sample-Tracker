@@ -5,7 +5,7 @@ import 'bulma/css/bulma.min.css';
 import { SampleConfigurationSet } from '../sampleConfiguration.ts';
 import { MetadataContext, ProviderLoadingState } from '../metadataProvider.tsx';
 import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
-import AddSet from './addSets.tsx';
+import AddSets from './addSets.tsx';
 import './setTable.css';
 
 
@@ -49,7 +49,7 @@ const SetTable: React.FC = () => {
       <nav className="level">
         <div className="level-left">
           <div className="level-item">
-            <p className="subtitle is-5"><strong>{ sets.length }</strong> sets</p>
+            <p className="subtitle is-5"><strong>{ sets.length }</strong> bars</p>
           </div>
         </div>
 
@@ -58,14 +58,14 @@ const SetTable: React.FC = () => {
               <p className="subtitle is-5"><Link to={ "labels" }>Printable Labels</Link></p>
           </div>
           <div className="level-item">
-            <AddSet />
+            <AddSets />
           </div>
         </div>
       </nav>
 
       <div className="block">
         { sets.length == 0 ? (
-          <p>( Use the Add button on the right to add Sets. )</p>
+          <p>( Use the Add button on the right to add Bars. )</p>
         ) : (
           <>
             <table className="settable">
@@ -81,7 +81,7 @@ const SetTable: React.FC = () => {
                   sets.map((set) => {
                     return (
                       <tr key={set["id"]}>
-                          <th scope="row"><Link to={ "set/" + set.id }>{ set.name }</Link></th>
+                          <th className="barname" scope="row"><Link to={ "set/" + set.id }>{ set.name }</Link></th>
                           <td>{ set.description }</td>
                           <td>{ set.configurationsById.size }</td>
                       </tr>);

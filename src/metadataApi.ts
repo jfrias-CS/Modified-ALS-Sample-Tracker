@@ -1,5 +1,5 @@
 import { Guid } from "./components/utils.tsx";
-import { ResponseWrapper, sciCatGet, sciCatPost, sciCatPatch } from "./generalApi.ts";
+import { ResponseWrapper, sciCatGet, sciCatPost, sciCatDelete, sciCatPatch } from "./generalApi.ts";
 import { ScanTypeName, ParamUid } from './scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from './sampleConfiguration.ts';
 
@@ -149,8 +149,6 @@ async function createNewSet(name: string, description: string): Promise<Response
   };
  
   const result = await sciCatPost('samples', JSON.stringify(body));
-//  console.log("create set result");
-//  console.log(result);
 
   if (result.success) {
     const newRecord:any = await result.response!.json();
@@ -160,6 +158,28 @@ async function createNewSet(name: string, description: string): Promise<Response
       description
     );
     return { success: true, response: newSet };
+  }
+  return { success: false, message: result.message };
+}
+
+
+// Delete a Configuration from the server, returning the Id used if successful.
+async function deleteConfiguration(configId: Guid): Promise<ResponseWrapper<Guid>> {
+  return deleteSample(configId);
+}
+
+// Delete a Set from the server, returning the Id used if successful.
+// Note:  This operation does not check if there are any Configurations belonging to the set!
+// Those should be deleted first.
+async function deleteSet(setId: Guid): Promise<ResponseWrapper<Guid>> {
+  return deleteSample(setId);
+}
+
+// Delete a Sample record from the server, returning the Id used if successful.
+async function deleteSample(sampleId: Guid): Promise<ResponseWrapper<Guid>> {
+   const result = await sciCatDelete(`samples/${sampleId}`, {});
+  if (result.success) {
+    return { success: true, response: sampleId };
   }
   return { success: false, message: result.message };
 }
@@ -191,8 +211,6 @@ async function createNewConfiguration(setId: Guid, name: string, description: st
   };
 
   const result = await sciCatPost('samples', JSON.stringify(body));
-//  console.log("create configuration result");
-//  console.log(result);
 
   if (result.success) {
     const newRecord:any = await result.response!.json();
@@ -230,12 +248,9 @@ async function updateSet(set: SampleConfigurationSet): Promise<ResponseWrapper<S
   };
 
   const result = await sciCatPatch(`samples/${set.id}`, JSON.stringify(body));
-//  console.log("patch result");
-//  console.log(result);
 
   if (result.success) {
     const body:any = await result.response!.json();
-//    console.log(body);
     return { success: true, response: set };
   }
   return { success: false, message: result.message };
@@ -279,4 +294,4 @@ async function updateConfig(config: SampleConfiguration): Promise<ResponseWrappe
 
 
 export type { RecordsFromServer }
-export { whoAmI, readConfigsForProposalId, createNewSet, createNewConfiguration, updateSet, updateConfig }
+export { whoAmI, readConfigsForProposalId, createNewSet, createNewConfiguration, updateSet, updateConfig, deleteSet, deleteConfiguration }

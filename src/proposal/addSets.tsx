@@ -4,10 +4,10 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
 import { MetadataContext } from '../metadataProvider.tsx';
-import { createNewSet } from '../matadataApi.ts';
+import { createNewSet } from '../metadataApi.ts';
 
 
-const AddSamples: React.FC = () => {
+const AddSets: React.FC = () => {
 
   const metadataContext = useContext(MetadataContext);
 
@@ -117,14 +117,14 @@ const AddSamples: React.FC = () => {
   return (
     <div>
 
-      <button className="button" onClick={ clickedOpen }>Add Sets</button>
+      <button className="button" onClick={ clickedOpen }>Add Bars</button>
 
       <div id="modal-add-sample" className={ isOpen ? "modal is-active" : "modal" }>
         <div className="modal-background"></div>
 
         <div className="modal-card">
           <header className="modal-card-head">
-            <p className="modal-card-title">Add Sets</p>
+            <p className="modal-card-title">Add Bars</p>
             <button className="delete" aria-label="close" onClick={ clickedClose }></button>
 
           </header>
@@ -202,4 +202,4 @@ const AddSamples: React.FC = () => {
     </div>
   )
 }
-export default AddSamples
+export default AddSets

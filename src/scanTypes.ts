@@ -48,7 +48,9 @@ function isNumber(v:string):boolean { return !isNaN(v as any); };
 function above(a:number, v:string):boolean { const n = parseFloat(v); return !isNaN(n) && (n > a); };
 function atOrAbove(a:number, v:string):boolean { const n = parseFloat(v); return !isNaN(n) && (n >= a); };
 function atOrBelow(a:number, v:string):boolean { const n = parseFloat(v); return !isNaN(n) && (n <= a); };
+function atOrBetween(a:number, b:number, v:string):boolean { return atOrAbove(a, v) && atOrBelow(b, v); };
 function commaList(test:(v:string) => boolean, c:string):boolean { return c.split(",").every(test) };
+function listSumsTo(a:number, v:string):boolean { return v.split(",").map(parseFloat).reduce((acc, cur) => acc+cur, 0) == a };
 
 
 // This may eventually have to be an asynchronous function
@@ -78,7 +80,7 @@ export function getScanTypes(): ScanTypes {
     },
     { id: "mspots" as ParamUid,
       name: "Measurement Spots" as ScanParameterName,
-      description: "The number of measurement spots per sample (2 mm apart, around center of sample).",
+      description: "The number of measurement spots per sample (2 mm apart, around center of sample, including center spot.)",
       default: "1",
       validator: (v) => {
         if (isInt(v) && atOrAbove(1, v)) { return null; }
@@ -90,7 +92,7 @@ export function getScanTypes(): ScanTypes {
       description: "The upper limit for exposure time in seconds. Can be up to 120.",
       default: "120",
       validator: (v) => {
-        if (atOrAbove(1, v) && atOrBelow(120, v)) { return null; }
+        if (atOrBetween(1, 120, v)) { return null; }
         return "Must be a number from 1 to 120.";
       },
     },
@@ -102,9 +104,19 @@ export function getScanTypes(): ScanTypes {
       default: "tiled"
     },
     { id: "testunused" as ParamUid,
-      name: "Unused" as ScanParameterName,
+      name: "Demo" as ScanParameterName,
       description: "This parameter is unused, except for the test ScanType",
-    }
+    },
+    { id: "gpcam_params" as ParamUid,
+      name: "gpCAM %" as ScanParameterName,
+      description: "gpCAM input parameter percentages, totaling 100%. For example 70, 20, 10.",
+      required: true,
+      default: "50, 50",
+      validator: (v) => {
+        if (commaList(isNumber, v) && listSumsTo(100, v)) { return null; }
+        return "Must be a comma-separated list of numbers that add up to 100.";
+      }
+    },
   ];
 
   var parameterMap = new Map<ParamUid, ScanParameterType>();
@@ -114,8 +126,13 @@ export function getScanTypes(): ScanTypes {
   const types: ScanType[] = [
     {
       name: "GIWAXS" as ScanTypeName,
-      description: "GIWAXS",
+      description: "Standard GIWAXS.  All samples will be measured.",
       parameters: ["incangles" as ParamUid, "exptime" as ParamUid, "mspots" as ParamUid, "expmax" as ParamUid, "imgtype" as ParamUid]
+    },
+    {
+      name: "GIWAXS with gpCAM" as ScanTypeName,
+      description: "Search for the best sample based on a percentage mixture of components.  Some samples may be skipped during the search.",
+      parameters: ["incangles" as ParamUid, "exptime" as ParamUid, "expmax" as ParamUid, "imgtype" as ParamUid, "gpcam_params" as ParamUid]
     },
     {
       name: "Test" as ScanTypeName,

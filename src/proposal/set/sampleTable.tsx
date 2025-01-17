@@ -4,9 +4,10 @@ import { faExclamationTriangle, faSpinner, faCheck } from '@fortawesome/free-sol
 import 'bulma/css/bulma.min.css';
 
 import { Guid } from '../../components/utils.tsx';
+import { ScanTypeName } from '../../scanTypes.ts';
 import { SampleConfiguration } from '../../sampleConfiguration.ts';
 import { MetadataContext, ProviderLoadingState } from '../../metadataProvider.tsx';
-import { updateConfig } from '../../matadataApi.ts';
+import { updateConfig } from '../../metadataApi.ts';
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
 import { SampleTableCell } from './sampleTableCell/cell.tsx';
@@ -213,6 +214,13 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       // Description can be anything
       return { status: CellValidationStatus.Success, message: null };
 
+    // Validate Scan Type
+    } else if (x === 3) {
+      if (metadataContext.scanTypes.typeNamesInDisplayOrder.some((name) => name == value)) {
+        return { status: CellValidationStatus.Success, message: null };
+      }
+      return { status: CellValidationStatus.Failure, message: "Must be the name of a Scan Type." };
+
     // Validate scan parameters
     } else if ((x > 3) && ((x-4) < displayedParameters.length)) {
 
@@ -254,6 +262,21 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     // Description
     } else if (x === 2) {
       editedConfig.description = newValue;
+
+    // Scan Type
+    } else if (x === 3) {
+      const asScanTypeName = newValue as ScanTypeName;
+      editedConfig.scanType = asScanTypeName;
+      const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
+      newScanType!.parameters.forEach((p) => {
+        const parameterType = metadataContext.scanTypes.parametersById.get(p);
+        if (parameterType) {
+          // Set any missing parameters to defaults.
+          if (!editedConfig.parameters.has(parameterType!.id)) {
+            editedConfig.parameters.set(parameterType.id, parameterType.default ?? "");
+          }
+        }
+      });
 
     // Validate scan parameters
     } else if ((x > 3) && ((x-4) < displayedParameters.length)) {

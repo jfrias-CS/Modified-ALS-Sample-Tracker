@@ -1,14 +1,5 @@
-
-div.autocomplete.scantype td {
-  padding: .375rem 1rem;
-}
-
 div.autocomplete.scantype table {
   width: 70vw;
-}
-
-div.autocomplete.scantype tr:not(:hover):not(.focused) td b {
-  color: gold;
 }
 
 div.autocomplete.scantype td:first-child {
@@ -21,20 +12,4 @@ div.autocomplete.scantype td:last-child {
 
 div.autocomplete.scantype tr:not(:hover) td:last-child {
   opacity: 72%;
-}
-
-div.autocomplete.scantype tr {
-  transition-duration: 294ms;
-  transition-property: background-color, border-color, color;
-}
-
-div.autocomplete.scantype tr.focused {
-  color: #535bf2;
-  background-color: hsl(221, 14%, calc(20%));
-}
-
-div.autocomplete.scantype tr:hover {
-  color: #535bf2;
-  background-color: hsl(221, 14%, calc(20%));
-  cursor: pointer;
 }

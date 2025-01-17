@@ -21,7 +21,7 @@ const ProposalLayout: React.FC<PropsWithChildren> = () => {
   return (
     <>
       <div className="block">
-        <h1 className="title">Beamline Sample Set Configuration</h1>
+        <h1 className="title">Beamline Sample Bar Configuration</h1>
       </div>
       <MetadataProvider proposalId={proposalId}>
         <Outlet />

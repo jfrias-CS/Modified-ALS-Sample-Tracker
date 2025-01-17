@@ -4,7 +4,7 @@ import { Guid } from "./components/utils.tsx";
 import { ScanTypes, getScanTypes } from './scanTypes.ts';
 import { SampleConfigurationSets } from './sampleConfiguration.ts';
 import { AppConfigurationContext } from './appConfigurationProvider.tsx';
-import { RecordsFromServer, readConfigsForProposalId } from './matadataApi.ts';
+import { RecordsFromServer, readConfigsForProposalId } from './metadataApi.ts';
 
 
 // This is a "context provider" React component for a SampleConfigurationSets instance.

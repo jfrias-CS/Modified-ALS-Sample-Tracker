@@ -49,7 +49,7 @@ const SetLabels: React.FC = () => {
       <nav className="level do-not-print">
         <div className="level-left">
           <div className="level-item">
-            <p className="subtitle is-5"><strong>{ sets.length }</strong> sets</p>
+            <p className="subtitle is-5"><strong>{ sets.length }</strong> bars</p>
           </div>
         </div>
       </nav>

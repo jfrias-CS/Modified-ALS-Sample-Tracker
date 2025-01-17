@@ -6,11 +6,17 @@ table.proposals tr th {
   padding: .375rem 1rem;
 }
 
-table.proposals tr:nth-child(even) {
-  background-color: hsl(221, 10%, calc(11%));
+table.proposals tbody tr:nth-child(odd) {
+  background-color: rgba(130, 143, 167, 0.07);
 }
 
-table.proposals tr:hover {
-  color: #535bf2;
-  background-color: hsl(221, 14%, calc(20%));
+table.proposals tbody tr:hover {
+  color: rgba(7, 73, 251, 1);
+  background-color: rgba(90, 105, 255, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  table.settable tbody tr:hover {
+    color: rgba(156, 165, 241, 1);
+  }
 }

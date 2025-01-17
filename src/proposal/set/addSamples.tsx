@@ -4,13 +4,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { ScanType } from '../../scanTypes.ts';
 import { Guid } from "../../components/utils.tsx";
+import { ScanType } from '../../scanTypes.ts';
 import { ParamUid } from './../../scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
 import { MetadataContext } from '../../metadataProvider.tsx';
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
-import { createNewConfiguration } from '../../matadataApi.ts';
+import { createNewConfiguration } from '../../metadataApi.ts';
 
 
 const AddSamples: React.FC = () => {
