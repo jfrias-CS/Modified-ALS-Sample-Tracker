@@ -1,6 +1,7 @@
 import React from 'react';
 import 'bulma/css/bulma.min.css';
 
+import { appConfiguration } from './../appConfiguration.ts';
 import { Guid } from "./../components/utils.tsx";
 import { QrCodeImage } from './../components/qrcode/qrCodeImage.tsx';
 import { QrEncoding, QrErrorCorrectionLevel } from './../components/qrcode/qrCodeTypes.ts';
@@ -15,12 +16,9 @@ interface SetLabelProps {
 }
 
 
-const sampleBaseUrl = "http://samples.als.lbl.gov/set/";
-
-
 const SetLabel: React.FC<SetLabelProps> = (props) => {
 
-    const qrContent = `${sampleBaseUrl}${props.setId}`.toUpperCase(); 
+    const qrContent = `${appConfiguration.config.baseUrl}set/${props.setId}`.toUpperCase(); 
 
     return (
       <div className="setLabel">
