@@ -15,7 +15,7 @@ const App: React.FC = () => {
 
   return (
     <AppConfigurationProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="{import.meta.env.BASE_URL}">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/proposal/:proposalId/" element={<ProposalLayout />}>
