@@ -55,10 +55,21 @@ class AppConfiguration {
   async load() {
     if (this.loadingState != ConfigLoadingState.NotTriggered) { return; }
     this.loadingState = ConfigLoadingState.Pending;
+
+    function emergencyLogger(...args: any[]) {
+      const loggingDiv = document.createElement("div");
+      loggingDiv.innerText = [ ...args].join(" ");
+      const c = document.getElementsByTagName("body");
+      c.item(0)?.appendChild(loggingDiv);
+    }
+
     try {
       const requestInit: RequestInit = {
         method: "GET"
       };
+
+      emergencyLogger(`Base URL: ${import.meta.env.BASE_URL}`);
+
       const requestInfo: RequestInfo = new Request(`${import.meta.env.BASE_URL}/config.json`, requestInit );
       const response = await fetch(requestInfo);
   
