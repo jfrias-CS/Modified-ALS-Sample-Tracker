@@ -61,7 +61,7 @@ class AppConfiguration {
       const requestInit: RequestInit = {
         method: "GET"
       };
-      const requestInfo: RequestInfo = new Request('/config.json', requestInit );
+      const requestInfo: RequestInfo = new Request(`${import.meta.env.BASE_URL}/config.json`, requestInit );
       const response = await fetch(requestInfo);
   
       if (response.status == 201 || response.status == 200) {
