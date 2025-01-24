@@ -1,5 +1,4 @@
 {
-    "baseUrl": "http://localhost:8080/",
     "scicatAppUrl": "http://backend.localhost/",
     "scicatApiPath": "api/v3/",
     "externalAuthUrl": "http://localhost:3000/",

@@ -18,7 +18,7 @@ interface SetLabelProps {
 
 const SetLabel: React.FC<SetLabelProps> = (props) => {
 
-    const qrContent = `${appConfiguration.config.baseUrl}set/${props.setId}`.toUpperCase(); 
+    const qrContent = `${import.meta.env.BASE_URL}/set/${props.setId}`.toUpperCase();
 
     return (
       <div className="setLabel">

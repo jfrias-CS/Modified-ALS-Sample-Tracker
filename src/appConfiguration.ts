@@ -19,7 +19,6 @@
 
 // The structure we are providing to components in the hierarchy below the provider
 interface AppConfig {
-  baseUrl: string;
   scicatAppUrl: string;
   scicatApiPath: string;
   externalAuthUrl: string;
@@ -31,7 +30,6 @@ interface AppConfig {
 
 // These should never be accessed.  They're here as placeholders before the config actually loads.
 const appConfigDefaults:AppConfig = {
-  baseUrl: "",
   scicatAppUrl: "",
   scicatApiPath: "",
   externalAuthUrl: "",
