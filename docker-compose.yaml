@@ -1,6 +1,6 @@
 services:
   sample_metadata_app-frontend:
-    image: ghcr.io/als-computing/sample_metadata_app-frontend
+    image: ghcr.io/als-computing/sample_metadata_app-frontend:main
     build:
       context: .
       dockerfile: ./Dockerfile
