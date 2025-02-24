@@ -21,14 +21,29 @@ interface ResponseWrapper<Data> {
 const jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJ1c2VybmFtZSI6ImFkbWluIiwiZW1haWwiOiJzY2ljYXRhZG1pbkB5b3VyLnNpdGUiLCJhdXRoU3RyYXRlZ3kiOiJsb2NhbCIsIl9fdiI6MCwiaWQiOiI2NzAzNjIxODA3NzM0YjYxYmJkNzRiOWIiLCJpYXQiOjE3MzMyNjc2OTEsImV4cCI6MTczMzI3MTI5MX0.UdaSkSnMQ3TKWpdMBCqOk7B66ag0_kALB1vcHzdmQPo';
 
 
-async function sciCatGetOrDelete(url: string, params: Record<string, string>, method: string): Promise<ResponseWrapper<Response>> {
+async function sciCatApiCall(url: string, method: string, params: Record<string, string> | null, body: string | null): Promise<ResponseWrapper<Response>> {
+
+  var headers:HeadersInit = { 'Authorization': "Bearer " + jwt };
+  if (body) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  var queryString = "";
+  if (params) {
+    const searchParams = new URLSearchParams(params);
+    queryString = `?${searchParams}`;
+  }
+
+  var requestInit: RequestInit = {
+        method: method,
+        headers: headers,
+      };
+  if (body) {
+    requestInit['body'] = body;
+  }
+
   try {
-    const requestInit: RequestInit = {
-      method: method,
-      headers: { 'Authorization': "Bearer " + jwt }
-    };
-    const queryString = new URLSearchParams(params);
-    const requestInfo: RequestInfo = new Request(`${appConfiguration.config.scicatAppUrl}${appConfiguration.config.scicatApiPath}${url}?${queryString}`, requestInit );
+    const requestInfo: RequestInfo = new Request(`${appConfiguration.config.scicatAppUrl}${appConfiguration.config.scicatApiPath}${url}${queryString}`, requestInit );
     const response = await fetch(requestInfo);
 
     if (response.status == 201 || response.status == 200) {
@@ -44,46 +59,21 @@ async function sciCatGetOrDelete(url: string, params: Record<string, string>, me
   }
 }
 
+
 async function sciCatGet(url: string, params: Record<string, string>): Promise<ResponseWrapper<Response>> {
-  return sciCatGetOrDelete(url, params, "GET");
+  return sciCatApiCall(url, "GET", params, null);
 }
 
 async function sciCatDelete(url: string, params: Record<string, string>): Promise<ResponseWrapper<Response>> {
-  return sciCatGetOrDelete(url, params, "DELETE");
+  return sciCatApiCall(url, "DELETE", params, null);
 }
 
 async function sciCatPatch(url: string, body: string): Promise<ResponseWrapper<Response>> {
-  return sciCatPostOrPatch(url, body, "PATCH");
+  return sciCatApiCall(url, "PATCH", null, body);
 }
 
 async function sciCatPost(url: string, body: string): Promise<ResponseWrapper<Response>> {
-  return sciCatPostOrPatch(url, body, "POST");
-}
-
-async function sciCatPostOrPatch(url: string, body: string, method: string): Promise<ResponseWrapper<Response>> {
-  try {
-    const requestInit: RequestInit = {
-      method: method,
-      headers: {
-        'Authorization': "Bearer " + jwt,
-        'Content-Type': 'application/json'
-      },
-      body: body
-    };
-    const requestInfo: RequestInfo = new Request(`${appConfiguration.config.scicatAppUrl}${appConfiguration.config.scicatApiPath}${url}`, requestInit );
-    const response = await fetch(requestInfo);
-
-    if (response.status == 201 || response.status == 200) {
-      return { success: true, response: response };
-    } else {
-      if (response.status == 401) {
-        return { success: false, response: response, message: "Error: Unauthorized. Are you sure you're still logged in?" };
-      }
-      return { success: false, response: response, message: "Error" };
-    }
-  } catch (err) {
-    return { success: false, message: "Exception" };
-  }
+  return sciCatApiCall(url, "POST", null, body);
 }
 
 
