@@ -69,9 +69,11 @@ subgraph SubP[Selected A Proposal]
     Samples("`Samples Table`")
     ImpSamples@{ shape: subprocess, label: "Import Samples Modal"}
     AddSamples@{ shape: subprocess, label: "Add Samples Modal"}
+    DeleteSet@{ shape: subprocess, label: "Delete Set Modal"}
 
     Samples <--> ImpSamples
     Samples <--> AddSamples
+    Samples <--> DeleteSet
 
   end
 end
