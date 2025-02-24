@@ -51,6 +51,10 @@ function CellTextfield(settings: CellSubcomponentParameters) {
         break;
     }
 
+    // If a key was entered that allowed movement, we are assuming that the
+    // key is not one that can change the effective value in the input element,
+    // so we're okay with replying on the value of validationState even though we
+    // haven't re-validated based on the effect of this keypress.
     if (didMove) {
       if (inputValue == settings.value) {
         reset();

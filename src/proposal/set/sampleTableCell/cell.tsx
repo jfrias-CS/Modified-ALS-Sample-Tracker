@@ -62,11 +62,13 @@ function SampleTableCell(settings: EditableCellParameters) {
 
 
   function save(inputValue: string): CellValidationResult {
-    // If the save is successful we expect settings.value to change
-    // which will update the control.
+    // Filtering out strange versions of space, for sanity.
     var value = inputValue.replace(/&nbsp;|\u202F|\u00A0/g, ' ');
+    // No multi-line inputs are allowed for table cells.
     value = value.replace(/\n/g, '');
     value = value.trim();
+    // If the save is successful we expect settings.value to change
+    // which will update the control.
     return settings.cellFunctions.save(settings.x, settings.y, value);
   }
 
