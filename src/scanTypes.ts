@@ -9,12 +9,17 @@ export type ParamUid = string & { __brand: 'ParamUID' };
 export type ScanParameterName = string & { __brand: 'Scan Parameter Name' };
 
 
+export interface ParameterChoice {
+  name: string;
+  description: string;
+}
+
 export interface ScanParameterType {
   id: ParamUid;
   name: ScanParameterName;
   description: string;
   // If a choices field is present, we provide a pulldown isntead of a text field and restrict the choices to this array.
-  choices?: string[];
+  choices?: ParameterChoice[];
   // If no default is provided the default is assumed to be "".
   default?: string;
   // If a non-blank value is mandatory for this parameter
@@ -100,12 +105,22 @@ export function getScanTypes(): ScanTypes {
       name: "Image Type" as ScanParameterName,
       description: "The type of image to generate",
       required: true,
-      choices: ["single", "tiled"],
+      choices: [
+        { name: "single", description: "A single image" },
+        { name: "tiled", description: "An image composed of smaller overlapping images"}
+      ],
       default: "tiled"
     },
     { id: "testunused" as ParamUid,
       name: "Demo" as ScanParameterName,
       description: "This parameter is unused, except for the test ScanType",
+      choices: [
+        { name: "choice1", description: "The first option of several" },
+        { name: "choice2", description: "A second option"},
+        { name: "rando", description: "some rando choice"},
+        { name: "arthur", description: "King of the Britons (anachronistic)"}
+      ],
+      default: "choice1"
     },
     { id: "gpcam_params" as ParamUid,
       name: "gpCAM %" as ScanParameterName,
