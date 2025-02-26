@@ -17,7 +17,6 @@ interface ScanTypeSearchFunctions {
 
 // Settings passed in with the React component
 interface ScanTypeAutocompleteParameters {
-  elementId: string;
   inputSize?: string;
   iconSize?: SizeProp;
   value: string;
@@ -58,7 +57,6 @@ function ScanTypeAutocomplete(settings:ScanTypeAutocompleteParameters) {
   };
 
   return InputAutocomplete<ScanType>({
-      elementId: settings.elementId,
       addedClass: "scantype",
       inputSize: settings.inputSize,
       iconSize: settings.iconSize,

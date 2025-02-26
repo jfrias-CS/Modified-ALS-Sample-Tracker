@@ -218,7 +218,6 @@ const AddSamples: React.FC = () => {
             <div className="field">
               <label className="label">Scan Type</label>
                 <ScanTypeAutocomplete
-                    elementId="addsamples-scantype"
                     value=""
                     selectedItem={null}
                     searchFunctions={scanTypeSearchFunctions} />

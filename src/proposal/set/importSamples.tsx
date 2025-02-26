@@ -175,7 +175,6 @@ const ImportSamples: React.FC = () => {
             <div className="field">
               <label className="label">Default Scan Type (if none is specified in data)</label>
               { ScanTypeAutocomplete({
-                elementId: "addsamples-scantype",
                 value: "",
                 selectedItem: null,
                 searchFunctions: scanTypeSearchFunctions

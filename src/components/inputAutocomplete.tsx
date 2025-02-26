@@ -35,7 +35,6 @@ interface SearchFunctions<Item> {
 
 // Settings passed in with the component.  Most of these are optional.
 interface InputAutocompleteParameters<Item> {
-  elementId: string;
   addedClass?: string;
   icon?: JSX.Element;
   inputSize?: string;
@@ -267,7 +266,7 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
         <div className={ controlClass }>
           <input type="text"
             className={ inputClass }
-            id={ "debouncer-autocomplete-" + (settings.elementId || "default") }
+            style={ settings.addedInputStyle }
             placeholder={ settings.placeholder || "Enter value" }
             readOnly={ settings.isReadOnly }
             onChange={ (event) => {
@@ -366,7 +365,7 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
         <div className="dropdown-trigger">
           { searchInput() }
         </div>
-        <div className="dropdown-menu" role="menu" id={ ("dropdown-autocomplete-" + (settings.elementId || "default") ) }>
+        <div className="dropdown-menu" role="menu">
           <div className="dropdown-content">
             { dropdownItems() }
           </div>
