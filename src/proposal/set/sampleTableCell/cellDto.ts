@@ -41,5 +41,15 @@ interface CellSubcomponentFunctions {
 }
 
 
+// Settings passed to cell subcomponents, e.g. text and autocomplete fields
+interface CellSubcomponentParameters {
+  triggerFocus: boolean;
+  value: string;
+  description?: string;
+  lastMinimumWidth: string;
+  cellFunctions: CellSubcomponentFunctions;
+}
+
+
 export { CellValidationStatus, CellNavigationDirection, CellHelpStatus }
-export type { CellValidationResult, CellFunctions, CellHelpMessage, CellSubcomponentFunctions }
+export type { CellValidationResult, CellFunctions, CellHelpMessage, CellSubcomponentFunctions, CellSubcomponentParameters }

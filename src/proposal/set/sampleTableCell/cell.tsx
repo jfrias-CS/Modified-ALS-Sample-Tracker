@@ -180,13 +180,12 @@ function SampleTableCell(settings: EditableCellParameters) {
         <div className="value" ref={ valueRef }>{ settings.isUnused ? (<span>&nbsp;</span>) : settings.value }</div>
         <div className="cellTableInput">
 
-          <CellTextfield
-            isActivated={justActivated}
-            value={settings.value}
-            description={settings.description}
-            lastMinimumWidth={lastMinimumWidth}
-            cellFunctions={cellSubcomponentFunctions} />
-
+            <CellTextfield
+              triggerFocus={ justActivated }
+              value={ settings.value }
+              description={ settings.description }
+              lastMinimumWidth={ lastMinimumWidth }
+              cellFunctions={ cellSubcomponentFunctions } />
           <div className={ helpClass }> 
             <div className="notify-content">
               { help }
