@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { faExclamationTriangle, faSpinner, faQuestion, faCheck } from '@fortawesome/free-solid-svg-icons';
@@ -10,8 +10,9 @@ import './inputAutocomplete.css';
 const focusedStyle: React.CSSProperties = { border: "2px solid #3273dc", borderRadius: "10px" }
 
 
-// Internal state tracking
+// Status tracking
 enum SearchResultStatus { Success, SuccessWithWarning, Failure };
+enum SelectingStatus { Success, Failure };
 
 interface SearchResult<Item> {
   status?: SearchResultStatus;
@@ -27,28 +28,33 @@ type ItemToString<Item> = (item:Item) => string;
 interface SearchFunctions<Item> {
   itemToString: ItemToString<Item>;
   itemsRetriever: Retriever<Item>;
-  itemSelected: (item: Item) => void;
-  selectedNone: () => void;
-  renderMatchedItem?: (item: Item, searchString: string) => JSX.Element
+  itemSelected: (item: Item) => SelectingStatus;
+  selectedNone: () => SelectingStatus;
+  renderMatchedItem?: (item: Item, searchString: string) => JSX.Element;
+  unhandledKeyEvent?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 
 // Settings passed in with the component.  Most of these are optional.
 interface InputAutocompleteParameters<Item> {
-  addedClass?: string;
-  icon?: JSX.Element;
-  inputSize?: string;
-  iconSize?: SizeProp;
-  placeholder?: string;
   value: string;
+  selectedItem: Item | null;
+  searchFunctions: SearchFunctions<Item>;
+
   isReadOnly?: boolean;
   showAllByDefault?: boolean;
   renderResultsAsTable?: boolean;
   greenWhenValid?: boolean;
-  autoFocus?: boolean;
+  triggerFocus?: boolean;
+  resetOnDefocus?: boolean;
   debounceTime?: number;
-  selectedItem: Item | null;
-  searchFunctions: SearchFunctions<Item>;
+
+  icon?: JSX.Element;
+  inputSize?: string;
+  iconSize?: SizeProp;
+  placeholder?: string;
+  addedClass?: string;
+  addedInputStyle?: React.CSSProperties | undefined;
 }
 
 
@@ -78,6 +84,8 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [justBlurred, setJustBlurred] = useState<boolean>(false);
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
 
   function isDropdownActive(): boolean {
     return  (selectedItem == null) &&
@@ -93,9 +101,29 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
   useEffect(() => {
     if (!justBlurred) { return; }
     setJustBlurred(false);
-
-    validate();
+    if (settings.resetOnDefocus) {
+      // We rely on this happening after a timer, so a click-based selection
+      // has time to take effect first.
+      // This way, a blur that happens because the user clicked on an item in
+      // the pulldown won't cause this call to reset the form to the previous value.
+      reset();
+    } else {
+      validate();
+    }
   }, [justBlurred]);
+
+
+  // We want to give the input element focus, and setting "autofocus" on the
+  // element would do that once, but we also want to select the entire contents
+  // of the input box afterwards.
+  useEffect(() => {
+    if (settings.triggerFocus) {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.setSelectionRange(0, inputRef.current.value.length)
+      }
+    }
+  }, [settings.triggerFocus]);
 
 
   // This handles keyboard-based selection in the dropdown.
@@ -104,7 +132,9 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
 
     var move = 0;
     if ( isDropdownActive() ) {
-      if (event.key == "ArrowDown") {
+      if (event.key == "Escape") {
+        reset();
+      } else if (event.key == "ArrowDown") {
         move = 1;
       } else if (event.key == "ArrowUp") {
         move = -1;
@@ -130,6 +160,8 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
         newIndex = itemsLength - 1;
       }
       setFocusedItemIndex( newIndex );
+    } else if (settings.searchFunctions.unhandledKeyEvent !== undefined) {
+      settings.searchFunctions.unhandledKeyEvent(event);
     }
   }
 
@@ -146,8 +178,6 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
     setFocusedItemIndex(null);
     setValidationState(InputValidationState.NotTriggered);
     setValidationMessage(null);
-    // Send "nothing selected" one time when input starts.
-    if (selectedItem !== null) { settings.searchFunctions.selectedNone(); }
     setSelectedItem(null);
   }
 
@@ -190,6 +220,22 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
     }
     setOperationInProgress(false);
     setFocusedItemIndex(null);
+  }
+
+
+  function reset() {
+    setSelectedItem(settings.selectedItem);
+    setMatchedItems([]);
+    setFocusedItemIndex(null);
+    setTypingState(InputTypingState.NotTyping);
+    setValidationState(InputValidationState.NotTriggered);
+    setValidationMessage(null);
+    if (debounceTimer) { clearTimeout(debounceTimer); }
+    if (settings.selectedItem) {
+      setInputValue(settings.searchFunctions.itemToString(settings.selectedItem));
+    } else {
+      setInputValue("");
+    }
   }
 
   
@@ -274,7 +320,7 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
             } }
             autoComplete="off"
             autoCorrect="off"
-            autoFocus={ settings.autoFocus }
+            autoFocus={ settings.triggerFocus }
 
             aria-haspopup="listbox"
 
@@ -374,5 +420,5 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
   </div>)
 }
 
-export { InputAutocomplete, SearchResultStatus }
+export { InputAutocomplete, SearchResultStatus, SelectingStatus }
 export type { SearchFunctions, SearchResult  }
