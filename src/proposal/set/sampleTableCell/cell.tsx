@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import 'bulma/css/bulma.min.css';
 
+import { ParameterChoice } from '../../../scanTypes.ts';
 import { CellFunctions, CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellNavigationDirection, CellSubcomponentFunctions } from './cellDto.ts';
 import { CellTextfield } from './cellTextfield.tsx';
+import { CellAutocomplete } from './cellAutocomplete.tsx';
 
 
 // Settings passed in with the React component
@@ -15,6 +17,11 @@ interface EditableCellParameters {
   description?: string;
   isUnused?: boolean;
   cellFunctions: CellFunctions;
+  // This parameter is used to indicate that a CellAutocomplete should be
+  // used instead of a CellTextfield.
+  // It's the only parameter that makes the editable table code
+  // non-generic.
+  choices?: ParameterChoice[];
 }
 
 
@@ -179,13 +186,22 @@ function SampleTableCell(settings: EditableCellParameters) {
       <div>
         <div className="value" ref={ valueRef }>{ settings.isUnused ? (<span>&nbsp;</span>) : settings.value }</div>
         <div className="cellTableInput">
-
+          { settings.choices ? (
+            <CellAutocomplete
+              triggerFocus={ justActivated }
+              value={ settings.value }
+              choices={ settings.choices }
+              description={ settings.description }
+              lastMinimumWidth={ lastMinimumWidth }
+              cellFunctions={ cellSubcomponentFunctions } />
+          ) : (
             <CellTextfield
               triggerFocus={ justActivated }
               value={ settings.value }
               description={ settings.description }
               lastMinimumWidth={ lastMinimumWidth }
               cellFunctions={ cellSubcomponentFunctions } />
+          )}
           <div className={ helpClass }> 
             <div className="notify-content">
               { help }
@@ -199,4 +215,3 @@ function SampleTableCell(settings: EditableCellParameters) {
 
 
 export { SampleTableCell }
-export type { CellFunctions }

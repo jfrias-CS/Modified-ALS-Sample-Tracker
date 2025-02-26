@@ -4,7 +4,7 @@ import { faExclamationTriangle, faSpinner, faCheck } from '@fortawesome/free-sol
 import 'bulma/css/bulma.min.css';
 
 import { Guid } from '../../components/utils.tsx';
-import { ScanTypeName } from '../../scanTypes.ts';
+import { ScanTypeName, ParameterChoice } from '../../scanTypes.ts';
 import { SampleConfiguration } from '../../sampleConfiguration.ts';
 import { MetadataContext, ProviderLoadingState } from '../../metadataProvider.tsx';
 import { updateConfig } from '../../metadataApi.ts';
@@ -113,6 +113,11 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   if (!thisSet) {
     return (<div></div>)
   }
+
+  const scanTypesAsChoices: ParameterChoice[] =
+    metadataContext.scanTypes.typeNamesInDisplayOrder.map((name) => { return { name: name, description: "" }});
+
+
 
   const displayedParameterIds = thisSet.relevantParameters.filter((p) => metadataContext.scanTypes.parametersById.has(p));
   const displayedParameters = displayedParameterIds.map((p) => metadataContext.scanTypes.parametersById.get(p)!);
@@ -427,7 +432,9 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                                   isActivated={activated}
                                   cellFunctions={cellFunctions}
                                   description={ p.description }
-                                  value={ sample.parameters.get(p.id) ?? "" } />) ;
+                                  value={ sample.parameters.get(p.id) ?? "" }
+                                  choices={ p.choices }
+                                  />) ;
                     cells.push(td);
                   });
 
@@ -456,7 +463,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                           cellKey="scantype"
                           isActivated={(cellFocusX === 3) && cellFocusOnThisY}
                           cellFunctions={cellFunctions}
-                          value={ sample.scanType } />
+                          value={ sample.scanType }
+                          choices={ scanTypesAsChoices } />
                       { cells }
                     </tr>);
                 })
