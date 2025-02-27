@@ -37,7 +37,7 @@ interface CellSubcomponentFunctions {
   validate: (inputString: string) => CellValidationResult;
   save: (inputString: string) => CellValidationResult;
   setHelp: (help: CellHelpMessage) => void;
-  testKeyForMovement: (event: React.KeyboardEvent<HTMLInputElement>, useArrows: boolean) => boolean;
+  testKeyForMovement: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, useArrows: boolean) => boolean;
 }
 
 

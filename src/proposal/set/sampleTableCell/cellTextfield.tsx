@@ -19,12 +19,12 @@ function CellTextfield(settings: CellSubcomponentParameters) {
   const [validationState, setValidationState] = useState<InputValidationState>(InputValidationState.NotTriggered);
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
 
   // This handles keyboard-based navigation or actions in the input field.
   // Changes to the input value are handled in inputOnChange.
-  function inputOnKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  function inputOnKeyDown(event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
     var didMove = settings.cellFunctions.testKeyForMovement(event, true);
 
     switch (event.key) {
@@ -73,7 +73,7 @@ function CellTextfield(settings: CellSubcomponentParameters) {
   // Deal with changes to the input value.
   // We trigger a short delay before validating,
   // and in the meantime we hide the feedback panel.
-  function inputOnChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function inputOnChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const value = event.target.value;
     if (debounceTimer) { clearTimeout(debounceTimer); }
     setDebounceTimer(setTimeout(() => inputCompleted(value), 100));
@@ -134,13 +134,12 @@ function CellTextfield(settings: CellSubcomponentParameters) {
   }
 
 
-  function inputOnBlur(e: React.FocusEvent<HTMLInputElement, Element>) {
+  function inputOnBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement, Element>) {
     if ((validationState == InputValidationState.Succeeded) && (inputValue != settings.value)) {
       save();
     } else {
       reset();
     }
-    console.log(`Blurred.`);
   }
   
 
@@ -170,7 +169,24 @@ function CellTextfield(settings: CellSubcomponentParameters) {
     settings.cellFunctions.setHelp(help);
   }, [typingState, inputValue, validationMessage, validationState]);
 
+    return (
+          <textarea
+            placeholder={ "Enter value" }
+            onChange={ inputOnChange }
+            autoCorrect="off"
+            value={ inputValue }
+            ref={ inputRef }
+            onKeyDown={ inputOnKeyDown }
+            onFocus={ inputOnFocus }
+            onBlur={ inputOnBlur }
+            style={ {
+                height: settings.lastMinimumHeight || "unset", 
+                width: settings.lastMinimumWidth || "unset"
+              } }
+          />
+  );
 
+/*
   return (
           <input type="text"
             placeholder={ "Enter value" }
@@ -184,6 +200,7 @@ function CellTextfield(settings: CellSubcomponentParameters) {
             style={ {width: settings.lastMinimumWidth} }
           />
   );
+  */
 }
 
 
