@@ -44,14 +44,14 @@ table.sampletable td.samplecell.unused > div > div.cellTableInput {
 /* Table cells showing values (not being edited) */
 
 table.sampletable tr td.samplecell:not(.unused):not(.editing) {
-  padding: .375rem 1rem;
+  padding: 0.1rem 0;
+}
+
+table.sampletable td.samplecell > div > div.value {
+  padding: .275rem 1rem;
 }
 
 table.sampletable td.samplecell:not(.editing) > div > div.cellTableInput {
-  display: none;
-}
-
-table.sampletable td.samplecell:not(.editing) > div > div.cellTableInput > div.notify {
   display: none;
 }
 
@@ -64,18 +64,29 @@ table.sampletable td.samplecell.focused {
 /* Table cells showing values in editing mode */
 
 table.sampletable tr td.samplecell.editing {
-  padding: 0.1rem 0;
+  padding: 0;
 }
 
 table.sampletable td.samplecell.editing > div > div.value {
   display: none;
 }
 
-table.sampletable tr td.samplecell.editing div.cellTableInput > input {
-  padding: 0.3rem 0 0.3rem 0.8rem;
+table.sampletable tr td.samplecell div.cellTableInput {
+  line-height: 1em;
+  overflow-x: hidden;
 }
 
-table.sampletable td.samplecell > div > div.cellTableInput > div.notify {
+table.sampletable tr td.samplecell div.cellTableInput input {
+  padding: 0.3rem 0 0.3rem 0.5rem;
+  font-size: 1em;
+}
+
+table.sampletable tr td.samplecell div.cellTableInput textarea {
+  padding: 0.4rem 0 0.2rem 0.5rem;
+  font-size: 1em;
+}
+
+table.sampletable td.samplecell > div > div.cellTableInput div.notify {
   display: none;
   padding-top: 0;
   z-index: 5;
@@ -85,11 +96,11 @@ table.sampletable td.samplecell > div > div.cellTableInput > div.notify {
 
 /* Pop-under box for editing feedback */
 
-table.sampletable td.samplecell.editing > div > div.cellTableInput > div.notify.disclosed {
+table.sampletable td.samplecell.editing > div > div.cellTableInput div.notify.disclosed {
   display: block;
 }
 
-table.sampletable td.samplecell > div > div.cellTableInput > div.notify > div.notify-content {
+table.sampletable td.samplecell > div > div.cellTableInput div.notify > div.notify-content {
   background-color: #F8F8F8;
   border-radius: 4px;
   box-shadow: 0 2px 3px rgba(10, 10, 10, 0.2), 0 0 0 1px rgba(10, 10, 10, 0.2);
@@ -103,7 +114,7 @@ table.sampletable td.samplecell > div > div.cellTableInput > div.notify > div.no
     color: rgba(156, 165, 241, 1);
   }
 
-  table.sampletable td.samplecell > div > div.cellTableInput > div.notify > div.notify-content {
+  table.sampletable td.samplecell > div > div.cellTableInput div.notify > div.notify-content {
     background-color: #080808;
     box-shadow: 0 2px 3px rgba(120, 120, 120, 0.2), 0 0 0 1px rgba(120, 120, 120, 0.2);
   }
