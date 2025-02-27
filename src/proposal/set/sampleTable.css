@@ -73,7 +73,6 @@ table.sampletable td.samplecell.editing > div > div.value {
 
 table.sampletable tr td.samplecell div.cellTableInput {
   line-height: 1em;
-  overflow-x: hidden;
 }
 
 table.sampletable tr td.samplecell div.cellTableInput input {
