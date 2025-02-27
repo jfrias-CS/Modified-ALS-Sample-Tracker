@@ -18,6 +18,14 @@ interface CellAutocompleteParameters extends CellSubcomponentParameters {
 }
 
 
+function renderMatch(item: ParameterOption, searchString: string): JSX.Element {
+  return (<>
+            <td>{ highlightSearchTermsInString(item.name, [searchString]) }</td>
+            <td>{ highlightSearchTermsInString(item.description, [searchString]) }</td>
+          </>);
+}
+
+
 function CellAutocomplete(settings: CellAutocompleteParameters) {
 
   const [showHelp, setShowHelp] = useState<boolean>(true);
@@ -36,14 +44,6 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
                       s.description.toLowerCase().includes(searchStringLower));
     return { matches: matches };
   };
-
-
-  function renderMatch(item: ParameterOption, searchString: string): JSX.Element {
-    return (<>
-              <td>{ highlightSearchTermsInString(item.name, [searchString]) }</td>
-              <td>{ highlightSearchTermsInString(item.description, [searchString]) }</td>
-            </>);
-  }
 
 
   function itemSelected(item: ParameterOption): SelectingStatus {
@@ -111,17 +111,16 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
       value: settings.value,
       selectedItem: currentParameter,
       searchFunctions: searchFunctions,
-      isReadOnly: false,
-      greenWhenValid: false,
-      resetOnDefocus: true,
-      triggerFocus: settings.triggerFocus,
+
       showAllByDefault: true,
       renderResultsAsTable: true,
+      triggerFocus: settings.triggerFocus,
+      resetOnDefocus: true,
+
+      placeholder: "Select a value",
+      renderPlainInput: true,
       addedClass: "parametertype",
-      addedInputStyle: {width: settings.lastMinimumWidth},
-      inputSize: "is-small",
-      iconSize: "sm",
-      placeholder: "Select a value"
+      addedInputStyle: { width: settings.lastMinimumWidth || "unset" },
     })
   );
 }

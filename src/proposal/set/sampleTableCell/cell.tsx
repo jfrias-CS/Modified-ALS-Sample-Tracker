@@ -34,21 +34,21 @@ function classNames(...names:(string|null|undefined)[]): string {
 // Given a DOM node, walk up the tree looking for a node of type "div"
 // with class "value" assigned to it, and return the pixel width of that element,
 // or 0 if a matching node can't be found.
-function findWidth(node: HTMLElement): number {
+function findCellSize(node: HTMLElement): { h: number, w: number } | null {
   var n = node.nodeName || "";
   n = n.trim().toLowerCase();
   const p = node.parentNode as HTMLElement | null;
   if (n != "td") {
-      if (!p) { return 0 } else { return findWidth(p) }
+      if (!p) { return null } else { return findCellSize(p) }
   } else {
     const c = node.classList;
     if (c.contains("samplecell")) {
         const rect = node.getBoundingClientRect();
-        return rect.width;
+        return { w: rect.width, h: rect.height };
     } else if (!p) {
-      return 0
+      return null
     } else {
-      return findWidth(p)
+      return findCellSize(p)
     }
   }
 }
@@ -57,7 +57,8 @@ function findWidth(node: HTMLElement): number {
 function SampleTableCell(settings: EditableCellParameters) {
 
   const [justActivated, setJustActivated] = useState<boolean>(settings.isActivated);
-  const [lastMinimumWidth, setLastMinimumWidth] = useState<string>("23px");
+  const [lastMinimumHeight, setLastMinimumHeight] = useState<string>("unset");
+  const [lastMinimumWidth, setLastMinimumWidth] = useState<string>("unset");
   const [helpMessage, setHelpMessage] = useState<CellHelpMessage>({status: CellHelpStatus.Hide });
 
   const valueRef = useRef<HTMLDivElement>(null);
@@ -88,7 +89,7 @@ function SampleTableCell(settings: EditableCellParameters) {
   // This handles keyboard-based navigation for the table cell.
   // It's meant to be called after the specific input component does its own business.
   // Returns true if the outcome is a move to another cell, false otherwise.
-  function testKeyForMovement(event: React.KeyboardEvent<HTMLInputElement>, useArrows: boolean): boolean {
+  function testKeyForMovement(event: React.KeyboardEvent<HTMLInputElement| HTMLTextAreaElement>, useArrows: boolean): boolean {
     var didMove: CellValidationStatus = CellValidationStatus.Failure;
 
     switch (event.key) {
@@ -129,14 +130,21 @@ function SampleTableCell(settings: EditableCellParameters) {
     // we measure the width of the cell and set the input element width to match
     // before revealing it.
     if (settings.isActivated) {
-      var w = 20;
+      var w = "unset";
+      var h = "unset";
       if (valueRef.current) {
-        w = findWidth( valueRef.current as HTMLElement);
-        // 22 pixels accounts for the extra padding of the input element
-        // relative to the table cell when it's showing the value element.
-        w = Math.max(w - 22, 20);
+        const d = findCellSize( valueRef.current as HTMLElement);
+        if (d !== null) {
+          const height = Math.max(d.h - 2, 20)
+          // 15 pixels accounts for the extra padding of the input element
+          // relative to the table cell when it's showing the value element.
+          const width = Math.max(d.w - 10, 20)
+          h = `${height}px`;
+          w = `${width}px`;
+        }
       }
-      setLastMinimumWidth(`${w}px`);
+      setLastMinimumHeight(h);
+      setLastMinimumWidth(w);
     }
     // This state value is used to create a delayed reaction, where the
     // input element is revealed _after_ the size of the table cell is measured.
@@ -185,24 +193,23 @@ function SampleTableCell(settings: EditableCellParameters) {
     >
       <div>
         <div className="value" ref={ valueRef }>{ settings.isUnused ? (<span>&nbsp;</span>) : settings.value }</div>
-        <div className="cellTableInput">
-          { settings.choices ? (
-            <CellAutocomplete
+        <div className="cellTableInput">{
+            settings.choices ?
+            (<CellAutocomplete
               triggerFocus={ justActivated }
               value={ settings.value }
               choices={ settings.choices }
               description={ settings.description }
               lastMinimumWidth={ lastMinimumWidth }
-              cellFunctions={ cellSubcomponentFunctions } />
-          ) : (
-            <CellTextfield
+              cellFunctions={ cellSubcomponentFunctions } />)
+            : (<CellTextfield
               triggerFocus={ justActivated }
               value={ settings.value }
               description={ settings.description }
+              lastMinimumHeight={ lastMinimumHeight }
               lastMinimumWidth={ lastMinimumWidth }
-              cellFunctions={ cellSubcomponentFunctions } />
-          )}
-          <div className={ helpClass }> 
+              cellFunctions={ cellSubcomponentFunctions } />)
+          }<div className={ helpClass }> 
             <div className="notify-content">
               { help }
             </div>
