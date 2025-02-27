@@ -41,19 +41,34 @@ interface InputAutocompleteParameters<Item> {
   selectedItem: Item | null;
   searchFunctions: SearchFunctions<Item>;
 
+  // Make the input element read-only.
   isReadOnly?: boolean;
+  // Show all the results when the input is empty.
   showAllByDefault?: boolean;
+  // Expect renderMatchedItem to return table cells, suitable for wrapping in a table.
   renderResultsAsTable?: boolean;
+  // Change the color of the element to green when validation passes.
   greenWhenValid?: boolean;
+  // Whenever this is set to true, trigger a single focus event on the input element.
   triggerFocus?: boolean;
+  // Reset the value to the un-edited one when the control loses focus.
   resetOnDefocus?: boolean;
+  // Custom debounce time, in ms, to wait after keyboard activity to validate.
   debounceTime?: number;
 
+  // Optional icon to display inside the input element, on the left.
   icon?: JSX.Element;
+  // Bulma-style size indicator for the element, e.g. "is-small", "is-normal".
   inputSize?: string;
+  // Bulma-style size indicator for the icons.
   iconSize?: SizeProp;
+  // Placholder text to show when the input is empty.
   placeholder?: string;
+  // Render the input element with no icons and no Bulma styling and wrapping.
+  renderPlainInput?: boolean;
+  // Extra class to append to the outer element
   addedClass?: string;
+  // Extra styling to add directly to the input element
   addedInputStyle?: React.CSSProperties | undefined;
 }
 
@@ -305,34 +320,44 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
     }
 
     const controlClass = classNames("control", inputIcon ? "has-icons-left" : "", statusIcon ? "has-icons-right" : "");
-    const inputClass = classNames("input", inputColor, settings.inputSize || "is-normal");
+    const inputClass = settings.renderPlainInput ?
+        classNames(inputColor, settings.inputSize) :
+        classNames("input", inputColor, settings.inputSize || "is-normal");
+
+    const inputElement = (
+      <input type="text"
+        className={ inputClass }
+        style={ settings.addedInputStyle }
+        placeholder={ settings.placeholder || "Enter value" }
+        readOnly={ settings.isReadOnly }
+        onChange={ (event) => {
+          inputChanged(event.target.value.trimStart())
+        } }
+        autoComplete="off"
+        autoCorrect="off"
+
+        aria-haspopup="listbox"
+
+        value={ inputValue }
+        ref={ inputRef }
+        onKeyDown={ inputOnKeyDown }
+        onFocus={ inputOnFocus }
+        onBlur={ () => {
+          // The onblur event may happen because one of the matched items has been clicked.
+          // Wait a bit to give precedence to the click event in that case.
+          setTimeout( inputOnBlur, 200);
+        } }
+      />
+    );
+
+    if (settings.renderPlainInput) {
+      return inputElement;
+    }
 
     return (
       <>
         <div className={ controlClass }>
-          <input type="text"
-            className={ inputClass }
-            style={ settings.addedInputStyle }
-            placeholder={ settings.placeholder || "Enter value" }
-            readOnly={ settings.isReadOnly }
-            onChange={ (event) => {
-              inputChanged(event.target.value.trimStart())
-            } }
-            autoComplete="off"
-            autoCorrect="off"
-            autoFocus={ settings.triggerFocus }
-
-            aria-haspopup="listbox"
-
-            value={ inputValue }
-            onKeyDown={ inputOnKeyDown }
-            onFocus={ inputOnFocus }
-            onBlur={ () => {
-              // The onblur event may happen because one of the matched items has been clicked.
-              // Wait a bit to give precedence to the click event in that case.
-              setTimeout( inputOnBlur, 200);
-            } }
-          />
+          { inputElement }
           { (inputIcon && (
               <span className={ classNames( "icon", "is-left", settings.iconSize || null) }>
                 { inputIcon }
