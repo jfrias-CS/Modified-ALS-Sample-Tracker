@@ -425,46 +425,83 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                   displayedParameters.forEach((p, paramIndex) => {
                     const unused = !allowedParameters.has(p.id);
                     const activated = (cellFocusX === (paramIndex+4)) && cellFocusOnThisY;
-                    const td = (<SampleTableCell x={paramIndex+4} y={sampleIndex}
-                                  key={ p.id }
-                                  cellKey={ p.id }
-                                  isUnused={unused}
-                                  isActivated={activated}
-                                  cellFunctions={cellFunctions}
-                                  description={ p.description }
-                                  value={ sample.parameters.get(p.id) ?? "" }
-                                  choices={ p.choices }
-                                  />) ;
+                    const cellClass = "samplecell " + (unused ? "unused" : "");
+                    const td = (
+                      <td key={ p.id }
+                          data-sample-x={paramIndex+4}
+                          data-sample-y={sampleIndex}
+                          data-sample-unused={unused || 0}
+                          className={ cellClass }
+                        >
+                        <SampleTableCell x={paramIndex+4} y={sampleIndex}
+                                    key={ p.id }
+                                    cellKey={ p.id }
+                                    isUnused={unused}
+                                    isActivated={activated}
+                                    cellFunctions={cellFunctions}
+                                    description={ p.description }
+                                    value={ sample.parameters.get(p.id) ?? "" }
+                                    choices={ p.choices }
+                            />
+                      </td>);
                     cells.push(td);
                   });
 
                   return (
                     <tr key={sample["id"]}>
-                      <SampleTableCell x={0} y={sampleIndex}
-                          key="mm"
-                          cellKey="mm"
-                          isActivated={(cellFocusX === 0) && cellFocusOnThisY}
-                          cellFunctions={cellFunctions}
-                          value={ sample.mmFromLeftEdge.toString() } />
-                      <SampleTableCell x={1} y={sampleIndex}
-                          key="name"
-                          cellKey="name"
-                          isActivated={(cellFocusX === 1) && cellFocusOnThisY}
-                          cellFunctions={cellFunctions}
-                          value={ sample.name } />
-                      <SampleTableCell x={2} y={sampleIndex}
-                          key="description"
-                          cellKey="description"
-                          isActivated={(cellFocusX === 2) && cellFocusOnThisY}
-                          cellFunctions={cellFunctions}
-                          value={ sample.description } />
-                      <SampleTableCell x={3} y={sampleIndex}
-                          key="scantype"
-                          cellKey="scantype"
-                          isActivated={(cellFocusX === 3) && cellFocusOnThisY}
-                          cellFunctions={cellFunctions}
-                          value={ sample.scanType }
-                          choices={ scanTypesAsChoices } />
+                      <td key="mm"
+                          data-sample-x={0}
+                          data-sample-y={sampleIndex}
+                          data-sample-unused={0}
+                          className="samplecell"
+                        >
+                        <SampleTableCell x={0} y={sampleIndex}
+                            key="mm"
+                            cellKey="mm"
+                            isActivated={(cellFocusX === 0) && cellFocusOnThisY}
+                            cellFunctions={cellFunctions}
+                            value={ sample.mmFromLeftEdge.toString() } />
+                      </td>
+                      <td key="name"
+                          data-sample-x={1}
+                          data-sample-y={sampleIndex}
+                          data-sample-unused={0}
+                          className="samplecell"
+                        >
+                        <SampleTableCell x={1} y={sampleIndex}
+                            key="name"
+                            cellKey="name"
+                            isActivated={(cellFocusX === 1) && cellFocusOnThisY}
+                            cellFunctions={cellFunctions}
+                            value={ sample.name } />
+                      </td>
+                      <td key="description"
+                          data-sample-x={2}
+                          data-sample-y={sampleIndex}
+                          data-sample-unused={0}
+                          className="samplecell"
+                        >
+                        <SampleTableCell x={2} y={sampleIndex}
+                            key="description"
+                            cellKey="description"
+                            isActivated={(cellFocusX === 2) && cellFocusOnThisY}
+                            cellFunctions={cellFunctions}
+                            value={ sample.description } />
+                      </td>
+                      <td key="scantype"
+                          data-sample-x={3}
+                          data-sample-y={sampleIndex}
+                          data-sample-unused={0}
+                          className="samplecell"
+                        >
+                        <SampleTableCell x={3} y={sampleIndex}
+                            key="scantype"
+                            cellKey="scantype"
+                            isActivated={(cellFocusX === 3) && cellFocusOnThisY}
+                            cellFunctions={cellFunctions}
+                            value={ sample.scanType }
+                            choices={ scanTypesAsChoices } />
+                      </td>
                       { cells }
                     </tr>);
                 })

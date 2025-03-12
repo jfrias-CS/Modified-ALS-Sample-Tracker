@@ -127,7 +127,7 @@ function SampleTableCell(settings: EditableCellParameters) {
 
   useEffect(() => {
     // When the state goes from inactive to active,
-    // we measure the width of the cell and set the input element width to match
+    // we measure the size of the cell and set the input element to match
     // before revealing it.
     if (settings.isActivated) {
       var w = "unset";
@@ -135,8 +135,9 @@ function SampleTableCell(settings: EditableCellParameters) {
       if (valueRef.current) {
         const d = findCellSize( valueRef.current as HTMLElement);
         if (d !== null) {
-          const height = Math.max(d.h - 2, 20)
-          // 15 pixels accounts for the extra padding of the input element
+          // 6 pixels to account for the padding that a cell in non-editing mode gets
+          const height = Math.max(d.h - 6, 20)
+          // 10 pixels accounts for the extra padding of the input element
           // relative to the table cell when it's showing the value element.
           const width = Math.max(d.w - 10, 20)
           h = `${height}px`;
@@ -181,17 +182,11 @@ function SampleTableCell(settings: EditableCellParameters) {
     }
   }
 
-  const cellClass = classNames("samplecell", justActivated ? "editing" : "", settings.isUnused ? "unused" : "", inputColor);
+  const divClass = classNames(justActivated ? "editing" : "");
   const helpClass = classNames("notify", help ? "disclosed" : "");
 
   return (
-    <td key={ settings.cellKey }
-        data-sample-x={settings.x}
-        data-sample-y={settings.y}
-        data-sample-unused={settings.isUnused || 0}
-        className={ cellClass }
-    >
-      <div>
+      <div className={ divClass }>
         <div className="value" ref={ valueRef }>{ settings.isUnused ? (<span>&nbsp;</span>) : settings.value }</div>
         <div className="cellTableInput">{
             settings.choices ?
@@ -216,7 +211,6 @@ function SampleTableCell(settings: EditableCellParameters) {
           </div>
         </div>
       </div>
-    </td>
   );
 }
 

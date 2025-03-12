@@ -12,11 +12,29 @@ table.sampletable tbody tr:nth-child(odd) {
   background-color: rgba(130, 143, 167, 0.07);
 }
 
-table.sampletable tbody tr:hover {
+table.sampletable tbody td.samplecell:not(.unused):hover {
   color: rgba(7, 73, 251, 1);
   background-color: rgba(90, 105, 255, 0.2);
   cursor: pointer;
   user-select: none;
+}
+
+table.sampletable tbody td.samplecell {
+  border-width: 3px;
+  border-style: solid;
+  border-color: rgba(90, 105, 255, 0.0);
+}
+table.sampletable tbody td.samplecell.selectionTop {
+  border-top-color: rgba(90, 105, 255, 0.9);
+}
+table.sampletable tbody td.samplecell.selectionBottom {
+  border-bottom-color: rgba(90, 105, 255, 0.9);
+}
+table.sampletable tbody td.samplecell.selectionLeft {
+  border-left-color: rgba(90, 105, 255, 0.9);
+}
+table.sampletable tbody td.samplecell.selectionRight {
+  border-right-color: rgba(90, 105, 255, 0.9);
 }
 
 table.sampletable td.samplecell > div {
@@ -28,7 +46,7 @@ table.sampletable td.samplecell > div {
 /* Table cells with unused parameters */
 
 table.sampletable td.samplecell.unused {
-  padding: 0.1rem 0.2rem;
+  padding: 1px;
 }
 
 table.sampletable td.samplecell.unused > div > div.value {
@@ -43,7 +61,7 @@ table.sampletable td.samplecell.unused > div > div.cellTableInput {
 
 /* Table cells showing values (not being edited) */
 
-table.sampletable tr td.samplecell:not(.unused):not(.editing) {
+table.sampletable tr td.samplecell:not(.unused) > div:not(.editing) {
   padding: 0.1rem 0;
 }
 
@@ -51,7 +69,7 @@ table.sampletable td.samplecell > div > div.value {
   padding: .275rem 1rem;
 }
 
-table.sampletable td.samplecell:not(.editing) > div > div.cellTableInput {
+table.sampletable td.samplecell > div:not(.editing) > div.cellTableInput {
   display: none;
 }
 
@@ -63,11 +81,11 @@ table.sampletable td.samplecell.focused {
 
 /* Table cells showing values in editing mode */
 
-table.sampletable tr td.samplecell.editing {
+table.sampletable tr td.samplecell div.editing {
   padding: 0;
 }
 
-table.sampletable td.samplecell.editing > div > div.value {
+table.sampletable td.samplecell > div.editing > div.value {
   display: none;
 }
 
@@ -95,7 +113,7 @@ table.sampletable td.samplecell > div > div.cellTableInput div.notify {
 
 /* Pop-under box for editing feedback */
 
-table.sampletable td.samplecell.editing > div > div.cellTableInput div.notify.disclosed {
+table.sampletable td.samplecell > div.editing > div.cellTableInput div.notify.disclosed {
   display: block;
 }
 
@@ -109,7 +127,7 @@ table.sampletable td.samplecell > div > div.cellTableInput div.notify > div.noti
 }
 
 @media (prefers-color-scheme: dark) {
-  table.sampletable tbody tr:hover {
+  table.sampletable tbody td.samplecell:not(.unused):hover {
     color: rgba(156, 165, 241, 1);
   }
 
