@@ -66,7 +66,6 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
   function isDropdownActive(): boolean {
     return  (selectedItem == null) &&
             (matchedItems.length > 0)
-            !showHelp
   }
 
 
