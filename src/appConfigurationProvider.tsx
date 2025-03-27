@@ -6,7 +6,7 @@ import { LoadingBanner, LoadingState } from './components/loadingBanner.tsx';
 // This is a "context provider" React component for the configuration of our application.
 
 // It uses the AppConfiguration class to fetch and cache a JSON settings file
-// from the server, and make is available to all sub-components in the React tree.
+// from the server, and makes it available to all sub-components in the React tree.
 // (See appConfiguration.ts for details.)
 
 
