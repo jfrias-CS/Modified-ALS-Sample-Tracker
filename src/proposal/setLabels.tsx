@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
 import { SampleConfigurationSet } from '../sampleConfiguration.ts';
-import { MetadataContext, ProviderLoadingState } from '../metadataProvider.tsx';
+import { MetadataContext, MetaDataLoadingState } from '../metadataProvider.tsx';
 import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
 import SetLabel from './setLabel.tsx';
 import './setLabels.css';
@@ -19,10 +19,10 @@ const SetLabels: React.FC = () => {
   const [loadingMessage, setLoadingMessage] = useState("");
 
   useEffect(() => {
-    if (metadataContext.setsLoadingState == ProviderLoadingState.Failed) {
+    if (metadataContext.setsLoadingState == MetaDataLoadingState.Failed) {
       setLoading(LoadingState.Failure);
       setLoadingMessage("Failed to load Sets. Are you sure you're still logged in?");
-    } else if (metadataContext.loadingState == ProviderLoadingState.Succeeded) {
+    } else if (metadataContext.loadingState == MetaDataLoadingState.Succeeded) {
       const sortedSets = metadataContext.sets.all().sort((a, b) => a.name.localeCompare(b.name));
       setSets(sortedSets);
       setLoading(LoadingState.Success);

@@ -1,17 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import 'bulma/css/bulma.min.css';
 
-import { CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellSubcomponentFunctions } from './cellDto.ts';
+import { CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellSubcomponentParameters } from './cellDto.ts';
 
-
-// Settings passed in with the React component
-interface CellSubcomponentParameters {
-  isActivated: boolean;
-  value: string;
-  description?: string;
-  lastMinimumWidth: string;
-  cellFunctions: CellSubcomponentFunctions;
-}
 
 
 // Internal state tracking
@@ -28,12 +19,12 @@ function CellTextfield(settings: CellSubcomponentParameters) {
   const [validationState, setValidationState] = useState<InputValidationState>(InputValidationState.NotTriggered);
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
 
   // This handles keyboard-based navigation or actions in the input field.
   // Changes to the input value are handled in inputOnChange.
-  function inputOnKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+  function inputOnKeyDown(event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
     var didMove = settings.cellFunctions.testKeyForMovement(event, true);
 
     switch (event.key) {
@@ -51,6 +42,10 @@ function CellTextfield(settings: CellSubcomponentParameters) {
         break;
     }
 
+    // If a key was entered that allowed movement, we are assuming that the
+    // key is not one that can change the effective value in the input element,
+    // so we're okay with replying on the value of validationState even though we
+    // haven't re-validated based on the effect of this keypress.
     if (didMove) {
       if (inputValue == settings.value) {
         reset();
@@ -66,19 +61,19 @@ function CellTextfield(settings: CellSubcomponentParameters) {
   // "display:none" from the parent div.  Trying to .focus() on an element that
   // isn't being displayed does nothing.  So we watch justActivated for a delayed effect. 
   useEffect(() => {
-    if (settings.isActivated) {
+    if (settings.triggerFocus) {
       if (inputRef.current) {
         inputRef.current.focus();
         inputRef.current.setSelectionRange(0, inputRef.current.value.length)
       }
     }
-  }, [settings.isActivated]);
+  }, [settings.triggerFocus]);
 
 
   // Deal with changes to the input value.
   // We trigger a short delay before validating,
   // and in the meantime we hide the feedback panel.
-  function inputOnChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function inputOnChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const value = event.target.value;
     if (debounceTimer) { clearTimeout(debounceTimer); }
     setDebounceTimer(setTimeout(() => inputCompleted(value), 100));
@@ -139,13 +134,12 @@ function CellTextfield(settings: CellSubcomponentParameters) {
   }
 
 
-  function inputOnBlur(e: React.FocusEvent<HTMLInputElement, Element>) {
+  function inputOnBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement, Element>) {
     if ((validationState == InputValidationState.Succeeded) && (inputValue != settings.value)) {
       save();
     } else {
       reset();
     }
-    console.log(`Blurred.`);
   }
   
 
@@ -175,7 +169,24 @@ function CellTextfield(settings: CellSubcomponentParameters) {
     settings.cellFunctions.setHelp(help);
   }, [typingState, inputValue, validationMessage, validationState]);
 
+    return (
+          <textarea
+            placeholder={ "Enter value" }
+            onChange={ inputOnChange }
+            autoCorrect="off"
+            value={ inputValue }
+            ref={ inputRef }
+            onKeyDown={ inputOnKeyDown }
+            onFocus={ inputOnFocus }
+            onBlur={ inputOnBlur }
+            style={ {
+                height: settings.lastMinimumHeight || "unset", 
+                width: settings.lastMinimumWidth || "unset"
+              } }
+          />
+  );
 
+/*
   return (
           <input type="text"
             placeholder={ "Enter value" }
@@ -189,6 +200,7 @@ function CellTextfield(settings: CellSubcomponentParameters) {
             style={ {width: settings.lastMinimumWidth} }
           />
   );
+  */
 }
 
 

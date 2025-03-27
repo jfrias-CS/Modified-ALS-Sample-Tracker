@@ -37,9 +37,20 @@ interface CellSubcomponentFunctions {
   validate: (inputString: string) => CellValidationResult;
   save: (inputString: string) => CellValidationResult;
   setHelp: (help: CellHelpMessage) => void;
-  testKeyForMovement: (event: React.KeyboardEvent<HTMLInputElement>, useArrows: boolean) => boolean;
+  testKeyForMovement: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, useArrows: boolean) => boolean;
+}
+
+
+// Settings passed to cell subcomponents, e.g. text and autocomplete fields
+interface CellSubcomponentParameters {
+  triggerFocus: boolean;
+  value: string;
+  description?: string;
+  lastMinimumWidth?: string;
+  lastMinimumHeight?: string;
+  cellFunctions: CellSubcomponentFunctions;
 }
 
 
 export { CellValidationStatus, CellNavigationDirection, CellHelpStatus }
-export type { CellValidationResult, CellFunctions, CellHelpMessage, CellSubcomponentFunctions }
+export type { CellValidationResult, CellFunctions, CellHelpMessage, CellSubcomponentFunctions, CellSubcomponentParameters }

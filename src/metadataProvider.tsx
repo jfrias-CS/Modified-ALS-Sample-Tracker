@@ -30,7 +30,7 @@ interface ProviderProps {
   proposalId: string | undefined;
 }
 
-enum ProviderLoadingState { NotTriggered, Pending, Succeeded, Failed };
+enum MetaDataLoadingState { NotTriggered, Pending, Succeeded, Failed };
 
 // The structure we are providing to components in the hierarchy below the provider
 interface SampleConfigurationInterface {
@@ -40,11 +40,11 @@ interface SampleConfigurationInterface {
   scanTypes: ScanTypes;
 
   // General loading state, succeeds when all others succeed.
-  loadingState: ProviderLoadingState;
+  loadingState: MetaDataLoadingState;
   // Track the status of loading all the sets.
-  setsLoadingState: ProviderLoadingState;
+  setsLoadingState: MetaDataLoadingState;
   // Set to true when successfully loaded, which should happen automatically after this comoponent is mounted.
-  scanTypesLoadingState: ProviderLoadingState;
+  scanTypesLoadingState: MetaDataLoadingState;
 
   // A callback for when a child component makes a change to the SampleConfigurationSets instance.
   changed: () => void;
@@ -58,9 +58,9 @@ interface SampleConfigurationInterface {
 const MetadataContext = createContext<SampleConfigurationInterface>({
                     sets: new SampleConfigurationSets("empty", "0" as Guid), // Should never be reached
                     scanTypes: {typesByName:new Map(),typeNamesInDisplayOrder:[],parametersById:new Map()},
-                    loadingState: ProviderLoadingState.NotTriggered,
-                    setsLoadingState: ProviderLoadingState.NotTriggered,
-                    scanTypesLoadingState: ProviderLoadingState.NotTriggered,
+                    loadingState: MetaDataLoadingState.NotTriggered,
+                    setsLoadingState: MetaDataLoadingState.NotTriggered,
+                    scanTypesLoadingState: MetaDataLoadingState.NotTriggered,
                     changed: () => {},
                     changeCounter: 0
                   });
@@ -73,9 +73,9 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
   const [sampleConfigurationsObject, setSampleConfigurationsObject] = useState<SampleConfigurationSets>(new SampleConfigurationSets("empty", "0" as Guid));
   const [scanTypes, setScanTypes] = useState<ScanTypes>({typesByName:new Map(),typeNamesInDisplayOrder:[],parametersById:new Map()});
 
-  const [loadingState, setLoadingState] = useState<ProviderLoadingState>(ProviderLoadingState.NotTriggered);
-  const [setsLoadingState, setSetsLoadingState] = useState<ProviderLoadingState>(ProviderLoadingState.NotTriggered);
-  const [scanTypesLoadingState, setScanTypesLoadingState] = useState<ProviderLoadingState>(ProviderLoadingState.NotTriggered);
+  const [loadingState, setLoadingState] = useState<MetaDataLoadingState>(MetaDataLoadingState.NotTriggered);
+  const [setsLoadingState, setSetsLoadingState] = useState<MetaDataLoadingState>(MetaDataLoadingState.NotTriggered);
+  const [scanTypesLoadingState, setScanTypesLoadingState] = useState<MetaDataLoadingState>(MetaDataLoadingState.NotTriggered);
 
   const [changeCounter, setChangeCounter] = useState<number>(0);
 
@@ -85,7 +85,7 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
 
     // Will eventually be an asynchronous call.
     setScanTypes(getScanTypes());
-    setScanTypesLoadingState(ProviderLoadingState.Succeeded);
+    setScanTypesLoadingState(MetaDataLoadingState.Succeeded);
     return () => {
       appConfig.log('MetadataProvider unmounted');
     };
@@ -95,8 +95,8 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
 
   useEffect(() => {
     // Proceed only if our watched values equal these:
-    if (setsLoadingState != ProviderLoadingState.Pending) { return; }
-    if (scanTypesLoadingState != ProviderLoadingState.Succeeded) { return; }
+    if (setsLoadingState != MetaDataLoadingState.Pending) { return; }
+    if (scanTypesLoadingState != MetaDataLoadingState.Succeeded) { return; }
 
     const fetchData = async () => {
       try {
@@ -104,7 +104,7 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
 
         const p = proposalId.trim()
         if (!p) {
-          setSetsLoadingState(ProviderLoadingState.Failed);
+          setSetsLoadingState(MetaDataLoadingState.Failed);
           throw new Error("ProposalId is blank");
         }
 
@@ -126,13 +126,13 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
           });
 
           setSampleConfigurationsObject(setContainer);
-          setSetsLoadingState(ProviderLoadingState.Succeeded);
+          setSetsLoadingState(MetaDataLoadingState.Succeeded);
           return;
         }
       } catch (error) {
         console.error('Error fetching data:', error);
       }
-      setSetsLoadingState(ProviderLoadingState.Failed);
+      setSetsLoadingState(MetaDataLoadingState.Failed);
     };
 
     // Call fetchData when the proposalId changes
@@ -148,7 +148,7 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
       return;
     }
     appConfig.log('MetadataProvider given proposalId: ' + proposalId);
-    setSetsLoadingState(ProviderLoadingState.Pending);
+    setSetsLoadingState(MetaDataLoadingState.Pending);
   }, [proposalId]);
 
 
@@ -162,10 +162,10 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
 
 
   useEffect(() => {
-    var s = ProviderLoadingState.Pending;
-    if ((setsLoadingState == ProviderLoadingState.Succeeded) &&
-        (scanTypesLoadingState == ProviderLoadingState.Succeeded)) {
-      s = ProviderLoadingState.Succeeded;
+    var s = MetaDataLoadingState.Pending;
+    if ((setsLoadingState == MetaDataLoadingState.Succeeded) &&
+        (scanTypesLoadingState == MetaDataLoadingState.Succeeded)) {
+      s = MetaDataLoadingState.Succeeded;
     }
     setLoadingState(s);
   }, [setsLoadingState, scanTypesLoadingState]);
@@ -186,4 +186,4 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
   )
 }
 
-export { MetadataContext, MetadataProvider, ProviderLoadingState }
+export { MetadataContext, MetadataProvider, MetaDataLoadingState }

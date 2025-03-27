@@ -9,6 +9,7 @@ import { ScanType } from '../../scanTypes.ts';
 import { ParamUid } from './../../scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
 import { MetadataContext } from '../../metadataProvider.tsx';
+import { SelectingStatus } from '../../components/inputAutocomplete.tsx'
 import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
 import { createNewConfiguration } from '../../metadataApi.ts';
 
@@ -150,8 +151,8 @@ const AddSamples: React.FC = () => {
 
 
   const scanTypeSearchFunctions:ScanTypeSearchFunctions = {
-    itemSelected: (item: ScanType) => { setScanTypeValue(item); validate(quantity, newName, item); },
-    selectedNone: () => { setScanTypeValue(null); validate(quantity, newName, null); }
+    itemSelected: (item: ScanType) => { setScanTypeValue(item); validate(quantity, newName, item); return SelectingStatus.Success },
+    selectedNone: () => { setScanTypeValue(null); validate(quantity, newName, null); return SelectingStatus.Success }
   };
 
 
@@ -218,9 +219,8 @@ const AddSamples: React.FC = () => {
             <div className="field">
               <label className="label">Scan Type</label>
                 <ScanTypeAutocomplete
-                    elementId="addsamples-scantype"
                     value=""
-                    selectedItem={null}
+                    selectedItem={scanTypeValue}
                     searchFunctions={scanTypeSearchFunctions} />
             </div>
 

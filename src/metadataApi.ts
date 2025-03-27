@@ -1,5 +1,6 @@
 import { Guid } from "./components/utils.tsx";
-import { ResponseWrapper, sciCatGet, sciCatPost, sciCatDelete, sciCatPatch } from "./generalApi.ts";
+import { ResponseWrapper, sciCatGet, sciCatPost, sciCatDelete, sciCatPatch } from "./sciCatBasicApi.ts";
+import { SciCatUserIdentity, getUserDetails, deleteSample } from "./sciCatApi.ts";
 import { ScanTypeName, ParamUid } from './scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from './sampleConfiguration.ts';
 
@@ -32,19 +33,6 @@ const characeristicsToIgnore: Set<string> = new Set(
   ["lbnl_config_meta_type", "lbnl_config_meta_valid", "lbnl_config_meta_description", "lbnl_config_meta_set_id",
     "lbnl_config_meta_scan_type", "lbnl_config_meta_mm_from_left_edge"]
 );
-
-
-// Test function.  SciCat returns '{}' from this, which is not very useful.
-async function whoAmI(): Promise<ResponseWrapper<string>> {
-  const result = await sciCatGet('auth/whoami',{});
-  if (!result.success) {
-    return { success: false, message: result.message };
-  }
-  const rawRecords:any = await result.response!.text();
-//  console.log("whoAmI result");
-//  console.log(rawRecords);
-  return { success: true, response: rawRecords };
-}
 
 
 // Fetch all the Set/Sample records that are owned up the given proposalId (i.e. ownerGroup),
@@ -175,15 +163,6 @@ async function deleteSet(setId: Guid): Promise<ResponseWrapper<Guid>> {
   return deleteSample(setId);
 }
 
-// Delete a Sample record from the server, returning the Id used if successful.
-async function deleteSample(sampleId: Guid): Promise<ResponseWrapper<Guid>> {
-   const result = await sciCatDelete(`samples/${sampleId}`, {});
-  if (result.success) {
-    return { success: true, response: sampleId };
-  }
-  return { success: false, message: result.message };
-}
-
 
 // Create a new Sample record on the server, with sampleCharacteristics set to identify it as
 // a sample configuration.
@@ -294,4 +273,4 @@ async function updateConfig(config: SampleConfiguration): Promise<ResponseWrappe
 
 
 export type { RecordsFromServer }
-export { whoAmI, readConfigsForProposalId, createNewSet, createNewConfiguration, updateSet, updateConfig, deleteSet, deleteConfiguration }
+export { readConfigsForProposalId, createNewSet, createNewConfiguration, updateSet, updateConfig, deleteSet, deleteConfiguration }

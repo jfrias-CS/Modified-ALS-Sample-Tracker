@@ -4,28 +4,28 @@ import 'bulma/css/bulma.min.css';
 
 import { ScanType } from '../scanTypes.ts'
 import { MetadataContext } from '../metadataProvider.tsx'
-import { InputAutocomplete, SearchFunctions, SearchResult } from './inputAutocomplete.tsx'
+import { InputAutocomplete, SearchFunctions, SearchResult, SelectingStatus } from './inputAutocomplete.tsx'
 import { highlightSearchTermsInString } from "./utils.tsx";
 import './scanTypeAutocomplete.css';
 
 
 interface ScanTypeSearchFunctions {
-  itemSelected: (item: ScanType) => void;
-  selectedNone: () => void;
+  itemSelected: (item: ScanType) => SelectingStatus;
+  selectedNone: () => SelectingStatus;
 }
 
 
 // Settings passed in with the React component
 interface ScanTypeAutocompleteParameters {
-  elementId: string;
-  inputSize?: string;
-  iconSize?: SizeProp;
   value: string;
-  isReadOnly?: boolean;
-  greenWhenValid?: boolean;
-  autoFocus?: boolean;
   selectedItem: ScanType | null;
   searchFunctions: ScanTypeSearchFunctions;
+  inputSize?: string;
+  iconSize?: SizeProp;
+  isReadOnly?: boolean;
+  greenWhenValid?: boolean;
+  triggerFocus?: boolean;
+  resetOnDefocus?: boolean;
 }
 
 
@@ -58,19 +58,19 @@ function ScanTypeAutocomplete(settings:ScanTypeAutocompleteParameters) {
   };
 
   return InputAutocomplete<ScanType>({
-      elementId: settings.elementId,
+      value: settings.value,
+      selectedItem: settings.selectedItem,
+      searchFunctions: scanTypeSearchFunctions,
       addedClass: "scantype",
       inputSize: settings.inputSize,
       iconSize: settings.iconSize,
       placeholder: "Select a Scan Type",
-      value: settings.value,
       isReadOnly: settings.isReadOnly,
       greenWhenValid: settings.greenWhenValid,
-      autoFocus: settings.autoFocus,
+      resetOnDefocus: settings.resetOnDefocus,
+      triggerFocus: settings.triggerFocus,
       showAllByDefault: true,
-      renderResultsAsTable: true,
-      selectedItem: settings.selectedItem,
-      searchFunctions: scanTypeSearchFunctions
+      renderResultsAsTable: true
     });
 }
 

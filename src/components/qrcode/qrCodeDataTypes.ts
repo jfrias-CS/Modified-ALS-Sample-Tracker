@@ -25,7 +25,7 @@ class NumericData implements DataWriter {
 	toDigit(c: string) {
 		if ("0" <= c && c <= "9")
 			return c.charCodeAt(0) - "0".charCodeAt(0);
-		throw "illegal char :" + c
+		throw "Illegal  numeric QR char :" + c
 	}
 
 	toDigits(input: string) {
@@ -91,7 +91,7 @@ class AlphanumericData implements DataWriter {
 			case ":":
 				return 44;
 			default:
-				throw "illegal char: " + t;
+				throw "Illegal alphanumeric QR char: " + t;
 		}
 	}
 

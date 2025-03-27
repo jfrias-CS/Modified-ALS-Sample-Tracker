@@ -6,7 +6,7 @@ import 'bulma/css/bulma.min.css';
 
 import { Guid } from '../../components/utils.tsx';
 import { AppConfigurationContext } from '../../appConfigurationProvider.tsx';
-import { MetadataContext, ProviderLoadingState } from '../../metadataProvider.tsx';
+import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
 import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
 import DeleteSet from './deleteSet.tsx';
 import SampleTable from './sampleTable.tsx';
@@ -39,7 +39,7 @@ const Set: React.FC = () => {
       return;
     }
 
-    if (metadataContext.loadingState != ProviderLoadingState.Succeeded) {
+    if (metadataContext.loadingState != MetaDataLoadingState.Succeeded) {
       setLoading(LoadingState.Loading);
       setLoadingMessage("");
       return;
