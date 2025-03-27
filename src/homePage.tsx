@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
 import { Guid } from "./components/utils.tsx";
+import { SciCatUserDetailsContext } from './sciCatUserDetailsProvider.tsx';
 import './homePage.css';
 
 
 const HomePage: React.FC = () => {
+
+  const detailsContext = useContext(SciCatUserDetailsContext);
 
   const proposals = [
     {
@@ -15,6 +18,7 @@ const HomePage: React.FC = () => {
       description: "This is a test proposal, generated client-side as empty.",
       sets: 0
     }
+
   ];
 
   return (

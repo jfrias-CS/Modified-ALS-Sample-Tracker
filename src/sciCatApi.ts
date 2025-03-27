@@ -65,5 +65,5 @@ async function deleteSample(sampleId: Guid): Promise<ResponseWrapper<Guid>> {
 }
 
 
-export type { SciCatUserIdentity }
+export type { SciCatUserProfile, SciCatUserIdentity }
 export { whoAmI, getUserDetails, deleteSample }
