@@ -57,14 +57,14 @@ const AppConfigurationProvider: React.FC<PropsWithChildren> = (props) => {
 
 
   function logger(...args: any[]) {
-//    if (appConfigurationsObject.debugLoggingingEnabled) {
-    const loggingDiv = document.createElement("div");
-    loggingDiv.innerText = [ ...args].join(" ");
-    const c = document.getElementsByTagName("body");
-    c.item(0)?.appendChild(loggingDiv);
+    if (appConfigurationsObject.debugLoggingingEnabled) {
+      const loggingDiv = document.createElement("div");
+      loggingDiv.innerText = [ ...args].join(" ");
+      const c = document.getElementsByTagName("body");
+      c.item(0)?.appendChild(loggingDiv);
 
-//      console.log(...args);
-//    }
+      console.log(...args);
+    }
   }
 
 
