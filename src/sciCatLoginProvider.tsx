@@ -1,6 +1,5 @@
 import { createContext, useState, useEffect, useContext, PropsWithChildren } from "react";
 
-import { AppConfigurationContext } from './appConfigurationProvider.tsx';
 import { getUserIdOrRedirect } from './sciCatBasicApi.ts';
 import { LoadingBanner, LoadingState } from './components/loadingBanner.tsx';
 
@@ -23,19 +22,17 @@ const SciCatLoginContext = createContext<SciCatLoginInterface>({
 
 const SciCatLoginProvider: React.FC<PropsWithChildren> = (props) => {
 
-  const appConfig = useContext(AppConfigurationContext);
-
   const [loginState, setLoginState] = useState<LoginCheckState>(LoginCheckState.NotChecked);
   const [userId, setUserId] = useState<string | null>(null);
   const [loadingBannerState, setLoadingBannerState] = useState<LoadingState>(LoadingState.Loading);
-  const [loadingMessage, setLoadingMessage] = useState("");
+  const [loadingMessage, setLoadingMessage] = useState("Checking login status...");
 
 
   useEffect(() => {
 
     if (loginState == LoginCheckState.Failed) {
       setLoadingBannerState(LoadingState.Failure);
-      setLoadingMessage('No user is logged in. Redirecting to SciCat login page...');
+      setLoadingMessage('No user is logged in. Redirecting you to SciCat login page...');
       return;
     }
 
@@ -45,6 +42,8 @@ const SciCatLoginProvider: React.FC<PropsWithChildren> = (props) => {
     }
 
     if (loginState == LoginCheckState.Pending) {
+      // This relies on a properly loaded AppConfiguration,
+      // which is why this context provider needs to be inside an AppConfigurationProvider,
       const id = getUserIdOrRedirect();
       setUserId(id);
       if (id === null) {
