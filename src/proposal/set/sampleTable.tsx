@@ -6,7 +6,7 @@ import 'bulma/css/bulma.min.css';
 import { Guid } from '../../components/utils.tsx';
 import { ScanTypeName, ParameterChoice } from '../../scanTypes.ts';
 import { SampleConfiguration } from '../../sampleConfiguration.ts';
-import { MetadataContext, ProviderLoadingState } from '../../metadataProvider.tsx';
+import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
 import { updateConfig } from '../../metadataApi.ts';
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
@@ -63,7 +63,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     if ((setId === undefined) || (!setId.trim())) { return; }
 
-    if (metadataContext.loadingState != ProviderLoadingState.Succeeded) { return; }
+    if (metadataContext.loadingState != MetaDataLoadingState.Succeeded) { return; }
 
     const thisSet = metadataContext.sets.getById(setId.trim() as Guid);
     if (thisSet === undefined) { return; }
