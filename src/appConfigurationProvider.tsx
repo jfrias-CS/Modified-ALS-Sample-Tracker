@@ -24,7 +24,6 @@ const AppConfigurationContext = createContext<AppConfigurationInterface>({
 const AppConfigurationProvider: React.FC<PropsWithChildren> = (props) => {
 
   const [appConfigurationsObject, setAppConfigurationsObject] = useState<AppConfig>(appConfigDefaults);
-  const [logger, setLogger] = useState<(...args: any[]) => void>(() => {});
   const [loadingState, setLoadingState] = useState<ConfigLoadingState>(ConfigLoadingState.NotTriggered);
   const [loadingBannerState, setLoadingBannerState] = useState<LoadingState>(LoadingState.Loading);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -44,7 +43,6 @@ const AppConfigurationProvider: React.FC<PropsWithChildren> = (props) => {
 
     if (loadingState == ConfigLoadingState.Succeeded) {
       setAppConfigurationsObject(appConfiguration.config);
-      setLogger(appConfiguration.logger);
     }
 
     if (loadingState == ConfigLoadingState.Pending) {
@@ -67,7 +65,7 @@ const AppConfigurationProvider: React.FC<PropsWithChildren> = (props) => {
   return (
     <AppConfigurationContext.Provider value={{
         config: appConfigurationsObject,
-        log: logger
+        log: appConfiguration.logger
     }}>
     {props.children}
     </AppConfigurationContext.Provider>

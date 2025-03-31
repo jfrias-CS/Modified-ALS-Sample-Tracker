@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext, PropsWithChildren } from "react";
 
+import { AppConfigurationContext } from './appConfigurationProvider.tsx';
 import { getUserIdOrRedirect } from './sciCatBasicApi.ts';
 import { LoadingBanner, LoadingState } from './components/loadingBanner.tsx';
 
@@ -21,6 +22,7 @@ const SciCatLoginContext = createContext<SciCatLoginInterface>({
                   });
 
 const SciCatLoginProvider: React.FC<PropsWithChildren> = (props) => {
+  const appConfig = useContext(AppConfigurationContext);
 
   const [loginState, setLoginState] = useState<LoginCheckState>(LoginCheckState.NotChecked);
   const [userId, setUserId] = useState<string | null>(null);
@@ -40,11 +42,13 @@ const SciCatLoginProvider: React.FC<PropsWithChildren> = (props) => {
       setLoadingBannerState(LoadingState.Success);
       return;
     }
+    appConfig.log(`loginstate is '${loginState}'`);
 
     if (loginState == LoginCheckState.Pending) {
       // This relies on a properly loaded AppConfiguration,
       // which is why this context provider needs to be inside an AppConfigurationProvider,
       const id = getUserIdOrRedirect();
+      appConfig.log(`getUserIdOrRedirect returned '${id}'`);
       setUserId(id);
       if (id === null) {
         setLoginState(LoginCheckState.Failed);
@@ -56,9 +60,14 @@ const SciCatLoginProvider: React.FC<PropsWithChildren> = (props) => {
 
 
   useEffect(() => {
+    appConfig.log('SciCatLoginProvider mounted');
     setLoginState(LoginCheckState.Pending);
+    return () => {
+      appConfig.log('SciCatLoginProvider unmounted');
+    };
   }, []);
 
+  
   // If we're in any loading state other than success,
   // display a loading banner instead of the content.
   if (loginState != LoginCheckState.Succeeded) {

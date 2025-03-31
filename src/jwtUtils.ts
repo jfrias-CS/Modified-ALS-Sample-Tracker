@@ -1,6 +1,6 @@
 // Utility functions for dealing with JWT/authentication cookies set by the SciCat back end.
 // Note: If anyone can explain to me why SciCat sets cookies with the name "LoopBackSDK" in them,
-// I'd be grateful.
+// I'd be interested to know.
 
 
 // Decode and parse JSON data in Base64Url format.
