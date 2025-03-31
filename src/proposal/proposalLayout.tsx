@@ -11,7 +11,6 @@ const ProposalLayout: React.FC<PropsWithChildren> = () => {
   proposalId = proposalId ? proposalId.toLowerCase() : "";
 
   useEffect(() => {
-
 //    console.log('proposalLayout mounted');
     return () => {
 //        console.log('proposalLayout unmounted');

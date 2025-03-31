@@ -11,15 +11,32 @@ const HomePage: React.FC = () => {
 
   const detailsContext = useContext(SciCatUserDetailsContext);
 
-  const proposals = [
-    {
-      id: "group1" as Guid,
-      name: "Test Proposal (group1)",
-      description: "This is a test proposal, generated client-side as empty.",
-      sets: 0
-    }
+  const groups = detailsContext.userDetails?.profile.accessGroups || [];
 
-  ];
+  const proposals = groups.map((g) => {
+          return {
+            id: g as Guid,
+            name: g,
+            description: "",
+            sets: 7
+          }
+        }
+      );
+
+//      const proposals = [ // For testing purposes
+//        {
+//          id: "group1" as Guid,
+//          name: "Test Proposal (group1)",
+//          description: "This is a test proposal.",
+//          sets: 7
+//        },
+//        {
+//          id: "group2" as Guid,
+//          name: "Test Proposal 2 (group2)",
+//          description: "This is a second test proposal.",
+//          sets: 0
+//        }
+//      ];
 
   return (
 
@@ -32,34 +49,39 @@ const HomePage: React.FC = () => {
           read <a href="https://docs.google.com/document/d/1tKDQnEx4kwz0xS5tZ-yk1OHG1vhdM3FsCl4iYuiQF4s/edit?tab=t.0">this overview</a>.
         </p>
 
-        <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
-          <ul>
-            <li className="is-active"><Link to={ "/" }>Proposals</Link></li>
-          </ul>
-        </nav>
+        { proposals.length == 0 ? (
+          <p>( You do not appear to have access to any Proposals. )</p>
+        ) : (
+          <>
+            <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
+              <ul>
+                <li className="is-active"><Link to={ "/" }>Proposals</Link></li>
+              </ul>
+            </nav>
 
-        <table className="proposals">
-          <thead>
-            <tr key="headers">
-              <th key="name" scope="col">Name</th>
-              <th key="description" scope="col">Description</th>
-              <th key="samplecount" scope="col">Sets</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              proposals.map((proposal) => {
-                return (
-                  <tr key={proposal["id"]}>
-                      <th scope="row"><Link to={ "/proposal/" + proposal.id }>{ proposal.name }</Link></th>
-                      <td>{ proposal.description }</td>
-                      <td>{ proposal.sets }</td>
-                  </tr>);
-              })
-            }
-          </tbody>
-        </table>
-
+            <table className="proposals">
+              <thead>
+                <tr key="headers">
+                  <th key="name" scope="col">Name</th>
+                  <th key="description" scope="col">Description</th>
+                  <th key="samplecount" scope="col">Sets</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  proposals.map((proposal) => {
+                    return (
+                      <tr key={proposal["id"]}>
+                          <th scope="row"><Link to={ "/proposal/" + proposal.id }>{ proposal.name }</Link></th>
+                          <td>{ proposal.description }</td>
+                          <td>{ proposal.sets }</td>
+                      </tr>);
+                  })
+                }
+              </tbody>
+            </table>
+          </>
+        )}
       </div>
   )
 }

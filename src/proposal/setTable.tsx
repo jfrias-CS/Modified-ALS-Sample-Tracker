@@ -12,7 +12,7 @@ import './setTable.css';
 const SetTable: React.FC = () => {
 
   var { proposalId } = useParams();
-  proposalId = proposalId ? proposalId.toLowerCase() : "";
+  proposalId = proposalId ? proposalId : "";
 
   const metadataContext = useContext(MetadataContext);
   const [sets, setSets] = useState<SampleConfigurationSet[]>([]);
