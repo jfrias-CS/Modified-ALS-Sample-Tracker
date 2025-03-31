@@ -45,9 +45,12 @@ function getUserIdOrRedirect(): string | null {
 // A general-purpose function that constructs and makes an asynchronous SciCat API call.
 async function sciCatApiCall(url: string, method: string, params: Record<string, string> | null, body: string | null): Promise<ResponseWrapper<Response>> {
 
+  appConfiguration.logger(`SciCat ${method} to '${url}'`);
   const jwt = getJwt();
   if (jwt === null) {
-    return { success: false, message: "Error: Authentication token not found. Are you sure you're logged in?" };
+    const result = { success: false, message: "Error: Authentication token not found. Are you sure you're logged in?" };
+    appConfiguration.logger(result);
+    return result;
   }
 
   var headers:HeadersInit = { 'Authorization': "Bearer " + jwt };
@@ -59,6 +62,7 @@ async function sciCatApiCall(url: string, method: string, params: Record<string,
   if (params) {
     const searchParams = new URLSearchParams(params);
     queryString = `?${searchParams}`;
+    appConfiguration.logger(`Params: ${searchParams}`);
   }
 
   var requestInit: RequestInit = {
@@ -67,23 +71,30 @@ async function sciCatApiCall(url: string, method: string, params: Record<string,
       };
   if (body) {
     requestInit['body'] = body;
+    appConfiguration.logger(`Body: ${body}`);
   }
 
   try {
     const requestInfo: RequestInfo = new Request(`${appConfiguration.config.scicatAppUrl}${appConfiguration.config.scicatApiPath}${url}${queryString}`, requestInit );
     const response = await fetch(requestInfo);
+    var result;
 
     if (response.status == 201 || response.status == 200) {
-      return { success: true, response: response };
+      result = { success: true, response: response };
     } else {
       if (response.status == 401) {
-        return { success: false, response: response, message: "Error: Unauthorized. Are you sure you're still logged in?" };
+        result = { success: false, response: response, message: "Error: Unauthorized. Are you sure you're still logged in?" };
+      } else {
+        result = { success: false, response: response, message: "Error" };
       }
-      return { success: false, response: response, message: "Error" };
     }
+
   } catch (err) {
-    return { success: false, message: "Exception" };
+    result = { success: false, message: "Exception" };
   }
+
+  appConfiguration.logger(result);
+  return result;
 }
 
 
