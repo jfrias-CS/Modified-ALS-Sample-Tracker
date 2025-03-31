@@ -8,8 +8,6 @@ import { MetadataProvider } from './../metadataProvider.tsx';
 const ProposalLayout: React.FC<PropsWithChildren> = () => {
 
   var { proposalId } = useParams();
-  proposalId = proposalId ? proposalId.toLowerCase() : "";
-
 
   return (
     <>

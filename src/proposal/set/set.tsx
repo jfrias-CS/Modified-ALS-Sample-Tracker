@@ -17,7 +17,7 @@ import { updateSet } from '../../metadataApi.ts';
 const Set: React.FC = () => {
 
   var { proposalId, setId } = useParams();
-  proposalId = proposalId ? proposalId.toLowerCase() : "";
+  proposalId = proposalId || "";
   setId = setId ? setId.toLowerCase() : "";
 
   const appConfig = useContext(AppConfigurationContext);
