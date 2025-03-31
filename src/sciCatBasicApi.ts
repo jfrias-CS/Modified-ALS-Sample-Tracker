@@ -23,7 +23,9 @@ function redirectToLogin() {
   // Note that returnUrl is respected by the SciCat front end, but may currently be
   // overridden by the SciCat back end.  This is a bug that SciCat needs to fix.
   loginUrl.searchParams.append("returnUrl", window.location.toString());
-  window.location.href = loginUrl.toString();
+  const url = loginUrl.toString();
+  appConfiguration.logger(`Redirecting to '${url}'`);
+  //  window.location.href = url;
 }
 
 
