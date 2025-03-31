@@ -29,7 +29,7 @@ interface RecordsFromServer {
 
 // Everything else in the sampleCharacteristics object that's prefixed with "lbnl_config_",
 // but not mentioned here, is treated as the name of a Scan Type parameter.
-const characeristicsToIgnore: Set<string> = new Set(
+const characteristicsToIgnore: Set<string> = new Set(
   ["lbnl_config_meta_type", "lbnl_config_meta_valid", "lbnl_config_meta_description", "lbnl_config_meta_set_id",
     "lbnl_config_meta_scan_type", "lbnl_config_meta_mm_from_left_edge"]
 );
@@ -92,7 +92,7 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
     // is treated as a Scan Type parameter and its value is added to the parameter set.
     for (const [key, value] of Object.entries(sc)) {
       if (key.startsWith('lbnl_config_')) {
-        if (!characeristicsToIgnore.has(key)) { 
+        if (!characteristicsToIgnore.has(key)) { 
           parameters.set(key.replace(/lbnl_config_/, '') as ParamUid, value as string);
         }
       }
