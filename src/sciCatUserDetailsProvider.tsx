@@ -72,7 +72,7 @@ const SciCatUserDetailsProvider: React.FC<PropsWithChildren> = (props) => {
       // Anything other than a successful fetch causes a redirect to the login page.
       setLoadingState(UserDetailsLoadingState.Failed);
       setLoadingBannerState(LoadingState.Failure);
-      setLoadingMessage("Can't get logged in user details. Redirecting you to SciCat login page...");
+      setLoadingMessage("No user details found. Redirecting you to SciCat login page...");
       redirectToLogin();
     };
 

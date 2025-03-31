@@ -50,8 +50,8 @@ async function getUserDetails(userId: string): Promise<ResponseWrapper<SciCatUse
   if (!result.success) {
     return { success: false, message: result.message };
   }
-  const rawRecords:any = await result.response!.text();
-  return { success: true, response: rawRecords };
+  const record:any = await result.response!.json();
+  return { success: true, response: record };
 }
 
 
