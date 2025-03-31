@@ -22,7 +22,7 @@ const HomePage: React.FC = () => {
             id: g as Guid,
             name: g,
             description: "",
-            sets: 7
+            sets: 0
           }
         }
       );
@@ -68,7 +68,6 @@ const HomePage: React.FC = () => {
                 <tr key="headers">
                   <th key="name" scope="col">Name</th>
                   <th key="description" scope="col">Description</th>
-                  <th key="samplecount" scope="col">Sets</th>
                 </tr>
               </thead>
               <tbody>
@@ -78,7 +77,6 @@ const HomePage: React.FC = () => {
                       <tr key={proposal["id"]}>
                           <th scope="row"><Link to={ "/proposal/" + proposal.id }>{ proposal.name }</Link></th>
                           <td>{ proposal.description }</td>
-                          <td>{ proposal.sets }</td>
                       </tr>);
                   })
                 }
