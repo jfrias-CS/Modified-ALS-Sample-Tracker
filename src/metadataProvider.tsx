@@ -95,7 +95,6 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
   }, []);
 
 
-
   useEffect(() => {
     // Proceed only if our watched values equal these:
     if (setsLoadingState != MetaDataLoadingState.Pending) { return; }

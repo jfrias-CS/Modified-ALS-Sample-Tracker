@@ -13,8 +13,6 @@ const HomePage: React.FC = () => {
   const appConfig = useContext(AppConfigurationContext);
   const detailsContext = useContext(SciCatUserDetailsContext);
 
-  appConfig.log('User details from context:', detailsContext.userDetails);
-
   const groups = detailsContext.userDetails?.profile?.accessGroups || [];
 
   const proposals = groups.map((g) => {
