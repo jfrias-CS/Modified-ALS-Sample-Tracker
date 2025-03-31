@@ -3,26 +3,26 @@ import { ResponseWrapper, sciCatGet, sciCatPost, sciCatDelete, sciCatPatch } fro
 
 
 interface SciCatUserProfile {
-  accessGroups: string[];
   displayName: string;
+  username: string;
   email: string;
   emails: string[];
   id: string;
-//      oidcClaims: string[],
-//      thumbnailPhoto: "",
-  username: string;
+  accessGroups: string[];
+  oidcClaims?: string[],
+  thumbnailPhoto?: "",
 }
 
 // Identity details of a SciCat user, as defined by SciCat, and as returned by the UserIdentities API.
 interface SciCatUserIdentity {
     authStrategy: string;
-    created: string;
 //    credentials: {},
     externalId: string;
-    modified: string;
     profile: SciCatUserProfile;
     provider: string;
     userId: string;
+    created: string;
+    modified: string;
 }
 
 
