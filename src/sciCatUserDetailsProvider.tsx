@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useEffect, PropsWithChildren } from "react";
 
+import { SciCatUserIdentity, getUserDetails } from './sciCatApi.ts';
+import { redirectToLogin } from './sciCatBasicApi.ts';
 import { AppConfigurationContext } from './appConfigurationProvider.tsx';
 import { SciCatLoginContext } from './sciCatLoginProvider.tsx';
-
-import { SciCatUserIdentity, getUserDetails } from './sciCatApi.ts';
+import { LoadingBanner, LoadingState } from './components/loadingBanner.tsx';
 
 
 // This is a "context provider" React component for the user details object provided by SciCat
@@ -27,8 +28,10 @@ const SciCatUserDetailsProvider: React.FC<PropsWithChildren> = (props) => {
   const loginContext = useContext(SciCatLoginContext);
 
   const [userId, setUserId] = useState<string | null>(loginContext.userId);
-  const [userDetailsObject, setUserDetailsObject] = useState<SciCatUserIdentity | null>(null);
   const [loadingState, setLoadingState] = useState<UserDetailsLoadingState>(UserDetailsLoadingState.NotTriggered);
+  const [userDetailsObject, setUserDetailsObject] = useState<SciCatUserIdentity | null>(null);
+  const [loadingBannerState, setLoadingBannerState] = useState<LoadingState>(LoadingState.Loading);
+  const [loadingMessage, setLoadingMessage] = useState("Fetching user info...");
 
 
   useEffect(() => {
@@ -44,34 +47,47 @@ const SciCatUserDetailsProvider: React.FC<PropsWithChildren> = (props) => {
 
     const fetchData = async () => {
       try {
-        if (userId == null) { throw new Error("userId given to SciCatUserDetailsProvider is null"); }
+        if (userId == null) {
+          appConfig.log("userId given to SciCatUserDetailsProvider is null");
+        } else {
+          const u = userId.trim()
+          if (!u) {
+            setLoadingState(UserDetailsLoadingState.Failed);
+            appConfig.log("userId given to SciCatUserDetailsProvider is blank");
+          } else {
 
-        const u = userId.trim()
-        if (!u) {
-          setLoadingState(UserDetailsLoadingState.Failed);
-          throw new Error("userId given to SciCatUserDetailsProvider is blank");
-        }
-
-        const result = await getUserDetails(u);
-        if (result.success) {
-          const details = result.response!;
-          appConfig.log('User details:', details);
-          setUserDetailsObject(details);
-          setLoadingState(UserDetailsLoadingState.Succeeded);
-          return;
+            const result = await getUserDetails(u);
+            if (result.success) {
+              const details = result.response!;
+              appConfig.log('User details:', details);
+              setUserDetailsObject(details);
+              setLoadingState(UserDetailsLoadingState.Succeeded);
+              return;
+            }
+          }
         }
       } catch (error) {
-        console.error('Error fetching user details:', error);
+        appConfig.log('Error fetching user details:', error);
       }
+      // Anything other than a successful fetch causes a redirect to the login page.
       setLoadingState(UserDetailsLoadingState.Failed);
+      setLoadingBannerState(LoadingState.Failure);
+      setLoadingMessage("Can't get logged in user details. Redirecting you to SciCat login page...");
+      redirectToLogin();
     };
 
     // Call fetchData when the userId changes
     if (loadingState == UserDetailsLoadingState.Pending) {
       fetchData();
-      appConfig.log('Called fetchData');
     }
   }, [loadingState, userId]);
+
+
+  // If we're in any loading state other than success,
+  // display a loading banner instead of the content.
+  if (loadingState != UserDetailsLoadingState.Succeeded) {
+    return (<LoadingBanner state={loadingBannerState} message={loadingMessage}></LoadingBanner>)
+  }
 
 
   return (

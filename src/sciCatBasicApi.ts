@@ -20,7 +20,7 @@ interface ResponseWrapper<Data> {
 // with a return location of the current page, and send the browser to it.
 function redirectToLogin() {
   const loginUrl = new URL(appConfiguration.config.externalAuthUrl);
-  // Note that returnUrl is respected by the SciCat front end, but may currently be
+  // Note that returnUrl is respected by the SciCat front end, but is currently
   // overridden by the SciCat back end.  This is a bug that SciCat needs to fix.
   loginUrl.searchParams.append("returnUrl", window.location.toString());
   const url = loginUrl.toString();
@@ -120,4 +120,4 @@ async function sciCatPost(url: string, body: string): Promise<ResponseWrapper<Re
 
 
 export type { ResponseWrapper }
-export { getUserIdOrRedirect, sciCatGet, sciCatPost, sciCatDelete, sciCatPatch }
+export { redirectToLogin, getUserIdOrRedirect, sciCatGet, sciCatPost, sciCatDelete, sciCatPatch }
