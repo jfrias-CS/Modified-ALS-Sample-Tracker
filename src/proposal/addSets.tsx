@@ -92,7 +92,7 @@ const AddSets: React.FC = () => {
     setSubmitErrorMessage(null);
     setInProgress(true);
     while (count > 0 && (error === null)) {
-      const result = await createNewSet(uniqueNames[count-1], description);
+      const result = await createNewSet(metadataContext.proposalId!, uniqueNames[count-1], description);
       if (result.success) {
         metadataContext.sets.add([result.response!]);
       } else {

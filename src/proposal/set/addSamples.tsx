@@ -119,6 +119,7 @@ const AddSamples: React.FC = () => {
       });
 
       const result = await createNewConfiguration(
+                      metadataContext.proposalId!,
                       thisSet.id,
                       uniqueNames[count-1],
                       description,

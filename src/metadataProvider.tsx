@@ -34,6 +34,8 @@ enum MetaDataLoadingState { NotTriggered, Pending, Succeeded, Failed };
 
 // The structure we are providing to components in the hierarchy below the provider
 interface SampleConfigurationInterface {
+  // The proposalId that was provided to this provider
+  proposalId: string | undefined;
   // Access to the current instance of SampleConfigurationSets
   sets: SampleConfigurationSets;
   // Essential metadata for interpreting SampleConfiguration objects.
@@ -56,6 +58,7 @@ interface SampleConfigurationInterface {
 }
 
 const MetadataContext = createContext<SampleConfigurationInterface>({
+                    proposalId: undefined,
                     sets: new SampleConfigurationSets("empty", "0" as Guid), // Should never be reached
                     scanTypes: {typesByName:new Map(),typeNamesInDisplayOrder:[],parametersById:new Map()},
                     loadingState: MetaDataLoadingState.NotTriggered,
@@ -173,6 +176,7 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
 
   return (
     <MetadataContext.Provider value={{
+        proposalId: proposalId,
         sets: sampleConfigurationsObject,
         scanTypes: scanTypes,
         loadingState: loadingState,

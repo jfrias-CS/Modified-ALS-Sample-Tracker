@@ -1,23 +1,11 @@
 import { Guid } from "./components/utils.tsx";
 import { ResponseWrapper, sciCatGet, sciCatPost, sciCatDelete, sciCatPatch } from "./sciCatBasicApi.ts";
-import { SciCatUserIdentity, getUserDetails, deleteSample } from "./sciCatApi.ts";
+import { SciCatSample, createSample, getSamplesForGroupId, deleteSample } from "./sciCatApi.ts";
 import { ScanTypeName, ParamUid } from './scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from './sampleConfiguration.ts';
 
 
 // Database interconnection functions for SampleConfiguration objects.
-
-
-// This interface defines the records we expect to get from the server when fetching saved data
-interface RawRecordFromServer {
-  id: string,
-  description: string,
-  createdAt: string,
-  updatedAt: string,
-  // All remaining metadata, including parameters and flags to distinguish this record between
-  // a configuration and a set, is held in sampleCharacteristics.
-  sampleCharacteristics: any
-}
 
 
 // Returned by a successful fetch of all current records for a given proposal from the server
@@ -41,25 +29,15 @@ const characteristicsToIgnore: Set<string> = new Set(
 // so authentication status need to be confirmed before this call is useful.
 async function readConfigsForProposalId(proposalId: string): Promise<ResponseWrapper<RecordsFromServer>> {
 
-  const params = {
-    filter: `{"where":{"ownerGroup": "${proposalId}" }}`
-  };
-  const result = await sciCatGet('samples', params);
-
-  // More sophisticated query structure - not needed
-//  const params = {
-//    fields: `{"characteristics": [{"lhs":"ownerGroup","relation":"EQUAL_TO_STRING","rhs":"${proposalId}"}]}`
-//  };
-//  const result = await sciCatGet('samples', params);
-
+  const result = await getSamplesForGroupId(proposalId);
   if (!result.success) {
     return { success: false, message: result.message };
   }
-  const rawRecords:any = await result.response!.json();
+  const rawRecords = result.response!;  // At this point we know it's defined
 
-  var rawSetRecords:RawRecordFromServer[] = [];
-  var rawConfigRecords:RawRecordFromServer[] = [];
-  rawRecords.forEach((s:RawRecordFromServer) => {
+  var rawSetRecords:SciCatSample[] = [];
+  var rawConfigRecords:SciCatSample[] = [];
+  rawRecords.forEach((s:SciCatSample) => {
     // Skip any records that don't have a sampleCharacteristics object.
     // They will definitely not contain enough information to be useful.
     if (!s.sampleCharacteristics) { return; }
@@ -75,13 +53,15 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
   const sets = rawSetRecords.map((r) => {
     return new SampleConfigurationSet(
                     r.id as Guid,
-                    r.description,
+                    r.description || '',
                     r.sampleCharacteristics.lbnl_config_meta_description || "" );
   });
 
   var configs: SampleConfiguration[] = []; 
 
   rawConfigRecords.forEach((r) => {
+    // All remaining metadata, including parameters and flags to distinguish this record between
+    // a configuration and a set, is held in sampleCharacteristics.
     const sc = r.sampleCharacteristics;
     const setId = sc.lbnl_config_meta_set_id as Guid;
     if (!setId) { return; }
@@ -101,7 +81,7 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
     const newConfig = new SampleConfiguration({
       id: r.id as Guid,
       setId: setId,
-      name: r.description,
+      name: r.description || '',
       isValid: true,
       mmFromLeftEdge: sc.lbnl_config_meta_mm_from_left_edge,
       description: sc.lbnl_config_meta_description,
@@ -123,9 +103,9 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
 
 // Create a new Sample record on the server, with sampleCharacteristics set to identify it as
 // a sample configuration set.
-async function createNewSet(name: string, description: string): Promise<ResponseWrapper<SampleConfigurationSet>> {
+async function createNewSet(proposalId: string, name: string, description: string): Promise<ResponseWrapper<SampleConfigurationSet>> {
 
-  const body = {
+  const sample:SciCatSample = {
     "description": name,
     "sampleCharacteristics": {
       "lbnl_config_meta_type": "set",
@@ -133,15 +113,14 @@ async function createNewSet(name: string, description: string): Promise<Response
       "lbnl_config_meta_valid": true
     },
     "isPublished": false,
-    ownerGroup: "group1",
+    ownerGroup: proposalId,
   };
  
-  const result = await sciCatPost('samples', JSON.stringify(body));
+  const result = await createSample(sample);
 
   if (result.success) {
-    const newRecord:any = await result.response!.json();
     const newSet = new SampleConfigurationSet(
-      newRecord.id as Guid,
+      result.response!.id as Guid,
       name,
       description
     );
@@ -166,7 +145,7 @@ async function deleteSet(setId: Guid): Promise<ResponseWrapper<Guid>> {
 
 // Create a new Sample record on the server, with sampleCharacteristics set to identify it as
 // a sample configuration.
-async function createNewConfiguration(setId: Guid, name: string, description: string, scanType: string, mmFromLeftEdge: number, parameters: Map<ParamUid, string|null>): Promise<ResponseWrapper<SampleConfiguration>> {
+async function createNewConfiguration(proposalId: string, setId: Guid, name: string, description: string, scanType: string, mmFromLeftEdge: number, parameters: Map<ParamUid, string|null>): Promise<ResponseWrapper<SampleConfiguration>> {
 
   // All sampleCharacteristics values need to be specified in the patch operation.
   // The server will erase any that are left out.
@@ -182,19 +161,18 @@ async function createNewConfiguration(setId: Guid, name: string, description: st
     sampleCharacteristics['lbnl_config_' + k] = v;
   });
 
-  const body = {
+  const sample:SciCatSample = {
     "description": name,
     "sampleCharacteristics": sampleCharacteristics,
     "isPublished": false,
-    ownerGroup: "group1",
+    ownerGroup: proposalId
   };
 
-  const result = await sciCatPost('samples', JSON.stringify(body));
+  const result = await createSample(sample);
 
   if (result.success) {
-    const newRecord:any = await result.response!.json();
     const newConfig = new SampleConfiguration({
-      id: newRecord.id as Guid,
+      id: result.response!.id as Guid,
       setId: setId,
       name: name,
       isValid: true,
