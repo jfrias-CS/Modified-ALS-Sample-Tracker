@@ -52,6 +52,16 @@ class AppConfiguration {
     this.config = appConfigDefaults;
   }
 
+  logger(...args: any[]) {
+    if (this.config.debugLoggingingEnabled) {
+      const loggingDiv = document.createElement("div");
+      loggingDiv.innerText = [ ...args].join(" ");
+      const c = document.getElementsByTagName("body");
+      c.item(0)?.appendChild(loggingDiv);
+      console.log(...args);
+    }
+  }
+  
   async load() {
     if (this.loadingState != ConfigLoadingState.NotTriggered) { return; }
     this.loadingState = ConfigLoadingState.Pending;

@@ -24,6 +24,7 @@ const AppConfigurationContext = createContext<AppConfigurationInterface>({
 const AppConfigurationProvider: React.FC<PropsWithChildren> = (props) => {
 
   const [appConfigurationsObject, setAppConfigurationsObject] = useState<AppConfig>(appConfigDefaults);
+  const [logger, setLogger] = useState<(...args: any[]) => void>(() => {});
   const [loadingState, setLoadingState] = useState<ConfigLoadingState>(ConfigLoadingState.NotTriggered);
   const [loadingBannerState, setLoadingBannerState] = useState<LoadingState>(LoadingState.Loading);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -43,6 +44,7 @@ const AppConfigurationProvider: React.FC<PropsWithChildren> = (props) => {
 
     if (loadingState == ConfigLoadingState.Succeeded) {
       setAppConfigurationsObject(appConfiguration.config);
+      setLogger(appConfiguration.logger);
     }
 
     if (loadingState == ConfigLoadingState.Pending) {
@@ -54,18 +56,6 @@ const AppConfigurationProvider: React.FC<PropsWithChildren> = (props) => {
   useEffect(() => {
     setLoadingState(ConfigLoadingState.Pending);
   }, []);
-
-
-  function logger(...args: any[]) {
-    if (appConfigurationsObject.debugLoggingingEnabled) {
-      const loggingDiv = document.createElement("div");
-      loggingDiv.innerText = [ ...args].join(" ");
-      const c = document.getElementsByTagName("body");
-      c.item(0)?.appendChild(loggingDiv);
-
-      console.log(...args);
-    }
-  }
 
 
   // If we're in any loading state other than success,
