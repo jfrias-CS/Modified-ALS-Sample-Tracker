@@ -34,7 +34,7 @@ const SciCatLoginProvider: React.FC<PropsWithChildren> = (props) => {
 
     if (loginState == LoginCheckState.Failed) {
       setLoadingBannerState(LoadingState.Failure);
-      setLoadingMessage('No user is logged in. Redirecting you to SciCat login page...');
+      setLoadingMessage('Not logged in. Redirecting you to SciCat login page...');
       return;
     }
 
@@ -67,7 +67,7 @@ const SciCatLoginProvider: React.FC<PropsWithChildren> = (props) => {
     };
   }, []);
 
-  
+
   // If we're in any loading state other than success,
   // display a loading banner instead of the content.
   if (loginState != LoginCheckState.Succeeded) {

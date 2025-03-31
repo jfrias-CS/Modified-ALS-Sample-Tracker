@@ -3,15 +3,19 @@ import { Link } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
 import { Guid } from "./components/utils.tsx";
+import { AppConfigurationContext } from './appConfigurationProvider.tsx';
 import { SciCatUserDetailsContext } from './sciCatUserDetailsProvider.tsx';
 import './homePage.css';
 
 
 const HomePage: React.FC = () => {
 
+  const appConfig = useContext(AppConfigurationContext);
   const detailsContext = useContext(SciCatUserDetailsContext);
 
-  const groups = detailsContext.userDetails?.profile.accessGroups || [];
+  appConfig.log('User details from context:', detailsContext.userDetails);
+
+  const groups = detailsContext.userDetails?.profile?.accessGroups || [];
 
   const proposals = groups.map((g) => {
           return {
