@@ -25,7 +25,7 @@ function redirectToLogin() {
   loginUrl.searchParams.append("returnUrl", window.location.toString());
   const url = loginUrl.toString();
   appConfiguration.logger(`Redirecting to '${url}'`);
-  //  window.location.href = url;
+  window.location.href = url;
 }
 
 
