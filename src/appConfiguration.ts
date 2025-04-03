@@ -22,10 +22,10 @@ interface AppConfig {
   scicatAppUrl: string;
   scicatApiPath: string;
   externalAuthUrl: string;
-  externalAuthSuccessUrl: string;
-  loginEnabled: boolean;
+  externalAuthSuccessUrl: string; // Currently not used
+  loginEnabled: boolean;          // Currently not used
+  defaultProjectId: string | undefined; // Currently not used
   debugLoggingingEnabled: boolean;
-  defaultProjectId: string | undefined;
 }
 
 // These should never be accessed.  They're here as placeholders before the config actually loads.
@@ -35,8 +35,8 @@ const appConfigDefaults:AppConfig = {
   externalAuthUrl: "",
   externalAuthSuccessUrl: "",
   loginEnabled: false,
-  debugLoggingingEnabled: false,
-  defaultProjectId: ""
+  defaultProjectId: "",
+  debugLoggingingEnabled: false
 }
 
 enum ConfigLoadingState { NotTriggered, Pending, Succeeded, Failed };

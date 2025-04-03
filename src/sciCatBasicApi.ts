@@ -20,8 +20,9 @@ interface ResponseWrapper<Data> {
 // with a return location of the current page, and send the browser to it.
 function redirectToLogin() {
   const loginUrl = new URL(appConfiguration.config.externalAuthUrl);
-  // Note that returnUrl is respected by the SciCat front end, but is currently
-  // overridden by the SciCat back end.  This is a bug that SciCat needs to fix.
+  // This value is supposed to be stored in session data by the SciCat back end
+  // while it sends the user out to the OIDC service and back.
+  // Then it's passed to the SciCat front end and used there to perform a final redirect.
   loginUrl.searchParams.append("returnUrl", window.location.toString());
   const url = loginUrl.toString();
   appConfiguration.logger(`Redirecting to '${url}'`);
