@@ -37,20 +37,20 @@ function decodeJwt(token: string) {
 // This looks for and returns the JWT token set in a browser cookie by the loopback library.
 // Note that it looks for and removes a "Bearer%20" prefix.
 function getJwt(): string | null {
-  const bearerMaybe = document.cookie.split(";").find((row) => row.trim().startsWith("$LoopBackSDK$id="));
+  const bearerMaybe = document.cookie.split(";").find((row) => row.trim().startsWith("id="));
   if (bearerMaybe === undefined) { return null; }
-  const bearer = bearerMaybe.trim().slice(16);
-  if (!bearer.startsWith("Bearer%20")) { return null; }
-  const jwt = bearer.slice(9);
-  return jwt;
+  const bearer = bearerMaybe.trim().slice(3);
+  //if (!bearer.startsWith("Bearer%20")) { return null; }
+  //const jwt = bearer.slice(9);
+  return bearer;
 }
 
 
 // This looks for and returns the userId value set in a browser cookie by the looopback library.
 function getUserId(): string | null {
-  const userIdOrNull = document.cookie.split(";").find((row) => row.trim().startsWith("$LoopBackSDK$userId="));
+  const userIdOrNull = document.cookie.split(";").find((row) => row.trim().startsWith("userId="));
   if (userIdOrNull === undefined) { return null; }
-  const userId = userIdOrNull.trim().slice(20);
+  const userId = userIdOrNull.trim().slice(7);
   return userId;
 }
 
