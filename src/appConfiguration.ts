@@ -26,6 +26,8 @@ interface AppConfig {
   loginEnabled: boolean;          // Currently not used
   defaultProjectId: string | undefined; // Currently not used
   debugLoggingingEnabled: boolean;
+  // When debug logging is enabled, this appends log lines directly to the page content as HTML as well.
+  extremeDebugLoggingingEnabled: boolean;
 }
 
 // These should never be accessed.  They're here as placeholders before the config actually loads.
@@ -36,7 +38,8 @@ const appConfigDefaults:AppConfig = {
   externalAuthSuccessUrl: "",
   loginEnabled: false,
   defaultProjectId: "",
-  debugLoggingingEnabled: false
+  debugLoggingingEnabled: false,
+  extremeDebugLoggingingEnabled: false
 }
 
 enum ConfigLoadingState { NotTriggered, Pending, Succeeded, Failed };
@@ -54,10 +57,12 @@ class AppConfiguration {
 
   logger(...args: any[]) {
     if (this.config.debugLoggingingEnabled) {
-      const loggingDiv = document.createElement("div");
-      loggingDiv.innerText = [ ...args].join(" ");
-      const c = document.getElementsByTagName("body");
-      c.item(0)?.appendChild(loggingDiv);
+      if (this.config.extremeDebugLoggingingEnabled) {        
+        const loggingDiv = document.createElement("div");
+        loggingDiv.innerText = [ ...args].join(" ");
+        const c = document.getElementsByTagName("body");
+        c.item(0)?.appendChild(loggingDiv);
+      }
       console.log(...args);
     }
   }
