@@ -44,55 +44,67 @@ config:
 ---
 flowchart TB
 
-Config("`Configuration Provider`")
-Home@{ shape: process, label: "Home"}
+subgraph Config["`Configuration Provider`"]
+  subgraph Login["`Login Status Provider`"]
+    subgraph User["`User Details Provider`"]
 
-Home --- Sets
+      Home("`Home (Proposal List)`")
 
-subgraph SubP[Selected A Proposal]
-  direction TB
+      Home --- Sets
+      Home ~~~ ImpSamples
 
-  Sets("`Sets Table`")
-  Meta("`Metadata Provider`")
-  QR("`Printable QR Codes`")
-  AddSets@{ shape: subprocess, label: "Add Sets Modal"}
+      subgraph Meta["`Metadata Provider<br />(Selected a Proposal)`"]
 
-  Sets <--> QR
-  Sets ~~~ Meta
-  Sets <--> AddSets
-  Sets <--> Samples
-  QR <--> Samples
+        QR("`Printable QR Codes`")
+        Sets("`Sets Table`")
+        AddSets@{ shape: subprocess, label: "Add Sets"}
 
-  subgraph SubS[Selected A Set]
-    direction TB
+        Sets --- QR
+        Sets --- AddSets
+        Sets --- Samples
+        QR ~~~ Samples
 
-    Samples("`Samples Table`")
-    ImpSamples@{ shape: subprocess, label: "Import Samples Modal"}
-    AddSamples@{ shape: subprocess, label: "Add Samples Modal"}
-    DeleteSet@{ shape: subprocess, label: "Delete Set Modal"}
+        subgraph SubS[Selected A Set]
 
-    Samples <--> ImpSamples
-    Samples <--> AddSamples
-    Samples <--> DeleteSet
+          Samples("`Samples Table`")
+          ImpSamples@{ shape: subprocess, label: "Import Samples"}
+          AddSamples@{ shape: subprocess, label: "Add Samples"}
+          DeleteSet@{ shape: subprocess, label: "Delete Set"}
+          CloneSet@{ shape: subprocess, label: "Clone Set"}
 
+          Samples --- ImpSamples
+          Samples --- AddSamples
+          Samples --- DeleteSet
+          Samples --- CloneSet
+
+        end
+      end
+
+    end
   end
 end
 
-style SubP fill:#0805,padding-top:5em;
+style Meta fill:#0805,padding-top:5em;
 style SubS fill:#0805
 
-style Config stroke-dasharray: 5 5
-style Meta stroke-dasharray: 5 5
+style Config fill:none,stroke-dasharray: 5 5,stroke-width:3px
+style Login fill:none,stroke-dasharray: 5 5,stroke-width:3px
+style User fill:none,stroke-dasharray: 5 5,stroke-width:3px
+style Meta stroke-dasharray: 5 5,stroke-width:3px
 
 ```
 
 The content of `src` is laid out roughly the same as the subgroups in the chart above, so there is a `proposal` folder with a `set` folder inside it.
 
-Note the presence of *Configuration Provider* and *Metadata Provider*.  These are React <a href="https://react.dev/learn/passing-data-deeply-with-context">Context Providers</a> that become active at certain levels of the page heirarchy.
+Note the presence of *Configuration Provider* and *Metadata Provider*, etc.  These are React <a href="https://react.dev/learn/passing-data-deeply-with-context">Context Providers</a> that become active at certain levels of the page heirarchy.
 
 * **Configuration Provider** (`appConfigurationProvider.tsx`) fetches and parses the `config.json` file and turns it into an object, and makes it available to every page, including the home page.
 
-* **Metadata Provider** (`metadataProvider.tsx`) becomes active when a proposal is selected, and fetches all the sample configuration data for that proposal from SciCat, and makes it available to every page involving a proposal.
+* **Login Status Provider** (`sciCatLoginProvider.tsx`) checks the browser for the presence of a login token, and redirects to the login service if one is missing.  If a token is present, it provides a user id to its enclosed pages.
+
+* **User Details Provider** (`sciCatUserDetailsProvider.tsx`) fetches details from SciCat about the currently logged in user, using the id from the Login Status Provider. It makes the results available to enclosed pages.
+
+* **Metadata Provider** (`metadataProvider.tsx`) becomes active when a proposal is selected, and fetches all the sample configuration data for that proposal from SciCat, and makes it available to every enclosed page. It also handles the synchronization of changes to the data with SciCat.
 
 ## Reusable components
 
