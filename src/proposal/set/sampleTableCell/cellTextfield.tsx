@@ -39,6 +39,10 @@ function CellTextfield(settings: CellSubcomponentParameters) {
         // In the case of "Enter" we always want to save,
         // whether we've successfully moved or not.
         didMove = true;
+        // We also don't ever want carriage returns in our parameters,
+        // so we're going to consistently prevent the default.
+        event.preventDefault();
+
         break;
     }
 
