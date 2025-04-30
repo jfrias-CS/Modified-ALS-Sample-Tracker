@@ -29,18 +29,15 @@ type Coordinates = {x: number, y: number};
 function findAnEditableCell(node: HTMLElement): Coordinates | null {
   var n = node.nodeName || "";
   n = n.trim().toLowerCase();
-  const p = node.parentNode;
-  if (n != "td") {
-      if (!p) { return null; } else { return findAnEditableCell(p as HTMLElement); }
-  } else {
+  if (n == "td") {
     const x = node.dataset.sampleX;
     const y = node.dataset.sampleY;
     if ((x !== undefined) && (y !== undefined)) {
       return { x: parseInt(x, 10), y: parseInt(y, 10)};
-    } else {
-      if (!p) { return null; } else { return findAnEditableCell(p as HTMLElement); }
     }
   }
+  const p = node.parentNode;
+  if (!p) { return null; } else { return findAnEditableCell(p as HTMLElement); }
 }
 
 
@@ -54,6 +51,13 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   const [tableHasFocus, setTableHasFocus] = useState<boolean>(false);
   const [cellFocusX, setCellFocusX] = useState<number | null>(null);
   const [cellFocusY, setCellFocusY] = useState<number | null>(null);
+
+  const [cellMouseDown, setCellMouseDown] = useState<boolean>(false);
+  const [cellMouseDownX, setCellMouseDownX] = useState<number | null>(null);
+  const [cellMouseDownY, setCellMouseDownY] = useState<number | null>(null);
+  const [cellMouseMoveX, setCellMouseMoveX] = useState<number | null>(null);
+  const [cellMouseMoveY, setCellMouseMoveY] = useState<number | null>(null);
+
   const [syncTimer, setSyncTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [syncState, setSyncState] = useState<SyncState>(SyncState.Idle);
 
@@ -96,16 +100,56 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
-  function tableOnClick(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function tableOnMouseDown(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     const foundEditableCell = findAnEditableCell(event.target as HTMLElement);
-    var x = null;
-    var y = null;
     if (foundEditableCell) {
-      x = foundEditableCell.x;
-      y = foundEditableCell.y;
+      console.log(`sampleTable mouse down x:${foundEditableCell.x} y:${foundEditableCell.y}.`);
+      setCellMouseDown(true);
+      setCellMouseDownX(foundEditableCell.x);
+      setCellMouseDownY(foundEditableCell.y);
+      setCellMouseMoveX(foundEditableCell.x);
+      setCellMouseMoveY(foundEditableCell.y);
+      if ((cellFocusX != foundEditableCell.x) || (cellFocusY != foundEditableCell.y)) {
+        setCellFocusX(null);
+        setCellFocusY(null);
+      }
+      document.addEventListener("mouseup", tableOnMouseUp, {once: true });
+    } else {
+      console.log(`sampleTable mouse down null.`);
+      setCellMouseDown(false);
+      setCellMouseDownX(null);
+      setCellMouseDownY(null);
     }
-    setCellFocusX(x);
-    setCellFocusY(y);
+  }
+
+
+  function tableOnMouseOver(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    // We do no tracking if the mouse isn't down
+    if (!cellMouseDown) { return; }
+    const foundEditableCell = findAnEditableCell(event.target as HTMLElement);
+    if (!foundEditableCell) {
+      return;
+    }
+    if ((foundEditableCell.x != cellMouseMoveX) || (foundEditableCell.y != cellMouseMoveY)) {
+      console.log(`sampleTable mouse over x:${foundEditableCell.x} y:${foundEditableCell.y}.`);
+      setCellMouseMoveX(foundEditableCell.x);
+      setCellMouseMoveY(foundEditableCell.y);
+    }
+  }
+
+
+  function tableOnMouseUp(event: MouseEvent) {
+    const foundEditableCell = findAnEditableCell(event.target as HTMLElement);
+    setCellMouseDown(false);
+    if (foundEditableCell) {
+      console.log(`sampleTable mouse up x:${foundEditableCell.x} y:${foundEditableCell.y}.`);
+      if ((foundEditableCell.x != cellMouseDownX) || (foundEditableCell.y != cellMouseDownY)) {
+        setCellFocusX(foundEditableCell.x);
+        setCellFocusY(foundEditableCell.y);
+      }
+    } else {
+      console.log(`sampleTable mouse up null.`);
+    }
   }
 
 
@@ -407,7 +451,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                   tabIndex={0}
                   onFocus={ tableOnFocus }
                   onBlur={ tableOnBlur }
-                  onClick={ tableOnClick }
+                  onMouseOver={ tableOnMouseOver }
+                  onMouseDown={ tableOnMouseDown }
               >
             <thead>
               <tr key="headers">
