@@ -36,10 +36,8 @@ function getUserIdOrRedirect(): string | null {
   const userIdMaybe = getUserId();
   if (userIdMaybe == null) {
     redirectToLogin();
-    return null;
-  } else {
-    return userIdMaybe;
   }
+  return userIdMaybe;
 }
 
 
