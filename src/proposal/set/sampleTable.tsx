@@ -82,11 +82,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   // after a click event on a pulldown item.
   useEffect(() => {
     if (!tableHasFocus) {
-//      console.log(`Table lost focus`);
       setCellFocusX(null);
       setCellFocusY(null);
-    } else {
-//      console.log(`Table got focus`);
     }
   }, [tableHasFocus]);
 
@@ -103,7 +100,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   function tableOnMouseDown(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
     const foundCell = findAnEditableCell(event.target as HTMLElement);
     if (foundCell) {
-      console.log(`sampleTable mouse down x:${foundCell.x} y:${foundCell.y}.`);
       setCellMouseDown(true);
       setCellMouseDownX(foundCell.x);
       setCellMouseDownY(foundCell.y);
@@ -117,7 +113,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       // iteration of the SampleTable react object, which contains the old useState values.
       // document.addEventListener("mouseup", tableOnMouseUp, {once: true});
     } else {
-      console.log(`sampleTable mouse down null.`);
       setCellMouseDown(false);
       setCellMouseDownX(null);
       setCellMouseDownY(null);
@@ -173,6 +168,10 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
 
   function selectionBorderClasses(x: number, y: number) {
+    // If there is a cell in focus for editing, we don't draw the selection border.
+    if ((cellFocusX !== null) && (cellFocusY !== null)) {
+      return "";
+    }
     var borderClasses = [];
     // If one is true and the other false, regardless of which one, we're on either side of a transition
     // between "selected" and "not selected", and should set a border style.
