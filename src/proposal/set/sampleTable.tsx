@@ -12,6 +12,7 @@ import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
 import { SampleTableCell } from './sampleTableCell/cell.tsx';
 import { CellFunctions, CellValidationStatus, CellValidationResult, CellNavigationDirection } from './sampleTableCell/cellDto.ts';
+import { SampleTableClipboardContent } from './sampleClipboard.ts';
 import './sampleTable.css';
 
 
@@ -130,7 +131,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       return;
     }
     if ((foundCell.x != cellMouseMoveX) || (foundCell.y != cellMouseMoveY)) {
-      console.log(`sampleTable mouse over x:${foundCell.x} y:${foundCell.y}.`);
       setCellMouseMoveX(foundCell.x);
       setCellMouseMoveY(foundCell.y);
     }
@@ -142,13 +142,33 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     // It doesn't matter where the mouse came up,
     // we go by the last valid cell the mouse was moved in.
     if ((cellMouseDownX == cellMouseMoveX) && (cellMouseDownY == cellMouseMoveY)) {
-      console.log(`sampleTable mouse up:${cellMouseDownX} y:${cellMouseDownY}.`);
       setCellFocusX(cellMouseDownX);
       setCellFocusY(cellMouseDownY);
     } else {
       setCellFocusX(null);
       setCellFocusY(null);
     }
+  }
+
+
+  function tableOnCopy(event: React.ClipboardEvent) {
+    // If it's an element within the table, don't intercept the event.
+    // We're only interested in copy events where the table element itself has focus.
+    if (!tableHasFocus) { return; }
+    // A cell is being edited directly
+    if ((cellFocusY !== null) || (cellFocusX !== null)) { return; }
+    // No rows selected
+    if ((cellMouseDownY === null) || (cellMouseMoveY === null)) { return; }
+    // No columns selected
+    if ((cellMouseDownX === null) || (cellMouseMoveX === null)) { return; }
+    const c:SampleTableClipboardContent = new SampleTableClipboardContent();
+
+    var sampleRows = [];
+    for (var y = Math.min(cellMouseDownY, cellMouseMoveY); y <= Math.max(cellMouseDownY, cellMouseMoveY); y++) {
+      sampleRows.push(sampleConfigurations[y]);
+    }
+    c.fromTable(sampleRows, []);
+    c.sendToClipboard(event);
   }
 
 
@@ -168,6 +188,9 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
 
   function selectionBorderClasses(x: number, y: number) {
+    // If the table doesn't have focus, don't show the selection to avoid confusion
+    // over what else might be selected for copy/paste on the page.
+    if (!tableHasFocus) { return; }
     // If there is a cell in focus for editing, we don't draw the selection border.
     if ((cellFocusX !== null) && (cellFocusY !== null)) {
       return "";
@@ -493,6 +516,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                   tabIndex={0}
                   onFocus={ tableOnFocus }
                   onBlur={ tableOnBlur }
+                  onCopy={ tableOnCopy }
                   onMouseOver={ tableOnMouseOver }
                   onMouseDown={ tableOnMouseDown }
                   onMouseUp={ tableOnMouseUp }
