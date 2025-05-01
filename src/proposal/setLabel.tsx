@@ -18,6 +18,9 @@ interface SetLabelProps {
 
 const SetLabel: React.FC<SetLabelProps> = (props) => {
 
+    // Note: The value in BASE_URL cannot contain underscores, or anything else outside
+    // the QR alphanumeric format.  That format allows only the following:
+    // Digits 0 to 9, letters A to Z (capitals only), and " ", "$", "%", "*", "+", "-", ".", "/", ":"
     const qrContent = `${import.meta.env.BASE_URL}/set/${props.setId}`.toUpperCase();
 
     return (
