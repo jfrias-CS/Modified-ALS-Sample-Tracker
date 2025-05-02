@@ -12,6 +12,7 @@ import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
 import { SampleTableCell } from './sampleTableCell/cell.tsx';
 import { CellFunctions, CellValidationStatus, CellValidationResult, CellNavigationDirection } from './sampleTableCell/cellDto.ts';
+import { SampleTableClipboardContent } from './sampleClipboard.ts';
 import './sampleTable.css';
 
 
@@ -29,18 +30,15 @@ type Coordinates = {x: number, y: number};
 function findAnEditableCell(node: HTMLElement): Coordinates | null {
   var n = node.nodeName || "";
   n = n.trim().toLowerCase();
-  const p = node.parentNode;
-  if (n != "td") {
-      if (!p) { return null; } else { return findAnEditableCell(p as HTMLElement); }
-  } else {
+  if (n == "td") {
     const x = node.dataset.sampleX;
     const y = node.dataset.sampleY;
     if ((x !== undefined) && (y !== undefined)) {
       return { x: parseInt(x, 10), y: parseInt(y, 10)};
-    } else {
-      if (!p) { return null; } else { return findAnEditableCell(p as HTMLElement); }
     }
   }
+  const p = node.parentNode;
+  if (!p) { return null; } else { return findAnEditableCell(p as HTMLElement); }
 }
 
 
@@ -54,6 +52,13 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   const [tableHasFocus, setTableHasFocus] = useState<boolean>(false);
   const [cellFocusX, setCellFocusX] = useState<number | null>(null);
   const [cellFocusY, setCellFocusY] = useState<number | null>(null);
+
+  const [cellMouseDown, setCellMouseDown] = useState<boolean>(false);
+  const [cellMouseDownX, setCellMouseDownX] = useState<number | null>(null);
+  const [cellMouseDownY, setCellMouseDownY] = useState<number | null>(null);
+  const [cellMouseMoveX, setCellMouseMoveX] = useState<number | null>(null);
+  const [cellMouseMoveY, setCellMouseMoveY] = useState<number | null>(null);
+
   const [syncTimer, setSyncTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [syncState, setSyncState] = useState<SyncState>(SyncState.Idle);
 
@@ -78,11 +83,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   // after a click event on a pulldown item.
   useEffect(() => {
     if (!tableHasFocus) {
-//      console.log(`Table lost focus`);
       setCellFocusX(null);
       setCellFocusY(null);
-    } else {
-//      console.log(`Table got focus`);
     }
   }, [tableHasFocus]);
 
@@ -96,16 +98,102 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
-  function tableOnClick(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
-    const foundEditableCell = findAnEditableCell(event.target as HTMLElement);
-    var x = null;
-    var y = null;
-    if (foundEditableCell) {
-      x = foundEditableCell.x;
-      y = foundEditableCell.y;
+  function tableOnMouseDown(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    const foundCell = findAnEditableCell(event.target as HTMLElement);
+    if (foundCell) {
+      setCellMouseDown(true);
+      setCellMouseDownX(foundCell.x);
+      setCellMouseDownY(foundCell.y);
+      setCellMouseMoveX(foundCell.x);
+      setCellMouseMoveY(foundCell.y);
+      if ((cellFocusX != foundCell.x) || (cellFocusY != foundCell.y)) {
+        setCellFocusX(null);
+        setCellFocusY(null);
+      }
+      // We can't do this because it creates a reference to the function in a previous
+      // iteration of the SampleTable react object, which contains the old useState values.
+      // document.addEventListener("mouseup", tableOnMouseUp, {once: true});
+    } else {
+      setCellMouseDown(false);
+      setCellMouseDownX(null);
+      setCellMouseDownY(null);
+      setCellMouseMoveX(null);
+      setCellMouseMoveY(null);
     }
-    setCellFocusX(x);
-    setCellFocusY(y);
+  }
+
+
+  function tableOnMouseOver(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    // We do no tracking if the mouse isn't down
+    if (!cellMouseDown) { return; }
+    const foundCell = findAnEditableCell(event.target as HTMLElement);
+    if (!foundCell) {
+      return;
+    }
+    if ((foundCell.x != cellMouseMoveX) || (foundCell.y != cellMouseMoveY)) {
+      setCellMouseMoveX(foundCell.x);
+      setCellMouseMoveY(foundCell.y);
+    }
+  }
+
+
+  function tableOnMouseUp(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    setCellMouseDown(false);
+    // It doesn't matter where the mouse came up,
+    // we go by the last valid cell the mouse was moved in.
+    if ((cellMouseDownX == cellMouseMoveX) && (cellMouseDownY == cellMouseMoveY)) {
+      setCellFocusX(cellMouseDownX);
+      setCellFocusY(cellMouseDownY);
+    } else {
+      setCellFocusX(null);
+      setCellFocusY(null);
+    }
+  }
+
+
+  function isWithinSelection(x: number, y: number) {
+    if ((cellMouseDownX !== null) && (cellMouseDownY !== null) &&
+        (cellMouseMoveX !== null) && (cellMouseMoveY !== null)) {
+      if ((x <= Math.max(cellMouseDownX, cellMouseMoveX)) && 
+          (x >= Math.min(cellMouseDownX, cellMouseMoveX))) { 
+        if ((y <= Math.max(cellMouseDownY, cellMouseMoveY)) && 
+            (y >= Math.min(cellMouseDownY, cellMouseMoveY))) { 
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+
+  function selectionBorderClasses(x: number, y: number) {
+    // If the table doesn't have focus, don't show the selection to avoid confusion
+    // over what else might be selected for copy/paste on the page.
+    if (!tableHasFocus) { return; }
+    // If there is a cell in focus for editing, we don't draw the selection border.
+    if ((cellFocusX !== null) && (cellFocusY !== null)) {
+      return "";
+    }
+    var borderClasses = [];
+    // If one is true and the other false, regardless of which one, we're on either side of a transition
+    // between "selected" and "not selected", and should set a border style.
+    // When adding borders to table cells, the cells on both sides of the given border need to agree.
+    if (isWithinSelection(x, y) != isWithinSelection(x, y-1)) {
+      borderClasses.push("selectionTop");
+    }
+    if (isWithinSelection(x, y) != isWithinSelection(x, y+1)) {
+      borderClasses.push("selectionBottom");
+    }
+    if (isWithinSelection(x, y) != isWithinSelection(x-1, y)) {
+      borderClasses.push("selectionLeft");
+    }
+    if (isWithinSelection(x, y) != isWithinSelection(x+1, y)) {
+      borderClasses.push("selectionRight");
+    }
+    if (isWithinSelection(x, y)) {
+      borderClasses.push("inSelection");
+    }
+    return borderClasses.join(" ") || "";
   }
 
 
@@ -114,13 +202,138 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     return (<div></div>)
   }
 
+  // For the standard "scan type" column, which users the autocomplete widget
   const scanTypesAsChoices: ParameterChoice[] =
     metadataContext.scanTypes.typeNamesInDisplayOrder.map((name) => { return { name: name, description: "" }});
 
 
-
   const displayedParameterIds = thisSet.relevantParameters.filter((p) => metadataContext.scanTypes.parametersById.has(p));
   const displayedParameters = displayedParameterIds.map((p) => metadataContext.scanTypes.parametersById.get(p)!);
+
+
+  function tableOnCopy(event: React.ClipboardEvent) {
+    // If it's an element within the table, don't intercept the event.
+    // We're only interested in copy events where the table element itself has focus.
+    if (!tableHasFocus) { return; }
+    // A cell is being edited directly
+    if ((cellFocusY !== null) || (cellFocusX !== null)) { return; }
+    // No rows selected
+    if ((cellMouseDownY === null) || (cellMouseMoveY === null)) { return; }
+    // No columns selected
+    if ((cellMouseDownX === null) || (cellMouseMoveX === null)) { return; }
+    const c:SampleTableClipboardContent = new SampleTableClipboardContent();
+
+    var sampleRows = [];
+    for (var y = Math.min(cellMouseDownY, cellMouseMoveY); y <= Math.max(cellMouseDownY, cellMouseMoveY); y++) {
+      sampleRows.push(sampleConfigurations[y]);
+    }
+
+    // The first four columns of the table always represent these fields in order:
+    const fields = ["mmFromLeftEdge", "name", "description", "scanType"];
+    var selectedFields = [];
+    // If the selection overlaps those columns, we push the relevant field names. 
+    var lowX = Math.min(cellMouseDownX, cellMouseMoveX);
+    const highX = Math.max(cellMouseDownX, cellMouseMoveX);
+    while (lowX <= Math.min(highX, 3)) {
+      selectedFields.push(fields[lowX]);
+      lowX++;
+    }
+
+    var selectedParameters = [];
+    // If the selection overlaps those columns, we push the relevant field names. 
+    var lowX = Math.max(Math.min(cellMouseDownX, cellMouseMoveX), 4);
+    while (lowX <= highX) {
+      selectedParameters.push(displayedParameterIds[lowX-4]);
+      lowX++;
+    }
+
+    c.fromTable(sampleRows, selectedFields, selectedParameters);
+    c.sendToClipboard(event);
+  }
+
+
+  function tableOnPaste(event: React.ClipboardEvent) {
+    // If it's an element within the table, don't intercept the event.
+    // We're only interested in copy events where the table element itself has focus.
+    if (!tableHasFocus) { return; }
+    // A cell is being edited directly
+    if ((cellFocusY !== null) || (cellFocusX !== null)) { return; }
+    // No rows selected
+    if ((cellMouseDownY === null) || (cellMouseMoveY === null)) { return; }
+    // No columns selected
+    if ((cellMouseDownX === null) || (cellMouseMoveX === null)) { return; }
+    const c:SampleTableClipboardContent = new SampleTableClipboardContent();
+
+    c.fromClipboardPasteEvent(event);
+    // If we didn't get any content, give up
+    const validRawText = c.alternateTextData !== null ? true : false;
+    if ((c.content.length == 0) && !validRawText) { return; }
+
+    // Is there only one sample on the clipboard to work with?
+    // This will influence our pasting behavior.
+    const oneSample = c.content.length == 1 ? true : false;
+    // Was there only one field/parameter column selected when the data was copied?
+    // Are there none selected, as we would get from a paste of raw text?
+    // This also will influence out pasting behavior.
+    const oneColumn = (c.selectedFields.size + c.selectedParameters.size) == 1 ? true : false;
+    const zeroColumns = (c.selectedFields.size + c.selectedParameters.size) == 0 ? true : false;
+
+    // The rect of the current selection.  We may re-form this in the process of pasting.
+    var upperLeftX = Math.min(cellMouseDownX, cellMouseMoveX);
+    var upperLeftY = Math.min(cellMouseDownY, cellMouseMoveY);
+    var lowerRightX = Math.max(cellMouseDownX, cellMouseMoveX);
+    var lowerRightY = Math.max(cellMouseDownY, cellMouseMoveY);
+
+    // Possible different behavior if just one column is selected
+    const pastingToOneColumn = lowerRightX == upperLeftX ? true : false;
+
+    console.log(`zeroColumns: ${zeroColumns}`);
+
+    // If we're bulk-pasting raw text to a single column that isn't "from left edge" or "name":
+    if (zeroColumns && pastingToOneColumn && validRawText && (upperLeftX >= 2)) {
+
+      var editedConfigs = [];
+      var y = 0;
+      while (upperLeftY+y <= lowerRightY) {
+
+        var editedConfig = sampleConfigurations[upperLeftY+y].clone();
+
+        // Description
+        if (upperLeftX === 2) {
+          editedConfig.description = c.alternateTextData!;
+
+        // Scan Type
+        } else if (upperLeftX === 3) {
+          const asScanTypeName = c.alternateTextData! as ScanTypeName;
+          editedConfig.scanType = asScanTypeName;
+          const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
+          newScanType!.parameters.forEach((p) => {
+            const parameterType = metadataContext.scanTypes.parametersById.get(p);
+            if (parameterType) {
+              // Set any missing parameters to defaults.
+              if (!editedConfig.parameters.has(parameterType!.id)) {
+                editedConfig.parameters.set(parameterType.id, parameterType.default ?? "");
+              }
+            }
+          });
+
+        // Validate scan parameters
+        } else if ((upperLeftX >= 4) && ((upperLeftX-4) < displayedParameters.length)) {
+          const paramType = displayedParameters[upperLeftX - 4];
+          editedConfig.parameters.set(paramType.id, c.alternateTextData!);
+        }
+
+        // This may not be the right behavior
+        sampleConfigurations[upperLeftY+y] = editedConfig;
+        editedConfigs.push(editedConfig);
+        y++;
+      }
+
+      thisSet!.addOrReplaceWithHistory(editedConfigs);
+      contentChanged();
+    }
+  }
+
 
   // Add the vector to the given currentPosition until it points to a table cell that is
   // valid for editing, then return that position, or return null if we run off the edge of the table.
@@ -284,7 +497,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       });
 
     // Validate scan parameters
-    } else if ((x > 3) && ((x-4) < displayedParameters.length)) {
+    } else if ((x >= 4) && ((x-4) < displayedParameters.length)) {
       const paramType = displayedParameters[x - 4];
       editedConfig.parameters.set(paramType.id, newValue);
     }
@@ -407,7 +620,11 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                   tabIndex={0}
                   onFocus={ tableOnFocus }
                   onBlur={ tableOnBlur }
-                  onClick={ tableOnClick }
+                  onCopy={ tableOnCopy }
+                  onPaste={ tableOnPaste }
+                  onMouseOver={ tableOnMouseOver }
+                  onMouseDown={ tableOnMouseDown }
+                  onMouseUp={ tableOnMouseUp }
               >
             <thead>
               <tr key="headers">
@@ -425,7 +642,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                   displayedParameters.forEach((p, paramIndex) => {
                     const unused = !allowedParameters.has(p.id);
                     const activated = (cellFocusX === (paramIndex+4)) && cellFocusOnThisY;
-                    const cellClass = "samplecell " + (unused ? "unused" : "");
+                    const cellClass = "samplecell " + (unused ? "unused " : "") + selectionBorderClasses(paramIndex+4, sampleIndex);
                     const td = (
                       <td key={ p.id }
                           data-sample-x={paramIndex+4}
@@ -453,7 +670,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                           data-sample-x={0}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
-                          className="samplecell"
+                          className={"samplecell " + selectionBorderClasses(0, sampleIndex)}
                         >
                         <SampleTableCell x={0} y={sampleIndex}
                             key="mm"
@@ -466,7 +683,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                           data-sample-x={1}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
-                          className="samplecell"
+                          className={"samplecell " + selectionBorderClasses(1, sampleIndex)}
                         >
                         <SampleTableCell x={1} y={sampleIndex}
                             key="name"
@@ -479,7 +696,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                           data-sample-x={2}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
-                          className="samplecell"
+                          className={"samplecell " + selectionBorderClasses(2, sampleIndex)}
                         >
                         <SampleTableCell x={2} y={sampleIndex}
                             key="description"
@@ -492,7 +709,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                           data-sample-x={3}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
-                          className="samplecell"
+                          className={"samplecell " + selectionBorderClasses(3, sampleIndex)}
                         >
                         <SampleTableCell x={3} y={sampleIndex}
                             key="scantype"
