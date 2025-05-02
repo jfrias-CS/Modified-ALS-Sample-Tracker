@@ -151,27 +151,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
-  function tableOnCopy(event: React.ClipboardEvent) {
-    // If it's an element within the table, don't intercept the event.
-    // We're only interested in copy events where the table element itself has focus.
-    if (!tableHasFocus) { return; }
-    // A cell is being edited directly
-    if ((cellFocusY !== null) || (cellFocusX !== null)) { return; }
-    // No rows selected
-    if ((cellMouseDownY === null) || (cellMouseMoveY === null)) { return; }
-    // No columns selected
-    if ((cellMouseDownX === null) || (cellMouseMoveX === null)) { return; }
-    const c:SampleTableClipboardContent = new SampleTableClipboardContent();
-
-    var sampleRows = [];
-    for (var y = Math.min(cellMouseDownY, cellMouseMoveY); y <= Math.max(cellMouseDownY, cellMouseMoveY); y++) {
-      sampleRows.push(sampleConfigurations[y]);
-    }
-    c.fromTable(sampleRows, []);
-    c.sendToClipboard(event);
-  }
-
-
   function isWithinSelection(x: number, y: number) {
     if ((cellMouseDownX !== null) && (cellMouseDownY !== null) &&
         (cellMouseMoveX !== null) && (cellMouseMoveY !== null)) {
@@ -230,6 +209,48 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
   const displayedParameterIds = thisSet.relevantParameters.filter((p) => metadataContext.scanTypes.parametersById.has(p));
   const displayedParameters = displayedParameterIds.map((p) => metadataContext.scanTypes.parametersById.get(p)!);
+
+
+  function tableOnCopy(event: React.ClipboardEvent) {
+    // If it's an element within the table, don't intercept the event.
+    // We're only interested in copy events where the table element itself has focus.
+    if (!tableHasFocus) { return; }
+    // A cell is being edited directly
+    if ((cellFocusY !== null) || (cellFocusX !== null)) { return; }
+    // No rows selected
+    if ((cellMouseDownY === null) || (cellMouseMoveY === null)) { return; }
+    // No columns selected
+    if ((cellMouseDownX === null) || (cellMouseMoveX === null)) { return; }
+    const c:SampleTableClipboardContent = new SampleTableClipboardContent();
+
+    var sampleRows = [];
+    for (var y = Math.min(cellMouseDownY, cellMouseMoveY); y <= Math.max(cellMouseDownY, cellMouseMoveY); y++) {
+      sampleRows.push(sampleConfigurations[y]);
+    }
+
+    // The first four columns of the table always represent these fields in order:
+    const fields = ["mmFromLeftEdge", "name", "description", "scanType"];
+    var selectedFields = [];
+    // If the selection overlaps those columns, we push the relevant field names. 
+    var lowX = Math.min(cellMouseDownX, cellMouseMoveX);
+    const highX = Math.max(cellMouseDownX, cellMouseMoveX);
+    while (lowX <= Math.min(highX, 3)) {
+      selectedFields.push(fields[lowX]);
+      lowX++;
+    }
+
+    var selectedParameters = [];
+    // If the selection overlaps those columns, we push the relevant field names. 
+    var lowX = Math.max(Math.min(cellMouseDownX, cellMouseMoveX), 4);
+    while (lowX <= highX) {
+      selectedParameters.push(displayedParameterIds[lowX-4]);
+      lowX++;
+    }
+
+    c.fromTable(sampleRows, selectedFields, selectedParameters);
+    c.sendToClipboard(event);
+  }
+
 
   // Add the vector to the given currentPosition until it points to a table cell that is
   // valid for editing, then return that position, or return null if we run off the edge of the table.
@@ -393,7 +414,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       });
 
     // Validate scan parameters
-    } else if ((x > 3) && ((x-4) < displayedParameters.length)) {
+    } else if ((x >= 4) && ((x-4) < displayedParameters.length)) {
       const paramType = displayedParameters[x - 4];
       editedConfig.parameters.set(paramType.id, newValue);
     }

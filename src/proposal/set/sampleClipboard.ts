@@ -3,19 +3,22 @@ import { SampleConfiguration } from '../../sampleConfiguration.ts';
 export class SampleTableClipboardContent {
 
     content: SampleConfiguration[];
-    selectedColumns: string[];
+    selectedFields: Set<string>;
+    selectedParameters: Set<string>;
 
 	constructor() {
 		this.content = [];
-        this.selectedColumns = [];
+        this.selectedFields = new Set();		// List of SampleConfoguration fields that were selected during copy 
+        this.selectedParameters = new Set();	// Set of Parameter IDs that were selected during copy
 	}
 
 	// Accepts an object of class LevelChanges
-	fromTable(c:SampleConfiguration[], selectedColumns:string[]) {
+	fromTable(c:SampleConfiguration[], selectedFields:string[], selectedParameters:string[]) {
         this.content = c.map((oneConfig) => {
             return oneConfig.clone();
         });
-        this.selectedColumns = selectedColumns;
+        this.selectedFields = new Set(selectedFields);
+        this.selectedParameters = new Set(selectedParameters);
     }
 
 	// The object we expect from the clipboard: {
@@ -24,8 +27,10 @@ export class SampleTableClipboardContent {
 	//    selectedColumns: string[]
 	// }
 	fromClipboardPasteEvent(event: React.ClipboardEvent<Element>) {
-		this.content = [];
-        this.selectedColumns = [];
+		this.content = []
+        this.selectedFields = new Set(); 
+        this.selectedParameters = new Set();
+
         // Can't get data from the event? Leave this object blank.
         if (event.clipboardData === null) { return; }
 
@@ -42,7 +47,8 @@ export class SampleTableClipboardContent {
 		if (!c.fromAlsSampleConfigureApp) { return; }
 
     	this.content = c.content;
-      	this.selectedColumns = c.selectedColumns;
+        this.selectedFields = new Set(c.selectedFields);
+        this.selectedParameters = new Set(c.selectedParameters);
 	}
 
 	isEmpty() {
@@ -57,14 +63,15 @@ export class SampleTableClipboardContent {
 		const forClipboard = {
 			fromAlsSampleConfigureApp: true,
 			content: this.content,
-			selectedColumns: this.selectedColumns
+			selectedFields: [...this.selectedFields],
+			selectedParameters: [...this.selectedParameters]
 		};
 
 		//const asBlob = new Blob([JSON.stringify(forClipboard)], {type: 'text/plain'});
 		//const item = new ClipboardItem({'text/plain': asBlob });
 
 		event.preventDefault();
-		event.clipboardData!.setData("text/plain", JSON.stringify(forClipboard));
+		event.clipboardData!.setData("text/json", JSON.stringify(forClipboard));
 		console.log(forClipboard);
 
 		//navigator.permissions.query({name: 'clipboard-write'}).then((result) => {
