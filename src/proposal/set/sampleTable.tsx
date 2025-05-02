@@ -252,6 +252,89 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
+  function tableOnPaste(event: React.ClipboardEvent) {
+    // If it's an element within the table, don't intercept the event.
+    // We're only interested in copy events where the table element itself has focus.
+    if (!tableHasFocus) { return; }
+    // A cell is being edited directly
+    if ((cellFocusY !== null) || (cellFocusX !== null)) { return; }
+    // No rows selected
+    if ((cellMouseDownY === null) || (cellMouseMoveY === null)) { return; }
+    // No columns selected
+    if ((cellMouseDownX === null) || (cellMouseMoveX === null)) { return; }
+    const c:SampleTableClipboardContent = new SampleTableClipboardContent();
+
+    c.fromClipboardPasteEvent(event);
+    // If we didn't get any content, give up
+    const validRawText = c.alternateTextData !== null ? true : false;
+    if ((c.content.length == 0) && !validRawText) { return; }
+
+    // Is there only one sample on the clipboard to work with?
+    // This will influence our pasting behavior.
+    const oneSample = c.content.length == 1 ? true : false;
+    // Was there only one field/parameter column selected when the data was copied?
+    // Are there none selected, as we would get from a paste of raw text?
+    // This also will influence out pasting behavior.
+    const oneColumn = (c.selectedFields.size + c.selectedParameters.size) == 1 ? true : false;
+    const zeroColumns = (c.selectedFields.size + c.selectedParameters.size) == 0 ? true : false;
+
+    // The rect of the current selection.  We may re-form this in the process of pasting.
+    var upperLeftX = Math.min(cellMouseDownX, cellMouseMoveX);
+    var upperLeftY = Math.min(cellMouseDownY, cellMouseMoveY);
+    var lowerRightX = Math.max(cellMouseDownX, cellMouseMoveX);
+    var lowerRightY = Math.max(cellMouseDownY, cellMouseMoveY);
+
+    // Possible different behavior if just one column is selected
+    const pastingToOneColumn = lowerRightX == upperLeftX ? true : false;
+
+    console.log(`zeroColumns: ${zeroColumns}`);
+
+    // If we're bulk-pasting raw text to a single column that isn't "from left edge" or "name":
+    if (zeroColumns && pastingToOneColumn && validRawText && (upperLeftX >= 2)) {
+
+      var editedConfigs = [];
+      var y = 0;
+      while (upperLeftY+y <= lowerRightY) {
+
+        var editedConfig = sampleConfigurations[upperLeftY+y].clone();
+
+        // Description
+        if (upperLeftX === 2) {
+          editedConfig.description = c.alternateTextData!;
+
+        // Scan Type
+        } else if (upperLeftX === 3) {
+          const asScanTypeName = c.alternateTextData! as ScanTypeName;
+          editedConfig.scanType = asScanTypeName;
+          const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
+          newScanType!.parameters.forEach((p) => {
+            const parameterType = metadataContext.scanTypes.parametersById.get(p);
+            if (parameterType) {
+              // Set any missing parameters to defaults.
+              if (!editedConfig.parameters.has(parameterType!.id)) {
+                editedConfig.parameters.set(parameterType.id, parameterType.default ?? "");
+              }
+            }
+          });
+
+        // Validate scan parameters
+        } else if ((upperLeftX >= 4) && ((upperLeftX-4) < displayedParameters.length)) {
+          const paramType = displayedParameters[upperLeftX - 4];
+          editedConfig.parameters.set(paramType.id, c.alternateTextData!);
+        }
+
+        // This may not be the right behavior
+        sampleConfigurations[upperLeftY+y] = editedConfig;
+        editedConfigs.push(editedConfig);
+        y++;
+      }
+
+      thisSet!.addOrReplaceWithHistory(editedConfigs);
+      contentChanged();
+    }
+  }
+
+
   // Add the vector to the given currentPosition until it points to a table cell that is
   // valid for editing, then return that position, or return null if we run off the edge of the table.
   function lookForAdjacentCell(currentPosition: Coordinates, vector: Coordinates): Coordinates | null {
@@ -538,6 +621,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                   onFocus={ tableOnFocus }
                   onBlur={ tableOnBlur }
                   onCopy={ tableOnCopy }
+                  onPaste={ tableOnPaste }
                   onMouseOver={ tableOnMouseOver }
                   onMouseDown={ tableOnMouseDown }
                   onMouseUp={ tableOnMouseUp }

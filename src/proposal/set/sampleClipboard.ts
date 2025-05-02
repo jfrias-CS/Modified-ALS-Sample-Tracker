@@ -2,14 +2,21 @@ import { SampleConfiguration } from '../../sampleConfiguration.ts';
 
 export class SampleTableClipboardContent {
 
-    content: SampleConfiguration[];
+    // SampleConfigurationDto objects representing the copied data
+	content: SampleConfiguration[];
+	// List of SampleConfoguration fields that were selected during copy 
     selectedFields: Set<string>;
+	// Set of Parameter IDs that were selected during copy
     selectedParameters: Set<string>;
+	// If no SampleConfigurationDto objects were found on the clipboard,
+	// we possibly fall back to raw text data.
+	alternateTextData: string | null;
 
 	constructor() {
 		this.content = [];
-        this.selectedFields = new Set();		// List of SampleConfoguration fields that were selected during copy 
-        this.selectedParameters = new Set();	// Set of Parameter IDs that were selected during copy
+        this.selectedFields = new Set();
+        this.selectedParameters = new Set();
+		this.alternateTextData = null;
 	}
 
 	// Accepts an object of class LevelChanges
@@ -30,16 +37,18 @@ export class SampleTableClipboardContent {
 		this.content = []
         this.selectedFields = new Set(); 
         this.selectedParameters = new Set();
+		this.alternateTextData = null;
 
         // Can't get data from the event? Leave this object blank.
         if (event.clipboardData === null) { return; }
 
-		const rawPaste = event.clipboardData.getData("text");
+		const rawPaste = event.clipboardData.getData("text/json");
 		// If there's any parsing error, this content didn't come from us.
 		var c;
 		try {
 			c = JSON.parse(rawPaste);
 		} catch (e) {
+			this.alternateTextData = event.clipboardData.getData("text") || null;
 			return;
 		}
 
