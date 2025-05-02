@@ -22,7 +22,7 @@ interface AppConfig {
   scicatAppUrl: string;
   scicatApiPath: string;
   externalAuthUrl: string;
-  externalAuthSuccessUrl: string; // Currently not used
+  documentationUrl: string;
   loginEnabled: boolean;          // Currently not used
   defaultProjectId: string | undefined; // Currently not used
   debugLoggingingEnabled: boolean;
@@ -35,7 +35,7 @@ const appConfigDefaults:AppConfig = {
   scicatAppUrl: "",
   scicatApiPath: "",
   externalAuthUrl: "",
-  externalAuthSuccessUrl: "",
+  documentationUrl: "",
   loginEnabled: false,
   defaultProjectId: "",
   debugLoggingingEnabled: false,

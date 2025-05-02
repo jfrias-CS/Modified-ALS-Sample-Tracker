@@ -43,12 +43,12 @@ const HomePage: React.FC = () => {
   return (
 
       <div style={{padding: ".375rem 1rem"}}>
-        <h1 className="title">Beamline Sample Bar Configuration</h1>
+        <h1 className="title">Beamline Sample Bar Tracker</h1>
 
         <p style={{marginBottom: "1em"}}>
           This application is for configuring and tracking samples scanned at Beamline 733.  To get started, select a Proposal below.
           For more information about the process and scan parameters,
-          read <a href="https://docs.google.com/document/d/1tKDQnEx4kwz0xS5tZ-yk1OHG1vhdM3FsCl4iYuiQF4s/edit?tab=t.0">this overview</a>.
+          read <a href={appConfig.config.documentationUrl}>this overview</a>.
         </p>
 
         { proposals.length == 0 ? (
