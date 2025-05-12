@@ -24,6 +24,8 @@ export interface ScanParameterType {
   default?: string;
   // If a non-blank value is mandatory for this parameter
   required?: boolean;
+  // If the value should be unique across all samples in the same set.
+  uniqueInSet?: boolean;
   // Validates the input. Any return value other than null is considered an error and displayed as an error message.
   validator?: (value:string) => null | string;
 }
@@ -67,7 +69,17 @@ function listSumsTo(a:number, v:string):boolean { return v.split(",").map(parseF
 export function getScanTypes(): ScanTypes {
 
   const parameters: ScanParameterType[] = [
-
+    { id: "fromleftedge" as ParamUid,
+      name: "From Left Edge" as ScanParameterName,
+      description: "Distance in mm between left edge of sample bar, and center of this sample. Should be unique with respect to the other samples on the bar.",
+      default: "25",
+      required: true,
+      uniqueInSet: true,
+      validator: (v) => {
+        if (atOrBetween(1, 200, v)) { return null; }
+        return "Must be a number between 1 and 200.";
+      },
+    },
     { id: "incangles" as ParamUid,
       name: "Incident Angles" as ScanParameterName,
       description: "A list of incident angles to use, between -30 and 30 degrees. For example 0.13, 0.15, 0.17. Or enter \"auto\" to use the auto-incident angle routine.",
@@ -148,6 +160,7 @@ export function getScanTypes(): ScanTypes {
       name: "GIWAXS" as ScanTypeName,
       description: "Standard GIWAXS.  All samples will be measured.",
       parameters: [
+        { typeId: "fromleftedge" as ParamUid },
         { typeId: "incangles" as ParamUid },
         { typeId: "mspots" as ParamUid },
         { typeId: "exptime" as ParamUid, readOnly: true, customDefault: "auto" },
