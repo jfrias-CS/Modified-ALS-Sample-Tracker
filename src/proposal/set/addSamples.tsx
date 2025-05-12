@@ -114,7 +114,7 @@ const AddSamples: React.FC = () => {
       // Make a set of parameters for the chosen ScanType, with default or blank values.
       const parameters:Map<ParamUid, string|null> = new Map();
       scanTypeValue!.parameters.forEach((p) => {
-        const parameterType = metadataContext.scanTypes.parametersById.get(p);
+        const parameterType = metadataContext.scanTypes.parametersById.get(p.typeId);
         if (parameterType) { parameters.set(parameterType.id, parameterType.default ?? ""); }
       });
 

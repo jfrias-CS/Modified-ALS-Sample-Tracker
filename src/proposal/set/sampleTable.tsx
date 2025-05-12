@@ -308,7 +308,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
           editedConfig.scanType = asScanTypeName;
           const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
           newScanType!.parameters.forEach((p) => {
-            const parameterType = metadataContext.scanTypes.parametersById.get(p);
+            const parameterType = metadataContext.scanTypes.parametersById.get(p.typeId);
             if (parameterType) {
               // Set any missing parameters to defaults.
               if (!editedConfig.parameters.has(parameterType!.id)) {
@@ -357,7 +357,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     const thisConfig = sampleConfigurations[nextPosition.y];
 
     const allowedParameters = metadataContext.scanTypes.typesByName.get(thisConfig.scanType)!.parameters;
-    if (allowedParameters.some((p) => p == thisParameter.id)) {
+    if (allowedParameters.some((p) => p.typeId == thisParameter.id)) {
       return nextPosition;
     }
 
@@ -487,7 +487,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       editedConfig.scanType = asScanTypeName;
       const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
       newScanType!.parameters.forEach((p) => {
-        const parameterType = metadataContext.scanTypes.parametersById.get(p);
+        const parameterType = metadataContext.scanTypes.parametersById.get(p.typeId);
         if (parameterType) {
           // Set any missing parameters to defaults.
           if (!editedConfig.parameters.has(parameterType!.id)) {
@@ -637,8 +637,9 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                   var cells: JSX.Element[] = [];
 
                   const cellFocusOnThisY = (cellFocusY === sampleIndex);
-                  const allowedParameters = new Set(metadataContext.scanTypes.typesByName.get(sample.scanType)!.parameters);
-
+                  const allowedParameters = new Set(
+                          metadataContext.scanTypes.typesByName.get(sample.scanType)!.parameters.map((p) => p.typeId)
+                    );
                   displayedParameters.forEach((p, paramIndex) => {
                     const unused = !allowedParameters.has(p.id);
                     const activated = (cellFocusX === (paramIndex+4)) && cellFocusOnThisY;

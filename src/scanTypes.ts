@@ -28,13 +28,18 @@ export interface ScanParameterType {
   validator?: (value:string) => null | string;
 }
 
+export interface ScanParameterSettings {
+  typeId: ParamUid;
+  readOnly?: boolean;
+  customDefault?: string;
+}
 
 export interface ScanType {
   name: ScanTypeName;
   description: string;
   referenceUrl?: string;
   // Which parameters are valid for this ScanType. Given in order meant to be displayed.
-  parameters: Array<ParamUid>;
+  parameters: Array<ScanParameterSettings>;
 }
 
 
@@ -142,28 +147,40 @@ export function getScanTypes(): ScanTypes {
     {
       name: "GIWAXS" as ScanTypeName,
       description: "Standard GIWAXS.  All samples will be measured.",
-      parameters: ["incangles" as ParamUid, "exptime" as ParamUid, "mspots" as ParamUid, "expmax" as ParamUid, "imgtype" as ParamUid]
-    },
-    {
-      name: "GIWAXS with gpCAM" as ScanTypeName,
-      description: "Search for the best sample based on a percentage mixture of components.  Some samples may be skipped during the search.",
-      parameters: ["incangles" as ParamUid, "exptime" as ParamUid, "expmax" as ParamUid, "imgtype" as ParamUid, "gpcam_params" as ParamUid]
-    },
-    {
-      name: "Test" as ScanTypeName,
-      description: "Test ScanType. Not to be used in production. Has two parameters: \"testunused\" and \"imgtype\".",
-      parameters: ["testunused" as ParamUid, "imgtype" as ParamUid]
+      parameters: [
+        { typeId: "incangles" as ParamUid },
+        { typeId: "mspots" as ParamUid },
+        { typeId: "exptime" as ParamUid, readOnly: true, customDefault: "auto" },
+        { typeId: "expmax" as ParamUid },
+        { typeId: "imgtype" as ParamUid }
+      ]
     }
-//      {
-//        name: "GIWAXS with 3-parameter gpCAM" as ScanTypeName,
-//        description: "GIWAXS with gpCAM optimization. Not all samples may be scanned.",
-//        parameters: ["2" as ParamUid, "5" as ParamUid, "6" as ParamUid, "7" as ParamUid]
-//      },
-//      {
-//        name: "GIWAXS with 6-parameter gpCAM" as ScanTypeName,
-//        description: "GIWAXS with gpCAM optimization. Not all samples may be scanned.",
-//        parameters: ["2" as ParamUid, "5" as ParamUid, "6" as ParamUid, "7" as ParamUid]
-//      }
+//    {
+//      name: "GIWAXS with gpCAM" as ScanTypeName,
+//      description: "Search for the best sample based on a percentage mixture of components.  Some samples may be skipped during the search.",
+//      parameters: [
+//        { typeId: "incangles" as ParamUid },
+//        { typeId: "gpcam_params" as ParamUid },
+//        { typeId: "exptime" as ParamUid, readOnly: true, customDefault: "auto" },
+//        { typeId: "expmax" as ParamUid },
+//        { typeId: "imgtype" as ParamUid }
+//      ]
+//    },
+//    {
+//      name: "Test" as ScanTypeName,
+//      description: "Test ScanType. Not to be used in production. Has two parameters: \"testunused\" and \"imgtype\".",
+//      parameters: ["testunused" as ParamUid, "imgtype" as ParamUid]
+//    },
+//    {
+//      name: "GIWAXS with 3-parameter gpCAM" as ScanTypeName,
+//      description: "GIWAXS with gpCAM optimization. Not all samples may be scanned.",
+//      parameters: ["2" as ParamUid, "5" as ParamUid, "6" as ParamUid, "7" as ParamUid]
+//    },
+//    {
+//      name: "GIWAXS with 6-parameter gpCAM" as ScanTypeName,
+//      description: "GIWAXS with gpCAM optimization. Not all samples may be scanned.",
+//      parameters: ["2" as ParamUid, "5" as ParamUid, "6" as ParamUid, "7" as ParamUid]
+//    }
   ];
 
   var typeMap = new Map<ScanTypeName, ScanType>();

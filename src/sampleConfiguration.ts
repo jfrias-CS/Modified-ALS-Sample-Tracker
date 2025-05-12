@@ -120,9 +120,9 @@ export class SampleConfigurationSet {
       if (!scanTypesByName.has(v.scanType)) { return; }
       const t = scanTypesByName.get(v.scanType)!;
       t.parameters.forEach((p) => {
-        if (!workingSet.has(p)) {
-          relevantParameters.push(p);
-          workingSet.add(p);
+        if (!workingSet.has(p.typeId)) {
+          relevantParameters.push(p.typeId);
+          workingSet.add(p.typeId);
         }
       });
     });
