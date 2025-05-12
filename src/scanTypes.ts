@@ -99,11 +99,11 @@ export function getScanTypes(): ScanTypes {
     },
     { id: "expmax" as ParamUid,
       name: "Max Exposure Time" as ScanParameterName,
-      description: "The upper limit for exposure time in seconds. Can be up to 120.",
-      default: "120",
+      description: "The upper limit for exposure time in seconds. Can be up to 30.",
+      default: "30",
       validator: (v) => {
-        if (atOrBetween(1, 120, v)) { return null; }
-        return "Must be a number from 1 to 120.";
+        if (atOrBetween(1, 30, v)) { return null; }
+        return "Must be a number from 1 to 30.";
       },
     },
     { id: "imgtype" as ParamUid,
