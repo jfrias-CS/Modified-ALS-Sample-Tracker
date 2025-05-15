@@ -136,22 +136,22 @@ export class SampleConfigurationSet {
     return generateUniqueNames(existingNames, suggestedName, quantity, startIndex);
   }
 
-  // Generate bar locations that are at least 10mm beyond the current
-  // rightmost config location, and 10mm apart from each other.
+  // Generate bar locations that are at least 13mm beyond the current
+  // rightmost config location, and 13mm apart from each other, with a default minimum of 3mm.
   generateOpenLocations(quantity?: number) {
     var chosenQuantity = Math.max(quantity||1, 1);
 
-    var maxUniqueLocation = 0;
+    var maxUniqueLocation = 3;
     this.configurationsById.forEach((v) => {
       maxUniqueLocation = Math.max(v.mmFromLeftEdge, maxUniqueLocation);
     });
 
-    maxUniqueLocation += 10;
+    maxUniqueLocation += 13;
 
     var goodLocations: number[] = [];
     while (chosenQuantity > 0) {
       goodLocations.push(maxUniqueLocation);
-      maxUniqueLocation += 10;
+      maxUniqueLocation += 13;
       chosenQuantity--;
     }
     return goodLocations;

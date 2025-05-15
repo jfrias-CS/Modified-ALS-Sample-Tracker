@@ -11,7 +11,7 @@ const ProposalLayout: React.FC<PropsWithChildren> = () => {
 
   return (
     <>
-      <div className="block">
+      <div className="block do-not-print">
         <h1 className="title">Beamline Sample Bar Tracker</h1>
       </div>
       <MetadataProvider proposalId={proposalId}>

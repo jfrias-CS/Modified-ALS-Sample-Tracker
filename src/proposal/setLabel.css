@@ -1,29 +1,35 @@
 div.setLabel {
-  min-width: 256px;
+  background-color: white;
+  width: 50.5mm;
+  height: 12.5mm;
   display: flex;
-  margin: 1em;
-  padding: 2px;
+  padding: 1mm;
   flex-flow: nowrap;
   column-gap: 0;
   align-items: stretch;
 }
 
 div.setLabel div.qrCode {
-  background-color: white;
-  width: 0.5in;
-  height: 0.5in;
+  width: 10.5mm;
+  height: 10.5mm;
   align-content: center;
-  padding: 0.05in 0 0 0.05in;
+  padding: 0;
 }
 
 div.setLabel div.textArea {
   background-color: white;
-  padding: 0 0.5em;
+  padding: 0 1mm;
   font-size: 8pt;
-  line-height: 9.3pt;
+  line-height: 9pt;
   align-content: center;
   font-weight: bold;
   color: black;
+}
+
+div.setLabel div.textArea div {
+  width: 34mm;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 @media print {

@@ -18,6 +18,9 @@ const SetLabels: React.FC = () => {
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
   const [loadingMessage, setLoadingMessage] = useState("");
 
+  const [marginAfterHorizontal, setMarginAfterHorizontal] = useState<string>("3.475");
+  const [marginAfterVertical, setMarginAfterVertical] = useState<string>("3.375");
+
   useEffect(() => {
     if (metadataContext.setsLoadingState == MetaDataLoadingState.Failed) {
       setLoading(LoadingState.Failure);
@@ -29,7 +32,17 @@ const SetLabels: React.FC = () => {
     }
   }, [metadataContext.changeCounter, metadataContext.setsLoadingState, metadataContext.loadingState]);
 
-  // If we're in any loading state other than success,
+  function changedMarginAfterHorizontal(c:React.ChangeEvent<HTMLInputElement>) {
+    const v = c.target.value;
+    setMarginAfterHorizontal(v);
+  }
+
+  function changedMarginAfterVertical(c:React.ChangeEvent<HTMLInputElement>) {
+    const v = c.target.value;
+    setMarginAfterVertical(v);
+  }
+
+    // If we're in any loading state other than success,
   // display a loading banner instead of the content.
   if (loading != LoadingState.Success) {
     return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
@@ -49,12 +62,50 @@ const SetLabels: React.FC = () => {
       <nav className="level do-not-print">
         <div className="level-left">
           <div className="level-item">
-            <p className="subtitle is-5"><strong>{ sets.length }</strong> bars</p>
+            <p className="subtitle is-5"><strong>{ sets.length }</strong> bar labels, 50.5mm x 12.5mm each (<a href="https://www.onlinelabels.com/products/ol820wx">Compatible example</a>)</p>
           </div>
         </div>
       </nav>
 
-      <div className="block">
+      <nav className="level do-not-print">
+        <div className="level-left">
+          <div className="level-item">
+            <p className="subtitle is-6">Horizontal spacing of</p>
+          </div>
+          <div className="level-item">
+            <input className="input"
+                  type="text"
+                  size={5}
+                  value={ marginAfterHorizontal }
+                  onChange={ changedMarginAfterHorizontal } />
+          </div>
+          <div className="level-item">
+            <p className="subtitle is-6">mm,</p>
+          </div>
+          <div className="level-item">
+            <p className="subtitle is-6">vertical spacing of</p>
+          </div>
+          <div className="level-item">
+            <input className="input"
+                    type="text"
+                    size={5}
+                    value={ marginAfterVertical }
+                    onChange={ changedMarginAfterVertical } />
+          </div>
+          <div className="level-item">
+            <p className="subtitle is-6">mm.</p>
+          </div>
+          <div>
+            <input
+              type="button"
+              className="button is-success"
+              onClick={ () => window.print() }
+              value="Print" />
+          </div>
+        </div>
+      </nav>
+
+      <div className="block setLabels">
         { sets.length == 0 ? (
           <p>( There are no Sets defined for this proposal yet, so there are no labels to print. )</p>
         ) : (
@@ -67,7 +118,9 @@ const SetLabels: React.FC = () => {
                       key={set.id}
                       setId={set.id}
                       setName={set.name}
-                      proposalName={metadataContext.sets.name} />
+                      proposalName={metadataContext.sets.name}
+                      marginAfterHorizontal={marginAfterHorizontal}
+                      marginAfterVertical={marginAfterVertical} />
                   </Link>
                 );
               })

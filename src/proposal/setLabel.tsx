@@ -13,17 +13,22 @@ interface SetLabelProps {
   setId: Guid;
   setName: string;
   proposalName: string;
+  marginAfterHorizontal: string;
+  marginAfterVertical: string;
 }
 
 
 const SetLabel: React.FC<SetLabelProps> = (props) => {
 
+    // Note: The value in BASE_URL cannot contain underscores, or anything else outside
+    // the QR alphanumeric format.  That format allows only the following:
+    // Digits 0 to 9, letters A to Z (capitals only), and " ", "$", "%", "*", "+", "-", ".", "/", ":"
     const qrContent = `${import.meta.env.BASE_URL}/set/${props.setId}`.toUpperCase();
 
     return (
-      <div className="setLabel">
+      <div className="setLabel" style={{ margin: `0 ${props.marginAfterHorizontal}mm ${props.marginAfterVertical}mm 0` }}>
         <div className="qrCode">
-          <QrCodeImage size="0.4in"
+          <QrCodeImage size="10mm"
             mode={QrEncoding.Alphanumeric}
             errorCorrectionLevel={QrErrorCorrectionLevel.L}
             content={qrContent} />

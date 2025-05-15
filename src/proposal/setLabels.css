@@ -4,7 +4,13 @@
   }
 
   @page {
-    size: a4 portrait;
-    margin: 0.75in;
+    size: a4 landscape;
+    margin: 0.25in;
   }
+}
+
+div.setLabels {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
 }
