@@ -87,7 +87,6 @@ const ImportSamples: React.FC = () => {
       setId: "" as Guid,
       name: "4",
       isValid: true,
-      mmFromLeftEdge: 10,
       description: "This is the second sample.",
       scanType: "two_parameter_generic" as ScanTypeName,
       parameters: new Map()

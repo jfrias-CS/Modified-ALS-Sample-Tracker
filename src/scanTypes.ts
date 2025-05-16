@@ -71,7 +71,7 @@ export function getScanTypes(): ScanTypes {
   const parameters: ScanParameterType[] = [
     { id: "fromleftedge" as ParamUid,
       name: "From Left Edge" as ScanParameterName,
-      description: "Distance in mm between left edge of sample bar, and center of this sample. Should be unique with respect to the other samples on the bar.",
+      description: "Distance in mm from the left edge of the sample bar to the center of this sample. Should be unique with respect to the other samples on the bar.",
       default: "25",
       required: true,
       uniqueInSet: true,

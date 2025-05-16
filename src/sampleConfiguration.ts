@@ -15,8 +15,6 @@ export interface SampleConfigurationDto extends ObjectWithGuid {
   // If set to false, this SampleConfiguration should be ignored in the UI,
   // and should be deleted on the server as soon as undo history is purged.
   isValid: boolean;
-  // Intended to be a unique number, but not enforced, for editing convenience.
-  mmFromLeftEdge: number;
   // Meant to be longer than the name.  Can be blank.
   description: string;
   scanType: ScanTypeName;
@@ -39,8 +37,6 @@ export class SampleConfiguration implements SampleConfigurationDto {
   // If set to false, this SampleConfiguration should be ignored in the UI,
   // and should be deleted on the server as soon as undo history is purged.
   isValid: boolean;
-  // Intended to be a unique number, but not enforced, for editing convenience.
-  mmFromLeftEdge: number;
   // Meant to be longer than the name.  Can be blank.
   description: string;
   scanType: ScanTypeName;
@@ -54,7 +50,6 @@ export class SampleConfiguration implements SampleConfigurationDto {
 		this.setId = p.setId;
 		this.name = p.name;
     this.isValid = p.isValid;
-		this.mmFromLeftEdge = p.mmFromLeftEdge || 0;
 		this.description = p.description || "";
 		this.scanType = p.scanType;
 		this.parameters = new Map(p.parameters);
@@ -66,7 +61,6 @@ export class SampleConfiguration implements SampleConfigurationDto {
       setId: this.setId,
       name: this.name,
       isValid: this.isValid,
-      mmFromLeftEdge: this.mmFromLeftEdge,
       description: this.description,
       scanType: this.scanType,
       parameters: this.parameters // Copied during creation

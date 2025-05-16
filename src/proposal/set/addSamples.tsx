@@ -129,7 +129,6 @@ const AddSamples: React.FC = () => {
                       uniqueNames[count-1],
                       description,
                       scanTypeValue!.name,
-                      openLocations[count-1],
                       parameters);
 
       if (result.success) {

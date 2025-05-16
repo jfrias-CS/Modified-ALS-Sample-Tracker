@@ -24,6 +24,10 @@ enum SyncState { Idle, Pending, Requested, Failed, Completed };
 
 type Coordinates = {x: number, y: number};
 
+// It's a magic number I know, and that's annoying, but this is the number of
+// standard non-parameter fields that are always displayed on the left side of the table.
+const FIXED_COLUMN_COUNT = 3;
+
 // Given a DOM node, walks up the tree looking for a node of type "td"
 // with "sampleX" and "sampleY" values in its dataset.
 // If those values are present, return them, otherwise return null.
@@ -228,22 +232,22 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       sampleRows.push(sampleConfigurations[y]);
     }
 
-    // The first four columns of the table always represent these fields in order:
-    const fields = ["mmFromLeftEdge", "name", "description", "scanType"];
+    // The first FIXED_COLUMN_COUNT columns of the table always represent these fields in order:
+    const fields = ["name", "description", "scanType"];
     var selectedFields = [];
     // If the selection overlaps those columns, we push the relevant field names. 
     var lowX = Math.min(cellMouseDownX, cellMouseMoveX);
     const highX = Math.max(cellMouseDownX, cellMouseMoveX);
-    while (lowX <= Math.min(highX, 3)) {
+    while (lowX < Math.min(highX, FIXED_COLUMN_COUNT)) {
       selectedFields.push(fields[lowX]);
       lowX++;
     }
 
     var selectedParameters = [];
     // If the selection overlaps those columns, we push the relevant field names. 
-    var lowX = Math.max(Math.min(cellMouseDownX, cellMouseMoveX), 4);
+    var lowX = Math.max(Math.min(cellMouseDownX, cellMouseMoveX), FIXED_COLUMN_COUNT);
     while (lowX <= highX) {
-      selectedParameters.push(displayedParameterIds[lowX-4]);
+      selectedParameters.push(displayedParameterIds[lowX-FIXED_COLUMN_COUNT]);
       lowX++;
     }
 
@@ -289,8 +293,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     console.log(`zeroColumns: ${zeroColumns}`);
 
-    // If we're bulk-pasting raw text to a single column that isn't "from left edge" or "name":
-    if (zeroColumns && pastingToOneColumn && validRawText && (upperLeftX >= 2)) {
+    // If we're bulk-pasting raw text to a single column that isn't "name":
+    if (zeroColumns && pastingToOneColumn && validRawText && (upperLeftX > 0)) {
 
       var editedConfigs = [];
       var y = 0;
@@ -299,11 +303,11 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         var editedConfig = sampleConfigurations[upperLeftY+y].clone();
 
         // Description
-        if (upperLeftX === 2) {
+        if (upperLeftX === 1) {
           editedConfig.description = c.alternateTextData!;
 
         // Scan Type
-        } else if (upperLeftX === 3) {
+        } else if (upperLeftX === 2) {
           const asScanTypeName = c.alternateTextData! as ScanTypeName;
           editedConfig.scanType = asScanTypeName;
           const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
@@ -318,8 +322,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
           });
 
         // Validate scan parameters
-        } else if ((upperLeftX >= 4) && ((upperLeftX-4) < displayedParameters.length)) {
-          const paramType = displayedParameters[upperLeftX - 4];
+        } else if ((upperLeftX >= FIXED_COLUMN_COUNT) && ((upperLeftX-FIXED_COLUMN_COUNT) < displayedParameters.length)) {
+          const paramType = displayedParameters[upperLeftX - FIXED_COLUMN_COUNT];
           editedConfig.parameters.set(paramType.id, c.alternateTextData!);
         }
 
@@ -341,19 +345,19 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     // Sanity check
     if ((vector.x == 0) && (vector.y == 0)) { return null; }
     const nextPosition = { x: currentPosition.x + vector.x, y: currentPosition.y + vector.y };
-    const xMax = displayedParameters.length + 4;  // Four additional columns on the left
+    const xMax = displayedParameters.length + FIXED_COLUMN_COUNT;  // Standard field columns on the left
     const yMax = sampleConfigurations.length;
     if ((nextPosition.x < 0) || (nextPosition.y < 0) || (nextPosition.x >= xMax) || (nextPosition.y >= yMax)) {
       return null;
     }
     // At this point we know the cell we're looking at is within the table.
-    if (nextPosition.x < 4) {
-      // The first four cells are always editable.
+    if (nextPosition.x < FIXED_COLUMN_COUNT) {
+      // The field cells are assumed to be always editable.
       return nextPosition;
     }
     // The only thing to ask now is whether the cell is for a ScanParameterType that's
     // _actually_used_ by the ScanType set by that row's SampleConfiguration.
-    const thisParameter = displayedParameters[nextPosition.x - 4];
+    const thisParameter = displayedParameters[nextPosition.x - FIXED_COLUMN_COUNT];
     const thisConfig = sampleConfigurations[nextPosition.y];
 
     const allowedParameters = metadataContext.scanTypes.typesByName.get(thisConfig.scanType)!.parameters;
@@ -408,18 +412,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   // It relies on the displayedParameters constant, calculated just above.
   function cellValidator(x: number, y: number, value: string): CellValidationResult {
 
-    // Validate "mm From Left Edge"
-    if (x === 0) {
-      const inputNumber = parseFloat(value);
-      if (isNaN(inputNumber)) {
-        return { status: CellValidationStatus.Failure, message: "Offset must be a number." };
-      } else if (sampleConfigurations.some((sample) => sample.mmFromLeftEdge == inputNumber)) {
-        return { status: CellValidationStatus.Failure, message: "Location must be unique on bar." };
-      }
-      return { status: CellValidationStatus.Success, message: null };
-
     // Validate Name
-    } else if (x === 1) {
+    if (x === 0) {
       if (value == "") {
         return { status: CellValidationStatus.Failure, message: "Name cannot be blank." };
       } else if (sampleConfigurations.some((sample) => sample.name == value)) {
@@ -428,21 +422,21 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       return { status: CellValidationStatus.Success, message: null };
 
     // Validate Description
-    } else if (x === 2) {
+    } else if (x === 1) {
       // Description can be anything
       return { status: CellValidationStatus.Success, message: null };
 
     // Validate Scan Type
-    } else if (x === 3) {
+    } else if (x === 2) {
       if (metadataContext.scanTypes.typeNamesInDisplayOrder.some((name) => name == value)) {
         return { status: CellValidationStatus.Success, message: null };
       }
       return { status: CellValidationStatus.Failure, message: "Must be the name of a Scan Type." };
 
     // Validate scan parameters
-    } else if ((x > 3) && ((x-4) < displayedParameters.length)) {
+    } else if ((x >= FIXED_COLUMN_COUNT) && ((x-FIXED_COLUMN_COUNT) < displayedParameters.length)) {
 
-      const paramType = displayedParameters[x - 4];
+      const paramType = displayedParameters[x - FIXED_COLUMN_COUNT];
       if (paramType.validator !== undefined) {
         const result = paramType.validator(value);
         if (result !== null) {
@@ -469,20 +463,16 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     var editedConfig = thisConfig.clone();
 
-    // "mm From Left Edge"
-    if (x === 0) {
-      editedConfig.mmFromLeftEdge = parseFloat(newValue);
-
     // Name
-    } else if (x === 1) {
+    if (x === 0) {
       editedConfig.name = newValue;
 
     // Description
-    } else if (x === 2) {
+    } else if (x === 1) {
       editedConfig.description = newValue;
 
     // Scan Type
-    } else if (x === 3) {
+    } else if (x === 2) {
       const asScanTypeName = newValue as ScanTypeName;
       editedConfig.scanType = asScanTypeName;
       const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
@@ -497,8 +487,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       });
 
     // Validate scan parameters
-    } else if ((x >= 4) && ((x-4) < displayedParameters.length)) {
-      const paramType = displayedParameters[x - 4];
+    } else if ((x >= FIXED_COLUMN_COUNT) && ((x-FIXED_COLUMN_COUNT) < displayedParameters.length)) {
+      const paramType = displayedParameters[x - FIXED_COLUMN_COUNT];
       editedConfig.parameters.set(paramType.id, newValue);
     }
 
@@ -567,7 +557,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
 
   var tableHeaders = [
-      (<th key="mm" scope="col">From Left Edge</th>),
       (<th key="name" scope="col">Name</th>),
       (<th key="description" scope="col">Description</th>),
       (<th key="scantype" scope="col">Scan Type</th>)
@@ -587,6 +576,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     syncStatusIcon = (<FontAwesomeIcon icon={faExclamationTriangle} color="darkred" />);
   }
 
+  const allowSampleImport = false;
+
   return (
     <>
 
@@ -598,9 +589,11 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         </div>
 
         <div className="level-right">
-          <div className="level-item">
-            <ImportSamples />
-          </div>
+          { allowSampleImport && (
+            <div className="level-item">
+              <ImportSamples />
+            </div>)
+          }
           <div className="level-item">
             <AddSamples />
           </div>
@@ -642,16 +635,16 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                     );
                   displayedParameters.forEach((p, paramIndex) => {
                     const unused = !allowedParameters.has(p.id);
-                    const activated = (cellFocusX === (paramIndex+4)) && cellFocusOnThisY;
-                    const cellClass = "samplecell " + (unused ? "unused " : "") + selectionBorderClasses(paramIndex+4, sampleIndex);
+                    const activated = (cellFocusX === (paramIndex+FIXED_COLUMN_COUNT)) && cellFocusOnThisY;
+                    const cellClass = "samplecell " + (unused ? "unused " : "") + selectionBorderClasses(paramIndex+FIXED_COLUMN_COUNT, sampleIndex);
                     const td = (
                       <td key={ p.id }
-                          data-sample-x={paramIndex+4}
+                          data-sample-x={paramIndex+FIXED_COLUMN_COUNT}
                           data-sample-y={sampleIndex}
                           data-sample-unused={unused || 0}
                           className={ cellClass }
                         >
-                        <SampleTableCell x={paramIndex+4} y={sampleIndex}
+                        <SampleTableCell x={paramIndex+FIXED_COLUMN_COUNT} y={sampleIndex}
                                     key={ p.id }
                                     cellKey={ p.id }
                                     isUnused={unused}
@@ -667,55 +660,42 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
                   return (
                     <tr key={sample["id"]}>
-                      <td key="mm"
+                      <td key="name"
                           data-sample-x={0}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
                           className={"samplecell " + selectionBorderClasses(0, sampleIndex)}
                         >
                         <SampleTableCell x={0} y={sampleIndex}
-                            key="mm"
-                            cellKey="mm"
+                            key="name"
+                            cellKey="name"
                             isActivated={(cellFocusX === 0) && cellFocusOnThisY}
                             cellFunctions={cellFunctions}
-                            value={ sample.mmFromLeftEdge.toString() } />
+                            value={ sample.name } />
                       </td>
-                      <td key="name"
+                      <td key="description"
                           data-sample-x={1}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
                           className={"samplecell " + selectionBorderClasses(1, sampleIndex)}
                         >
                         <SampleTableCell x={1} y={sampleIndex}
-                            key="name"
-                            cellKey="name"
+                            key="description"
+                            cellKey="description"
                             isActivated={(cellFocusX === 1) && cellFocusOnThisY}
                             cellFunctions={cellFunctions}
-                            value={ sample.name } />
+                            value={ sample.description } />
                       </td>
-                      <td key="description"
+                      <td key="scantype"
                           data-sample-x={2}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
                           className={"samplecell " + selectionBorderClasses(2, sampleIndex)}
                         >
                         <SampleTableCell x={2} y={sampleIndex}
-                            key="description"
-                            cellKey="description"
-                            isActivated={(cellFocusX === 2) && cellFocusOnThisY}
-                            cellFunctions={cellFunctions}
-                            value={ sample.description } />
-                      </td>
-                      <td key="scantype"
-                          data-sample-x={3}
-                          data-sample-y={sampleIndex}
-                          data-sample-unused={0}
-                          className={"samplecell " + selectionBorderClasses(3, sampleIndex)}
-                        >
-                        <SampleTableCell x={3} y={sampleIndex}
                             key="scantype"
                             cellKey="scantype"
-                            isActivated={(cellFocusX === 3) && cellFocusOnThisY}
+                            isActivated={(cellFocusX === 2) && cellFocusOnThisY}
                             cellFunctions={cellFunctions}
                             value={ sample.scanType }
                             choices={ scanTypesAsChoices } />

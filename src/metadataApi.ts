@@ -83,7 +83,6 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
       setId: setId,
       name: r.description || '',
       isValid: true,
-      mmFromLeftEdge: sc.lbnl_config_meta_mm_from_left_edge,
       description: sc.lbnl_config_meta_description,
       scanType: sc.lbnl_config_meta_scan_type,
       parameters: parameters
@@ -145,13 +144,12 @@ async function deleteSet(setId: Guid): Promise<ResponseWrapper<Guid>> {
 
 // Create a new Sample record on the server, with sampleCharacteristics set to identify it as
 // a sample configuration.
-async function createNewConfiguration(proposalId: string, setId: Guid, name: string, description: string, scanType: string, mmFromLeftEdge: number, parameters: Map<ParamUid, string|null>): Promise<ResponseWrapper<SampleConfiguration>> {
+async function createNewConfiguration(proposalId: string, setId: Guid, name: string, description: string, scanType: string, parameters: Map<ParamUid, string|null>): Promise<ResponseWrapper<SampleConfiguration>> {
 
   // All sampleCharacteristics values need to be specified in the patch operation.
   // The server will erase any that are left out.
   var sampleCharacteristics: { [key: string]: string|null|boolean } = {
     "lbnl_config_meta_type": "configuration",
-    "lbnl_config_meta_mm_from_left_edge": mmFromLeftEdge.toString(),
     "lbnl_config_meta_description": description,
     "lbnl_config_meta_set_id": setId,
     "lbnl_config_meta_scan_type": scanType,
@@ -176,7 +174,6 @@ async function createNewConfiguration(proposalId: string, setId: Guid, name: str
       setId: setId,
       name: name,
       isValid: true,
-      mmFromLeftEdge: mmFromLeftEdge,
       description: description,
       scanType: scanType as ScanTypeName,
       parameters: parameters
@@ -223,7 +220,6 @@ async function updateConfig(config: SampleConfiguration): Promise<ResponseWrappe
   var sampleCharacteristics: { [key: string]: string|null|boolean } = {
     "lbnl_config_meta_type": "configuration",
     "lbnl_config_meta_description": config.description,
-    "lbnl_config_meta_mm_from_left_edge": config.mmFromLeftEdge.toString(),
     "lbnl_config_meta_set_id": config.setId,
     "lbnl_config_meta_scan_type": config.scanType,
     "lbnl_config_meta_valid": config.isValid
