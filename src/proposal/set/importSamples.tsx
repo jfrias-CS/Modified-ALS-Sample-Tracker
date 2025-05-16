@@ -23,7 +23,12 @@ const ImportSamples: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [validAllInput, setValidAllInput] = useState<boolean>(true);
   const [inProgress, setInProgress] = useState<boolean>(false);
-  const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(null)
+
+  // Currently we just auto-set the pulldown to the first ScanType in the display order,
+  // but this will need to change on a per-beamline or per-project basis eventually.
+  const firstTypeName = metadataContext.scanTypes.typeNamesInDisplayOrder[0] || null;
+  const initialScanTypeValue = firstTypeName ? metadataContext.scanTypes.typesByName.get(firstTypeName)! : null;
+  const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(initialScanTypeValue)
 
   function getSet(): SampleConfigurationSet | undefined {
     if (!setId) { return undefined; }
@@ -177,7 +182,7 @@ const ImportSamples: React.FC = () => {
               <label className="label">Default Scan Type (if none is specified in data)</label>
                 <ScanTypeAutocomplete
                     value=""
-                    selectedItem={null}
+                    selectedItem={scanTypeValue}
                     searchFunctions={scanTypeSearchFunctions} />
             </div>
 

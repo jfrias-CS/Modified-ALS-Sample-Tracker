@@ -25,7 +25,12 @@ const AddSamples: React.FC = () => {
   const [newName, setNewName] = useState<string>("Sample");
   const [quantity, setQuantity] = useState<string>("1");
   const [description, setDescription] = useState<string>("");
-  const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(null)
+
+  // Currently we just auto-set the pulldown to the first ScanType in the display order,
+  // but this will need to change on a per-beamline or per-project basis eventually.
+  const firstTypeName = metadataContext.scanTypes.typeNamesInDisplayOrder[0] || null;
+  const initialScanTypeValue = firstTypeName ? metadataContext.scanTypes.typesByName.get(firstTypeName)! : null;
+  const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(initialScanTypeValue)
 
   const [validQuantity, setValidQuantity] = useState<boolean>(true);
   const [validName, setValidName] = useState<boolean>(true);
