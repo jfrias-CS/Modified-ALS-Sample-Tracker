@@ -3,6 +3,112 @@
 export type Guid = string & { __brand: 'GUID' };
 
 
+// This is a sorting function that will sort strings while respecting
+// the relative value of numbers inlined into the strings.
+// For example, it would sort the following strings like so:
+//    00000
+//    2
+//    2b
+//    14
+//    A-01
+//    A-3
+//    A-13
+//    bbb12342bfb333b-1-2-3-011
+//    bbb12342bfb333b-1-2-31-01
+export function sortWithNumberParsing(a:string, b:string):number {
+  var result = 0;
+
+  // Jsut in case some lunatic passes in non-string things
+  if (a === undefined || a === null) {
+    return 1
+  } else if (b === undefined || b === null) {
+    return -1
+  }
+
+  // A empty string always gets precedence
+  if (a.length < 1) {
+    return 1
+  } else if (b.length < 1) {
+    return -1
+  }
+
+  var aIndex = 0;
+  var bIndex = 0;
+
+  var aNumberString:string[] = [];
+  var bNumberString:string[] = [];
+
+  while (!result) {
+    var aChar = a.charAt(aIndex);
+    aIndex++;
+    // Seek further forward in the string for as long as we keep seeing digits.
+    while ("0" <= aChar && aChar <= "9") {
+        aNumberString.push(aChar);
+        if (aIndex < a.length) {
+          aChar = a.charAt(aIndex);
+          aIndex++;
+        } else {
+          // Exit this loop. The contents of aChar are stale,
+          // but also irrelevant now that we have a number.
+          break;
+        }
+    }
+
+    // Same procedure for string b.
+    var bChar = b.charAt(bIndex);
+    bIndex++;
+    while ("0" <= bChar && bChar <= "9") {
+        bNumberString.push(bChar);
+        if (bIndex < b.length) {
+          bChar = b.charAt(bIndex);
+          bIndex++;
+        } else {
+          break;
+        }
+    }
+
+    // If we got two numbers, compare them as numbers.
+    if (aNumberString.length > 0 && aNumberString.length > 0) {
+      const aNum = parseInt(aNumberString.join(""), 10);
+      const bNum = parseInt(bNumberString.join(""), 10);
+      result = bNum - aNum;
+      // If the numbers are identical, result will be zero, and we'll need to keep going.
+      // Clear the number arrays for the next iteration.
+      aNumberString = [];
+      bNumberString = [];
+
+    // If the a segment is a number and the b segment is not, don't bother
+    // parsing the number.  Give the number priority.
+    } else if (aNumberString.length > 0) {
+      result = 1;
+    // Same in the other direction.
+    } else if (bNumberString.length > 0) {
+      result = -1;
+
+    // At this point we know we got two non-number characters,
+    // and have moved the pointers on to the next character, or off the end of the string,
+    // for a and b.
+
+    // If the two characters are not identical, use localeCompare to get a result.
+    } else if (aChar !== bChar) {
+      result = bChar.localeCompare(aChar);
+    }
+
+    // The remaining case of the the two characters being identical does not give us a result.
+
+    // If we didn't get a result so far, check to see if we've moved off the end
+    // of one string or the other, in which case we should favor the shorter string.
+    if (result == 0) {
+      if (aIndex >= a.length) {
+        result = 1
+      } else if (bIndex >= b.length) {
+        result = -1
+      }
+    }
+  }
+  return result;
+}
+
 
 // Given a target string, and a list of search strings,
 // modify the target string so that all the occurrences of the search strings
