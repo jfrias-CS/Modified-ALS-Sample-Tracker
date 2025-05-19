@@ -5,23 +5,57 @@ import { ScanTypeName, ParamUid } from './scanTypes.ts';
 import { SampleConfiguration, SampleConfigurationSet } from './sampleConfiguration.ts';
 
 
-// Database interconnection functions for SampleConfiguration objects.
+// Functions providing translation between SciCat's native "Sample" records,
+// and our SampleConfiguration / SampleConfigurationSet objects.
+
+// The majority of the translation is based on using the "sampleCharacteristics" property
+// that SciCat provides for conveying arbitrary JSON structures.
 
 
-// Returned by a successful fetch of all current records for a given proposal from the server
+// This is returned by a successful fetch of all current records for a given proposal from SciCat
 interface RecordsFromServer {
   configs: SampleConfiguration[],
   sets: SampleConfigurationSet[]
 }
 
 
-// Everything else in the sampleCharacteristics object that's prefixed with "lbnl_config_",
-// but not mentioned here, is treated as the name of a Scan Type parameter.
-const characteristicsToIgnore: Set<string> = new Set(
-  ["lbnl_config_meta_type", "lbnl_config_meta_valid", "lbnl_config_meta_description", "lbnl_config_meta_set_id",
-    "lbnl_config_meta_scan_type", "lbnl_config_meta_mm_from_left_edge"]
-);
+//
+// Describing our SampleConfiguration data as it's being stored as SciCat data:
+//
 
+// We use an enum inside "sampleCharacteristics" to distinguish between our Configuration and Set objects.
+enum AlsSampeTrackingObjectType {
+  Set = "set",
+  Configuration = "configuration",
+}
+
+// The complete structure of our section of the custom JSON "sampleCharacteristics" property.
+interface AlsSampleTrackingObject {
+  type: AlsSampeTrackingObjectType,
+  description: string,
+  set_id: string,
+  scan_type: ScanTypeName,
+  valid: boolean,
+  parameters: { [key: string]: string|null|boolean }
+};
+
+// We keep our data under one property inside "sampleCharacteristics", to (try to) make it disinct
+// from other arbitrary metadata that might be placed there by other applications.
+interface SampleCharacteristicsContent {
+  als_sample_tracking?: AlsSampleTrackingObject;
+}
+
+// Here we extend the standard SciCatSample interface, overriding the
+// sampleCharacteristics property so it explicitly contains our als_sample_tracking property.
+// This enforces good type checking in the following code.
+interface SciCatSampleAsAlsSampleTracking extends SciCatSample {
+  sampleCharacteristics?: SampleCharacteristicsContent;
+}
+
+
+//
+// Functions to turn basic C/R/U/D operations into equivalent SciCat operations
+//
 
 // Fetch all the Set/Sample records that are owned up the given proposalId (i.e. ownerGroup),
 // and instantiate them into SampleConfigurationSet and SampleConfiguration records.
@@ -33,20 +67,24 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
   if (!result.success) {
     return { success: false, message: result.message };
   }
-  const rawRecords = result.response!;  // At this point we know it's defined
+  // From now on we're going to expect these to be our more narrowly defined type.
+  const rawRecords = result.response! as SciCatSampleAsAlsSampleTracking[];
 
-  var rawSetRecords:SciCatSample[] = [];
-  var rawConfigRecords:SciCatSample[] = [];
-  rawRecords.forEach((s:SciCatSample) => {
-    // Skip any records that don't have a sampleCharacteristics object.
+  var rawSetRecords:SciCatSampleAsAlsSampleTracking[] = [];
+  var rawConfigRecords:SciCatSampleAsAlsSampleTracking[] = [];
+  rawRecords.forEach((s) => {
+    // Skip any records that don't have a sampleCharacteristics object, or a als_sample_tracking object within.
     // They will definitely not contain enough information to be useful.
-    if (!s.sampleCharacteristics) { return; }
+    if (!s.sampleCharacteristics?.als_sample_tracking) { return; }
     // Skip any records that claim to be invalid.
     // These may be detritus from incomplete undo purging in a previous session.
-//    if (!(s.sampleCharacteristics.lbnl_config_meta_valid)) { return; }
+//    if (!(s.sampleCharacteristics.als_sample_tracking.valid)) { return; }
     // Separate the records into "set" and "configuration" buckets
-    if (s.sampleCharacteristics.lbnl_config_meta_type == 'set') { rawSetRecords.push(s); }
-    else if (s.sampleCharacteristics.lbnl_config_meta_type == 'configuration') { rawConfigRecords.push(s); }
+    if (s.sampleCharacteristics.als_sample_tracking.type == AlsSampeTrackingObjectType.Set) {
+      rawSetRecords.push(s);
+    } else if (s.sampleCharacteristics.als_sample_tracking.type == AlsSampeTrackingObjectType.Configuration) {
+      rawConfigRecords.push(s);
+    }
   });
 
   // Add a new SampleConfigurationSet object for each record we got that looks like one.
@@ -54,42 +92,40 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
     return new SampleConfigurationSet(
                     r.id as Guid,
                     r.description || '',
-                    r.sampleCharacteristics.lbnl_config_meta_description || "" );
+                    r.sampleCharacteristics!.als_sample_tracking!.description || "" );
   });
 
-  var configs: SampleConfiguration[] = []; 
+  const configs = rawConfigRecords.filter((r) => {
+      // All these fields must exist with a non-null non-zero set_id at the bottom,
+      // or we cannot use this record.
+      return r?.sampleCharacteristics?.als_sample_tracking?.set_id;
+    }).map((r) => {
+      // All remaining metadata, including parameters and flags to distinguish this record between
+      // a configuration and a set, is held in sampleCharacteristics.
+      const sc = r.sampleCharacteristics!.als_sample_tracking!;
+      const setId = sc.set_id as Guid;
 
-  rawConfigRecords.forEach((r) => {
-    // All remaining metadata, including parameters and flags to distinguish this record between
-    // a configuration and a set, is held in sampleCharacteristics.
-    const sc = r.sampleCharacteristics;
-    const setId = sc.lbnl_config_meta_set_id as Guid;
-    if (!setId) { return; }
+      const parameters:Map<ParamUid, string|null> = new Map();
 
-    const parameters:Map<ParamUid, string|null> = new Map();
-
-    // Anything in sampleCharacteristics that starts with lbnl_config_ and not lbnl_config_meta_
-    // is treated as a Scan Type parameter and its value is added to the parameter set.
-    for (const [key, value] of Object.entries(sc)) {
-      if (key.startsWith('lbnl_config_')) {
-        if (!characteristicsToIgnore.has(key)) { 
-          parameters.set(key.replace(/lbnl_config_/, '') as ParamUid, value as string);
-        }
+      // Anything in sampleCharacteristics.als_sample_tracking.parameters 
+      // is treated as a Scan Type parameter and its value is added to the parameter set.
+      // (Technically this laundering of the parameters object is not needed, but it's good practice.)
+      for (const [key, value] of Object.entries(sc.parameters)) {
+            parameters.set(key as ParamUid, value as string);
       }
-    }
 
-    const newConfig = new SampleConfiguration({
-      id: r.id as Guid,
-      setId: setId,
-      name: r.description || '',
-      isValid: true,
-      description: sc.lbnl_config_meta_description,
-      scanType: sc.lbnl_config_meta_scan_type,
-      parameters: parameters
+      const newConfig = new SampleConfiguration({
+        id: r.id as Guid,
+        setId: setId,
+        name: r.description || '',
+        isValid: true,
+        description: sc.description,
+        scanType: sc.scan_type,
+        parameters: parameters
+      });
+
+      return newConfig;
     });
-
-    configs.push(newConfig);
-  });
 
   const records = {
     sets: sets,
@@ -107,12 +143,14 @@ async function createNewSet(proposalId: string, name: string, description: strin
   const sample:SciCatSample = {
     "description": name,
     "sampleCharacteristics": {
-      "lbnl_config_meta_type": "set",
-      "lbnl_config_meta_description": description,
-      "lbnl_config_meta_valid": true
+      "als_sample_tracking": {
+        "type": AlsSampeTrackingObjectType.Set,
+        "description": description,
+        "valid": true
+      }
     },
     "isPublished": false,
-    ownerGroup: proposalId,
+    "ownerGroup": proposalId,
   };
  
   const result = await createSample(sample);
@@ -144,24 +182,28 @@ async function deleteSet(setId: Guid): Promise<ResponseWrapper<Guid>> {
 
 // Create a new Sample record on the server, with sampleCharacteristics set to identify it as
 // a sample configuration.
-async function createNewConfiguration(proposalId: string, setId: Guid, name: string, description: string, scanType: string, parameters: Map<ParamUid, string|null>): Promise<ResponseWrapper<SampleConfiguration>> {
+async function createNewConfiguration(proposalId: string, setId: Guid, name: string, description: string, scanType: ScanTypeName, parameters: Map<ParamUid, string|null>): Promise<ResponseWrapper<SampleConfiguration>> {
 
   // All sampleCharacteristics values need to be specified in the patch operation.
   // The server will erase any that are left out.
-  var sampleCharacteristics: { [key: string]: string|null|boolean } = {
-    "lbnl_config_meta_type": "configuration",
-    "lbnl_config_meta_description": description,
-    "lbnl_config_meta_set_id": setId,
-    "lbnl_config_meta_scan_type": scanType,
-    "lbnl_config_meta_valid": true
+  var alsSampleTracking:AlsSampleTrackingObject = {
+      "type": AlsSampeTrackingObjectType.Configuration,
+      "description": description,
+      "set_id": setId,
+      "scan_type": scanType,
+      "valid": true,
+      "parameters": {}
   };
+
   parameters.forEach((v, k) => {
-    sampleCharacteristics['lbnl_config_' + k] = v;
+    alsSampleTracking.parameters[k] = v;
   });
 
   const sample:SciCatSample = {
     "description": name,
-    "sampleCharacteristics": sampleCharacteristics,
+    "sampleCharacteristics": {
+      "als_sample_tracking": alsSampleTracking
+    },
     "isPublished": false,
     ownerGroup: proposalId
   };
@@ -195,9 +237,11 @@ async function updateSet(set: SampleConfigurationSet): Promise<ResponseWrapper<S
   const body = {
     "description": set.name,
     "sampleCharacteristics": {
-      "lbnl_config_meta_type": "set",
-      "lbnl_config_meta_description": set.description,
-      "lbnl_config_meta_valid": true
+      "als_sample_tracking": {
+        "type": AlsSampeTrackingObjectType.Set,
+        "description": set.description,
+        "valid": true
+      }      
     }
   };
 
@@ -217,20 +261,24 @@ async function updateConfig(config: SampleConfiguration): Promise<ResponseWrappe
 
   // All sampleCharacteristics values need to be specified in the patch operation.
   // The server will erase any that are left out.
-  var sampleCharacteristics: { [key: string]: string|null|boolean } = {
-    "lbnl_config_meta_type": "configuration",
-    "lbnl_config_meta_description": config.description,
-    "lbnl_config_meta_set_id": config.setId,
-    "lbnl_config_meta_scan_type": config.scanType,
-    "lbnl_config_meta_valid": config.isValid
+  var alsSampleTracking:AlsSampleTrackingObject = {
+      "type": AlsSampeTrackingObjectType.Configuration,
+      "description": config.description,
+      "set_id": config.setId,
+      "scan_type": config.scanType,
+      "valid": config.isValid,
+      "parameters": {}
   };
+
   config.parameters.forEach((v, k) => {
-    sampleCharacteristics['lbnl_config_' + k] = v;
+    alsSampleTracking.parameters[k] = v;
   });
 
   const body = {
     "description": config.name,
-    "sampleCharacteristics": sampleCharacteristics
+    "sampleCharacteristics": {
+      "als_sample_tracking": alsSampleTracking
+    }
   };
 
   const result = await sciCatPatch(`samples/${config.id}`, JSON.stringify(body));
