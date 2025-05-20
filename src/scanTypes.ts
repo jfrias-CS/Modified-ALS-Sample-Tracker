@@ -33,7 +33,8 @@ export interface ScanParameterType {
 export interface ScanParameterSettings {
   typeId: ParamUid;
   readOnly?: boolean;
-  customDefault?: string;
+  // If present, this will override the default in the ScanParameter definition.
+  default?: string;
 }
 
 export interface ScanType {
@@ -163,7 +164,7 @@ export function getScanTypes(): ScanTypes {
         { typeId: "fromleftedge" as ParamUid },
         { typeId: "incangles" as ParamUid },
         { typeId: "mspots" as ParamUid },
-        { typeId: "exptime" as ParamUid, readOnly: true, customDefault: "auto" },
+        { typeId: "exptime" as ParamUid, readOnly: true, default: "auto" },
         { typeId: "expmax" as ParamUid },
         { typeId: "imgtype" as ParamUid }
       ]
@@ -174,7 +175,7 @@ export function getScanTypes(): ScanTypes {
 //      parameters: [
 //        { typeId: "incangles" as ParamUid },
 //        { typeId: "gpcam_params" as ParamUid },
-//        { typeId: "exptime" as ParamUid, readOnly: true, customDefault: "auto" },
+//        { typeId: "exptime" as ParamUid, readOnly: true, default: "auto" },
 //        { typeId: "expmax" as ParamUid },
 //        { typeId: "imgtype" as ParamUid }
 //      ]

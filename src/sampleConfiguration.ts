@@ -81,8 +81,8 @@ export class SampleConfigurationSet {
   // Undo/redo history tracker
   history: UndoHistory;
   // A cached value used as a reference by e.g. findRelevantParameters.
-  // This can be undefined until legitimate ScanType information is available.
-  scanTypesByName!: Map<ScanTypeName, ScanType>;
+  // This can stay undefined until legitimate ScanType information is available.
+  scanTypesReference!: ScanTypes;
 
   constructor(id: Guid, name: string, description: string) {
     this.id = id;
@@ -93,8 +93,8 @@ export class SampleConfigurationSet {
     this.history = new UndoHistory();
   }
 
-  setScanTypes(scanTypesCache: ScanTypes) {
-    this.scanTypesByName = scanTypesCache.typesByName;
+  setScanTypes(scanTypesReference: ScanTypes) {
+    this.scanTypesReference = scanTypesReference;
     this.findRelevantParameters();
   }
 
@@ -107,7 +107,7 @@ export class SampleConfigurationSet {
   // and gather all the unique parameter names into a list, in the order encountered.
   // Used for deciding which parameter columns to render in the interface.
   findRelevantParameters() {
-    const scanTypesByName = this.scanTypesByName;
+    const scanTypesByName = this.scanTypesReference.typesByName;
     let workingSet: Set<ParamUid> = new Set();
     let relevantParameters: ParamUid[] = [];
 
@@ -127,6 +127,49 @@ export class SampleConfigurationSet {
     });
     this.relevantParameters = relevantParameters;
   }
+
+
+  // Generate and return a series of c objects suitable for
+  // sending to the server for the creation of new configurations in this set.
+  // This includes creating default parameter values that respect uniqueness constraints
+  // relative to the existing configurations in this set.
+  generateNewConfigurationsWithDefaults(quantity: number, scanTypeName: ScanTypeName, suggestedName?: string, suggestedDescription?: string): SampleConfiguration[] {
+
+    const scanTypesByName = this.scanTypesReference.typesByName;
+
+    if (!scanTypesByName.has(scanTypeName)) { return []; }
+    const scanType = scanTypesByName.get(scanTypeName)!;
+
+    const uniqueNames = this.generateUniqueNames(suggestedName ?? "Sample", quantity);
+    const openLocations = this.generateOpenLocations(quantity);
+
+    var newConfigs: SampleConfiguration[] = [];
+    var index = 0;
+    while (index < quantity) {
+
+      // Make a set of parameters for the chosen ScanType, with default or blank values.
+      const parameters:Map<ParamUid, string|null> = new Map();
+      scanType.parameters.forEach((p) => {
+        const parameterType = this.scanTypesReference.parametersById.get(p.typeId);
+        if (parameterType) { parameters.set(parameterType.id, p.default ?? parameterType.default ?? ""); }
+      });
+
+      newConfigs.push(
+        new SampleConfiguration({
+          id: "" as Guid,
+          setId: this.id,
+          name: uniqueNames[index],
+          isValid: true,
+          description: suggestedDescription || "",
+          scanType: scanType.name,
+          parameters: parameters
+        })
+      );
+      index++;
+    }
+    return newConfigs;
+  }
+
 
   generateUniqueNames(suggestedName: string, quantity?: number, startIndex?: number | null): string[] {
     let existingNames: string[] = [];
