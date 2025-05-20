@@ -26,6 +26,8 @@ export interface ScanParameterType {
   required?: boolean;
   // If the value should be unique across all samples in the same set.
   uniqueInSet?: boolean;
+  // When new instances are generated, and the value should be unique, use this interval when auto-generating new values.
+  autoGenerateInterval?: number;
   // Validates the input. Any return value other than null is considered an error and displayed as an error message.
   validator?: (value:string) => null | string;
 }
@@ -73,9 +75,10 @@ export function getScanTypes(): ScanTypes {
     { id: "fromleftedge" as ParamUid,
       name: "From Left Edge" as ScanParameterName,
       description: "Distance in mm from the left edge of the sample bar to the center of this sample. Should be unique with respect to the other samples on the bar.",
-      default: "25",
+      default: "18",
       required: true,
       uniqueInSet: true,
+      autoGenerateInterval: 12.7,
       validator: (v) => {
         if (atOrBetween(1, 200, v)) { return null; }
         return "Must be a number between 1 and 200.";

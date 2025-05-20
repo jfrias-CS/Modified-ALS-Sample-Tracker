@@ -1,4 +1,4 @@
-import { ScanTypes, ParamUid, ScanTypeName, ScanType } from './scanTypes.ts';
+import { ScanTypes, ParamUid, ScanTypeName } from './scanTypes.ts';
 import { Guid, sortWithNumberParsing, generateUniqueNames } from "./components/utils.tsx";
 import { ObjectWithGuid, EditQueueEntry, UndoHistory, UndoHistoryEntry } from "./undoHistory.ts";
 
@@ -136,12 +136,49 @@ export class SampleConfigurationSet {
   generateNewConfigurationsWithDefaults(quantity: number, scanTypeName: ScanTypeName, suggestedName?: string, suggestedDescription?: string): SampleConfiguration[] {
 
     const scanTypesByName = this.scanTypesReference.typesByName;
+    const parametersById = this.scanTypesReference.parametersById;
+    const configsById = this.configurationsById;
 
     if (!scanTypesByName.has(scanTypeName)) { return []; }
     const scanType = scanTypesByName.get(scanTypeName)!;
 
     const uniqueNames = this.generateUniqueNames(suggestedName ?? "Sample", quantity);
-    const openLocations = this.generateOpenLocations(quantity);
+
+    const parametersThatNeedUniqueValues = 
+      scanType.parameters.filter((p) => {
+        const parameterType = parametersById.get(p.typeId);
+        return parameterType?.uniqueInSet
+      });
+
+    var uniqueParameterValues: Map<ParamUid, number[]> = new Map();
+
+    // For each parameter that needs a unique value, create a list of acceptable values,
+    // long enough to meet out quantity demand.
+    parametersThatNeedUniqueValues.forEach((p) => {
+      const parameterType = parametersById.get(p.typeId);
+      var values = [];
+      var index = 0;
+
+      const interval = parseFloat((parameterType!.autoGenerateInterval || "1") as string);
+      const defaultValue = parseFloat(p.default ?? parameterType!.default ?? "0");
+
+      // We're starting with the default, but if there are any existing configs,
+      // we check their parameters for a value and, if it's higher than what we already have,
+      // we use that (plus the interval) as the starting point.
+      var value = defaultValue;
+      configsById.forEach((c) => {
+        const paramValue = parseFloat(c.parameters.get(parameterType!.id) ?? "");
+        if (!isNaN(paramValue)) { value = Math.max(paramValue+interval, value); }
+      });
+
+      // Create an array of values, separated by the interval
+      while (index < quantity) {
+        values.push(value);
+        value += interval;
+        index++;
+      }
+      uniqueParameterValues.set(parameterType!.id, values);
+    });
 
     var newConfigs: SampleConfiguration[] = [];
     var index = 0;
@@ -150,8 +187,14 @@ export class SampleConfigurationSet {
       // Make a set of parameters for the chosen ScanType, with default or blank values.
       const parameters:Map<ParamUid, string|null> = new Map();
       scanType.parameters.forEach((p) => {
-        const parameterType = this.scanTypesReference.parametersById.get(p.typeId);
+        const parameterType = parametersById.get(p.typeId);
         if (parameterType) { parameters.set(parameterType.id, p.default ?? parameterType.default ?? ""); }
+      });
+      // For all the parameters that need unique defaults, select one from our prepared arrays.
+      parametersThatNeedUniqueValues.forEach((p) => {
+        const uniqueValues = uniqueParameterValues.get(p.typeId) as number[];
+        const v = uniqueValues[index];
+        parameters.set(p.typeId, `${v}`)
       });
 
       newConfigs.push(
@@ -178,26 +221,6 @@ export class SampleConfigurationSet {
     return generateUniqueNames(existingNames, suggestedName, quantity, startIndex);
   }
 
-  // Generate bar locations that are at least 13mm beyond the current
-  // rightmost config location, and 13mm apart from each other, with a default minimum of 3mm.
-  generateOpenLocations(quantity?: number) {
-    var chosenQuantity = Math.max(quantity||1, 1);
-
-    var maxUniqueLocation = 3;
-    this.configurationsById.forEach((v) => {
-      maxUniqueLocation = Math.max(25, maxUniqueLocation);  // Pending
-    });
-
-    maxUniqueLocation += 13;
-
-    var goodLocations: number[] = [];
-    while (chosenQuantity > 0) {
-      goodLocations.push(maxUniqueLocation);
-      maxUniqueLocation += 13;
-      chosenQuantity--;
-    }
-    return goodLocations;
-  }
 
   all() {
     return Array.from(this.configurationsById.values());
