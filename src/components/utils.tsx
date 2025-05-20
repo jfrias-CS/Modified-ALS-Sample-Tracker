@@ -20,16 +20,16 @@ export function sortWithNumberParsing(a:string, b:string):number {
 
   // Jsut in case some lunatic passes in non-string things
   if (a === undefined || a === null) {
-    return 1
-  } else if (b === undefined || b === null) {
     return -1
+  } else if (b === undefined || b === null) {
+    return 1
   }
 
-  // A empty string always gets precedence
+  // A empty string gets moved to the bottom
   if (a.length < 1) {
-    return 1
-  } else if (b.length < 1) {
     return -1
+  } else if (b.length < 1) {
+    return 1
   }
 
   var aIndex = 0;
@@ -71,7 +71,7 @@ export function sortWithNumberParsing(a:string, b:string):number {
     if (aNumberString.length > 0 && aNumberString.length > 0) {
       const aNum = parseInt(aNumberString.join(""), 10);
       const bNum = parseInt(bNumberString.join(""), 10);
-      result = bNum - aNum;
+      result = aNum - bNum;
       // If the numbers are identical, result will be zero, and we'll need to keep going.
       // Clear the number arrays for the next iteration.
       aNumberString = [];
@@ -80,10 +80,10 @@ export function sortWithNumberParsing(a:string, b:string):number {
     // If the a segment is a number and the b segment is not, don't bother
     // parsing the number.  Give the number priority.
     } else if (aNumberString.length > 0) {
-      result = 1;
+      result = -1;
     // Same in the other direction.
     } else if (bNumberString.length > 0) {
-      result = -1;
+      result = 1;
 
     // At this point we know we got two non-number characters,
     // and have moved the pointers on to the next character, or off the end of the string,
@@ -91,7 +91,7 @@ export function sortWithNumberParsing(a:string, b:string):number {
 
     // If the two characters are not identical, use localeCompare to get a result.
     } else if (aChar !== bChar) {
-      result = bChar.localeCompare(aChar);
+      result = aChar.localeCompare(bChar);
     }
 
     // The remaining case of the the two characters being identical does not give us a result.
@@ -100,9 +100,9 @@ export function sortWithNumberParsing(a:string, b:string):number {
     // of one string or the other, in which case we should favor the shorter string.
     if (result == 0) {
       if (aIndex >= a.length) {
-        result = 1
-      } else if (bIndex >= b.length) {
         result = -1
+      } else if (bIndex >= b.length) {
+        result = 1
       }
     }
   }

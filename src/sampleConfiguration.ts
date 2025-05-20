@@ -1,5 +1,5 @@
 import { ScanTypes, ParamUid, ScanTypeName, ScanType } from './scanTypes.ts';
-import { Guid, generateUniqueNames } from "./components/utils.tsx";
+import { Guid, sortWithNumberParsing, generateUniqueNames } from "./components/utils.tsx";
 import { ObjectWithGuid, EditQueueEntry, UndoHistory, UndoHistoryEntry } from "./undoHistory.ts";
 
 // Class definitions to represent sample configurations,
@@ -98,6 +98,11 @@ export class SampleConfigurationSet {
     this.findRelevantParameters();
   }
 
+  getSortedSamples() {
+    const sortedSamples = this.all().sort((a, b) => { return sortWithNumberParsing(a.name, b.name)});
+    return sortedSamples;
+  }
+
   // Look through all the current sample configurations for scan parameters,
   // and gather all the unique parameter names into a list, in the order encountered.
   // Used for deciding which parameter columns to render in the interface.
@@ -106,9 +111,9 @@ export class SampleConfigurationSet {
     let workingSet: Set<ParamUid> = new Set();
     let relevantParameters: ParamUid[] = [];
 
-    // Start from the SampleConfiguration closest to the left edge,
+    // We default to sorting SampleConfiguration records by name,
     // since that's the default sort when displaying them.
-    const sortedSamples = this.all().sort((a, b) => a.mmFromLeftEdge - b.mmFromLeftEdge);
+    const sortedSamples = this.getSortedSamples();
 
     sortedSamples.forEach((v) => {
       if (!scanTypesByName.has(v.scanType)) { return; }
@@ -137,7 +142,7 @@ export class SampleConfigurationSet {
 
     var maxUniqueLocation = 3;
     this.configurationsById.forEach((v) => {
-      maxUniqueLocation = Math.max(v.mmFromLeftEdge, maxUniqueLocation);
+      maxUniqueLocation = Math.max(25, maxUniqueLocation);  // Pending
     });
 
     maxUniqueLocation += 13;

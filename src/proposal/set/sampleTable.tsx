@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationTriangle, faSpinner, faCheck } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { Guid } from '../../components/utils.tsx';
+import { Guid, sortWithNumberParsing } from '../../components/utils.tsx';
 import { ScanTypeName, ParameterChoice } from '../../scanTypes.ts';
 import { SampleConfiguration } from '../../sampleConfiguration.ts';
 import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
@@ -68,8 +68,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
 
   useEffect(() => {
-//    console.log(`sampleTable setId:${setId} changeCounter:${metadataContext.changeCounter} setsLoadingState:${metadataContext.setsLoadingState} scanTypesLoadingState:${metadataContext.scanTypesLoadingState}`);
-
     if ((setId === undefined) || (!setId.trim())) { return; }
 
     if (metadataContext.loadingState != MetaDataLoadingState.Succeeded) { return; }
@@ -77,7 +75,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     const thisSet = metadataContext.sets.getById(setId.trim() as Guid);
     if (thisSet === undefined) { return; }
 
-    const sortedSamples = thisSet.all().sort((a, b) => a.mmFromLeftEdge - b.mmFromLeftEdge);
+    const sortedSamples = thisSet.all().sort((a, b) => { return sortWithNumberParsing(a.name, b.name)});
     setSampleConfigurations(sortedSamples);
   }, [setId, metadataContext.changeCounter, metadataContext.loadingState]);
 
@@ -607,7 +605,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
       <div className="block">
         { sampleConfigurations.length == 0 ? (
-          <p>( Use the buttons on the right to add Samples. )</p>
+          <p>( Use the button on the right to add Samples. )</p>
         ) : (
           <table className="sampletable"
                   tabIndex={0}
