@@ -224,7 +224,6 @@ const AddSamples: React.FC = () => {
             <div className="field">
               <label className="label">Scan Type</label>
                 <ScanTypeAutocomplete
-                    value=""
                     selectedItem={scanTypeValue}
                     searchFunctions={scanTypeSearchFunctions} />
             </div>

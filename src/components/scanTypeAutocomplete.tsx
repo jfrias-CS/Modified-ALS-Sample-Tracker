@@ -17,7 +17,6 @@ interface ScanTypeSearchFunctions {
 
 // Settings passed in with the React component
 interface ScanTypeAutocompleteParameters {
-  value: string;
   selectedItem: ScanType | null;
   searchFunctions: ScanTypeSearchFunctions;
   inputSize?: string;
@@ -58,7 +57,7 @@ function ScanTypeAutocomplete(settings:ScanTypeAutocompleteParameters) {
   };
 
   return InputAutocomplete<ScanType>({
-      value: settings.value,
+      value: settings.selectedItem ? settings.selectedItem.name : "",
       selectedItem: settings.selectedItem,
       searchFunctions: scanTypeSearchFunctions,
       addedClass: "scantype",
