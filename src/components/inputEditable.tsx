@@ -37,6 +37,7 @@ interface InputEditableParameters {
   label?: string;
   isReadOnly?: boolean;
   isTextArea?: boolean;
+  useCtrlToSave?: boolean;
   textAreaRows?: number;
   debounceTime?: number;
   editFunctions: EditFunctions;
@@ -65,6 +66,10 @@ function InputEditable(settings: InputEditableParameters) {
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [justBlurred, setJustBlurred] = useState<boolean>(false);
 
+  // Note the use of '===' in the following.
+  // If useCtrlToSave is defined but false, this should be false.
+  // If it's undefined, fall back to whether we're using a textarea versus a text input element.
+  const useCtrlToSave = ((settings.useCtrlToSave === undefined) && settings.isTextArea) || (settings.useCtrlToSave === true)
 
   // Triggered one time only, whenever the input is blurred.
   // Used to ensure the latest state values are being validated (instead of old ones),
@@ -84,7 +89,9 @@ function InputEditable(settings: InputEditableParameters) {
       reset();
       // Defocus?
     } else if (event.key == "Enter") {
-      if (!settings.isTextArea || event.ctrlKey) {
+      // If both are true or both are false, but not otherwise
+      if (useCtrlToSave == event.ctrlKey) {
+        event.preventDefault();
         if (inputValue == settings.value) {
           reset();
         } else if (validationState == InputValidationState.Succeeded) {
@@ -171,7 +178,7 @@ function InputEditable(settings: InputEditableParameters) {
   // Only show decoration if the value has been edited (differs from value specified in settings)
   if (inputValue != settings.value) {
 
-    if (settings.isTextArea) {
+    if (useCtrlToSave) {
       help = (<p className="help">Press Ctrl + Enter to save. Press Ctrl + Esc to cancel.</p>);
     } else {
       help = (<p className="help">Press Enter to save. Press Esc to cancel.</p>);
