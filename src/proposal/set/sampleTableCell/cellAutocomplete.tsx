@@ -7,12 +7,6 @@ import { CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationRe
 import { highlightSearchTermsInString } from "../../../components/utils.tsx";
 
 
-// Just a small helper function to concatenate CSS class names
-function classNames(...names:(string|null|undefined)[]): string {
-  return names.filter((name) => (name !== undefined) && (name !== null) && (name.length > 0)).join(" "); 
-}
-
-
 interface CellAutocompleteParameters extends CellSubcomponentParameters {
   choices: ParameterChoice[];
 }

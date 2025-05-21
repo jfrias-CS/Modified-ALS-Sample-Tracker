@@ -3,6 +3,12 @@
 export type Guid = string & { __brand: 'GUID' };
 
 
+// Just a small helper function used to to concatenate CSS class names
+export function truthyJoin(...names:(string|null|false|undefined)[]): string {
+  return names.filter((name) => (name !== undefined) && (name !== null) && (name !== false) && (name.length > 0)).join(" "); 
+}
+
+
 // This is a sorting function that will sort strings while respecting
 // the relative value of numbers inlined into the strings.
 // For example, it would sort the following strings like so:

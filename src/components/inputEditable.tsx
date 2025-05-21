@@ -4,6 +4,7 @@ import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { faExclamationTriangle, faSpinner, faCheck, faX } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
+import { truthyJoin } from './utils.tsx';
 import './inputEditable.css';
 
 
@@ -47,12 +48,6 @@ interface InputEditableParameters {
 // Internal state tracking
 enum InputTypingState { NotTyping, IsTyping, StoppedTyping };
 enum InputValidationState { NotTriggered, Succeeded, Failed };
-
-
-// Just a small helper function to concatenate CSS class names
-function classNames(...names:(string|null|undefined)[]): string {
-  return names.filter((name) => (name !== undefined) && (name !== null) && (name.length > 0)).join(" "); 
-}
 
 
 function InputEditable(settings: InputEditableParameters) {
@@ -216,10 +211,10 @@ function InputEditable(settings: InputEditableParameters) {
     }
   }
 
-  const controlClass = classNames("control", "is-expanded", inputIcon ? "has-icons-left" : "", statusIcon ? "has-icons-right" : "");
+  const controlClass = truthyJoin("control", "is-expanded", inputIcon && "has-icons-left", statusIcon && "has-icons-right");
 
   return (
-    <div className={ classNames("editableinput", "field", settings.addedClass) }>
+    <div className={ truthyJoin("editableinput", "field", settings.addedClass) }>
       { (settings.label && (
           <label className="label">{ settings.label }</label>)
       ) }
@@ -230,7 +225,7 @@ function InputEditable(settings: InputEditableParameters) {
               { (settings.isTextArea ? (
 
                   <textarea
-                    className={ classNames("textarea", inputColor, settings.inputSize || "is-normal") }
+                    className={ truthyJoin("textarea", inputColor, settings.inputSize || "is-normal") }
                     id={ "debouncer-editable-" + (settings.elementId || "default") }
                     placeholder={ settings.placeholder || "Enter value" }
                     value={ inputValue }
@@ -254,7 +249,7 @@ function InputEditable(settings: InputEditableParameters) {
                 ) : (
 
                   <input type="text"
-                    className={ classNames("input", inputColor, settings.inputSize || "is-normal") }
+                    className={ truthyJoin("input", inputColor, settings.inputSize || "is-normal") }
                     id={ "debouncer-editable-" + (settings.elementId || "default") }
                     placeholder={ settings.placeholder || "Enter value" }
                     value={ inputValue }
@@ -277,12 +272,12 @@ function InputEditable(settings: InputEditableParameters) {
                 ))
               }
               { (inputIcon && (
-                  <span className={ classNames( "icon", "is-left", settings.iconSize) }>
+                  <span className={ truthyJoin( "icon", "is-left", settings.iconSize) }>
                     { inputIcon }
                   </span>)
               ) }
               { (statusIcon && (
-                  <span className={ classNames( "icon", "is-right", settings.iconSize) }>
+                  <span className={ truthyJoin( "icon", "is-right", settings.iconSize) }>
                     { statusIcon }
                   </span>)
               ) }
@@ -290,7 +285,7 @@ function InputEditable(settings: InputEditableParameters) {
             { showCancelButton && (
                 <div className="control reset">
                   <button className="button" onClick={ () => { reset() }}>
-                    <span className={ classNames( "icon", "is-right", "is-small") }>
+                    <span className={ truthyJoin( "icon", "is-right", "is-small") }>
                       <FontAwesomeIcon icon={faX} />
                     </span>
                   </button>
@@ -300,7 +295,7 @@ function InputEditable(settings: InputEditableParameters) {
             { showSaveButton && (
               <div className="control save">
                 <button className="button" onClick={ () => { save() }}>
-                  <span className={ classNames( "icon", "is-right", "is-small") }>
+                  <span className={ truthyJoin( "icon", "is-right", "is-small") }>
                     <FontAwesomeIcon icon={faCheck} />
                   </span>
                 </button>

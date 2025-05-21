@@ -171,10 +171,10 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   function selectionBorderClasses(x: number, y: number) {
     // If the table doesn't have focus, don't show the selection to avoid confusion
     // over what else might be selected for copy/paste on the page.
-    if (!tableHasFocus) { return; }
+    if (!tableHasFocus) { return []; }
     // If there is a cell in focus for editing, we don't draw the selection border.
     if ((cellFocusX !== null) && (cellFocusY !== null)) {
-      return "";
+      return [];
     }
     var borderClasses = [];
     // If one is true and the other false, regardless of which one, we're on either side of a transition
@@ -195,7 +195,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     if (isWithinSelection(x, y)) {
       borderClasses.push("inSelection");
     }
-    return borderClasses.join(" ") || "";
+    return borderClasses;
   }
 
 
@@ -634,13 +634,17 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                   displayedParameters.forEach((p, paramIndex) => {
                     const unused = !allowedParameters.has(p.id);
                     const activated = (cellFocusX === (paramIndex+FIXED_COLUMN_COUNT)) && cellFocusOnThisY;
-                    const cellClass = "samplecell " + (unused ? "unused " : "") + selectionBorderClasses(paramIndex+FIXED_COLUMN_COUNT, sampleIndex);
+                    const cellClasses = truthyJoin(
+                            "samplecell",
+                            (unused && "unused"),
+                            ...selectionBorderClasses(paramIndex+FIXED_COLUMN_COUNT, sampleIndex)
+                          );
                     const td = (
                       <td key={ p.id }
                           data-sample-x={paramIndex+FIXED_COLUMN_COUNT}
                           data-sample-y={sampleIndex}
                           data-sample-unused={unused || 0}
-                          className={ cellClass }
+                          className={ cellClasses }
                         >
                         <SampleTableCell x={paramIndex+FIXED_COLUMN_COUNT} y={sampleIndex}
                                     key={ p.id }
@@ -662,7 +666,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                           data-sample-x={0}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
-                          className={"samplecell " + selectionBorderClasses(0, sampleIndex)}
+                          className={truthyJoin("samplecell", ...selectionBorderClasses(0, sampleIndex))}
                         >
                         <SampleTableCell x={0} y={sampleIndex}
                             key="name"
@@ -675,7 +679,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                           data-sample-x={1}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
-                          className={"samplecell " + selectionBorderClasses(1, sampleIndex)}
+                          className={truthyJoin("samplecell", ...selectionBorderClasses(1, sampleIndex))}
                         >
                         <SampleTableCell x={1} y={sampleIndex}
                             key="description"
@@ -688,7 +692,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                           data-sample-x={2}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
-                          className={"samplecell " + selectionBorderClasses(2, sampleIndex)}
+                          className={truthyJoin("samplecell", ...selectionBorderClasses(2, sampleIndex))}
                         >
                         <SampleTableCell x={2} y={sampleIndex}
                             key="scantype"

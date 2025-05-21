@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import 'bulma/css/bulma.min.css';
 
+import { truthyJoin } from '../../../components/utils.tsx';
 import { ParameterChoice } from '../../../scanTypes.ts';
 import { CellFunctions, CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellNavigationDirection, CellSubcomponentFunctions } from './cellDto.ts';
 import { CellTextfield } from './cellTextfield.tsx';
@@ -22,12 +23,6 @@ interface EditableCellParameters {
   // It's the only parameter that makes the editable table code
   // non-generic.
   choices?: ParameterChoice[];
-}
-
-
-// Just a small helper function to concatenate CSS class names
-function classNames(...names:(string|null|undefined)[]): string {
-  return names.filter((name) => (name !== undefined) && (name !== null) && (name.length > 0)).join(" "); 
 }
 
 
@@ -182,8 +177,8 @@ function SampleTableCell(settings: EditableCellParameters) {
     }
   }
 
-  const divClass = classNames(justActivated ? "editing" : "");
-  const helpClass = classNames("notify", help ? "disclosed" : "");
+  const divClass = truthyJoin(justActivated && "editing");
+  const helpClass = truthyJoin("notify", help && "disclosed");
 
   return (
       <div className={ divClass }>

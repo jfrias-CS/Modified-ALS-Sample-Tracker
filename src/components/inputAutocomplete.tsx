@@ -3,8 +3,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { faExclamationTriangle, faSpinner, faQuestion, faCheck } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
-import './inputAutocomplete.css';
 
+import './inputAutocomplete.css';
+import { truthyJoin } from './utils.tsx';
 
 // Style to apply when an item is focused in the search results pulldown.
 const focusedStyle: React.CSSProperties = { border: "2px solid #3273dc", borderRadius: "10px" }
@@ -76,12 +77,6 @@ interface InputAutocompleteParameters<Item> {
 // Internal state tracking
 enum InputTypingState { NotTyping, IsTyping, StoppedTyping };
 enum InputValidationState { NotTriggered, Succeeded, Failed };
-
-
-// Just a small helper function to concatenate CSS class names
-function classNames(...names:(string|null|undefined)[]): string {
-  return names.filter((name) => (name !== undefined) && (name !== null) && (name.length > 0)).join(" "); 
-}
 
 
 function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
@@ -319,10 +314,10 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
       }
     }
 
-    const controlClass = classNames("control", inputIcon ? "has-icons-left" : "", statusIcon ? "has-icons-right" : "");
+    const controlClass = truthyJoin("control", inputIcon ? "has-icons-left" : "", statusIcon ? "has-icons-right" : "");
     const inputClass = settings.renderPlainInput ?
-        classNames(inputColor, settings.inputSize) :
-        classNames("input", inputColor, settings.inputSize || "is-normal");
+        truthyJoin(inputColor, settings.inputSize) :
+        truthyJoin("input", inputColor, settings.inputSize || "is-normal");
 
     const inputElement = (
       <input type="text"
@@ -359,17 +354,17 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
         <div className={ controlClass }>
           { inputElement }
           { (inputIcon && (
-              <span className={ classNames( "icon", "is-left", settings.iconSize || null) }>
+              <span className={ truthyJoin( "icon", "is-left", settings.iconSize || null) }>
                 { inputIcon }
               </span>)
           ) }
           { (statusIcon && (
-              <span className={ classNames( "icon", "is-right", settings.iconSize || null) }>
+              <span className={ truthyJoin( "icon", "is-right", settings.iconSize || null) }>
                 { statusIcon }
               </span>)
           ) }
         </div>
-        <div className={ classNames("help", inputColor) }
+        <div className={ truthyJoin("help", inputColor) }
             hidden={ validationState == InputValidationState.NotTriggered }
           >
             { validationMessage || "" }
