@@ -16,12 +16,15 @@ interface EditableCellParameters {
   isActivated: boolean;
   value: string;
   description?: string;
+  // If this is set, a read-only alert will be appended to the description,
+  // and all edits to the cell will revert to the previous value.
+  isReadOnly?: boolean;
   isUnused?: boolean;
   cellFunctions: CellFunctions;
   // This parameter is used to indicate that a CellAutocomplete should be
   // used instead of a CellTextfield.
-  // It's the only parameter that makes the editable table code
-  // non-generic.
+  // (Developer note: It's the only parameter that makes the editable table code
+  // non-generic.)
   choices?: ParameterChoice[];
 }
 
@@ -175,6 +178,10 @@ function SampleTableCell(settings: EditableCellParameters) {
     } else {
       help = (<p className="help">{ helpMessage.message }</p>);
     }
+
+    if (settings.isReadOnly) {
+      help = (<>{ help }<p className="help is-warning">This value is read-only.</p></>);
+    }
   }
 
   const divClass = truthyJoin(justActivated && "editing");
@@ -190,12 +197,14 @@ function SampleTableCell(settings: EditableCellParameters) {
               value={ settings.value }
               choices={ settings.choices }
               description={ settings.description }
+              isReadOnly={ settings.isReadOnly }
               lastMinimumWidth={ lastMinimumWidth }
               cellFunctions={ cellSubcomponentFunctions } />)
             : (<CellTextfield
               triggerFocus={ justActivated }
               value={ settings.value }
               description={ settings.description }
+              isReadOnly={ settings.isReadOnly }
               lastMinimumHeight={ lastMinimumHeight }
               lastMinimumWidth={ lastMinimumWidth }
               cellFunctions={ cellSubcomponentFunctions } />)

@@ -46,6 +46,7 @@ interface CellSubcomponentParameters {
   triggerFocus: boolean;
   value: string;
   description?: string;
+  isReadOnly?: boolean;
   lastMinimumWidth?: string;
   lastMinimumHeight?: string;
   cellFunctions: CellSubcomponentFunctions;

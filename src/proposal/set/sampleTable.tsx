@@ -3,8 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationTriangle, faSpinner, faCheck } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { Guid, sortWithNumberParsing } from '../../components/utils.tsx';
-import { ScanTypeName, ParameterChoice } from '../../scanTypes.ts';
+import { Guid, truthyJoin, sortWithNumberParsing } from '../../components/utils.tsx';
+import { ScanTypeName, ParamUid, ScanParameterSettings, ParameterChoice } from '../../scanTypes.ts';
 import { SampleConfiguration } from '../../sampleConfiguration.ts';
 import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
 import { updateConfig } from '../../metadataApi.ts';
@@ -27,6 +27,7 @@ type Coordinates = {x: number, y: number};
 // It's a magic number I know, and that's annoying, but this is the number of
 // standard non-parameter fields that are always displayed on the left side of the table.
 const FIXED_COLUMN_COUNT = 3;
+
 
 // Given a DOM node, walks up the tree looking for a node of type "td"
 // with "sampleX" and "sampleY" values in its dataset.
@@ -626,23 +627,33 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
               {
                 sampleConfigurations.map((sample, sampleIndex) => {
                   var cells: JSX.Element[] = [];
+                  const thisScanType = metadataContext.scanTypes.typesByName.get(sample.scanType)!;
 
                   const cellFocusOnThisY = (cellFocusY === sampleIndex);
-                  const allowedParameters = new Set(
-                          metadataContext.scanTypes.typesByName.get(sample.scanType)!.parameters.map((p) => p.typeId)
-                    );
+                  const allowedParameters = new Set(thisScanType.parameters.map((p) => p.typeId));
+                  // Build a temporary map, from parameter Ids to their ScanParameterSettings in this row's (config's) scan type.
+                  // This may be an incomplete mapping, because some parameters we need to display may not be in the scan type.
+                  const scanParameterSettingsMap: Map<ParamUid, ScanParameterSettings> =
+                          new Map(thisScanType.parameters.map((sp) => [sp.typeId, sp]));
+
                   displayedParameters.forEach((p, paramIndex) => {
+                    const scanParameterSettings:ScanParameterSettings | undefined = scanParameterSettingsMap.get(p.id)
+
                     const unused = !allowedParameters.has(p.id);
+                    // readOnly may not be defined, so this could effectively still be true | false | undefined.
+                    const readOnly = scanParameterSettings?.readOnly;
                     const activated = (cellFocusX === (paramIndex+FIXED_COLUMN_COUNT)) && cellFocusOnThisY;
                     const cellClasses = truthyJoin(
                             "samplecell",
                             (unused && "unused"),
+                            (readOnly && "readonly"),
                             ...selectionBorderClasses(paramIndex+FIXED_COLUMN_COUNT, sampleIndex)
                           );
                     const td = (
                       <td key={ p.id }
                           data-sample-x={paramIndex+FIXED_COLUMN_COUNT}
                           data-sample-y={sampleIndex}
+                          data-sample-readonly={readOnly || 0}
                           data-sample-unused={unused || 0}
                           className={ cellClasses }
                         >
@@ -651,6 +662,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                                     cellKey={ p.id }
                                     isUnused={unused}
                                     isActivated={activated}
+                                    isReadOnly={readOnly}
                                     cellFunctions={cellFunctions}
                                     description={ p.description }
                                     value={ sample.parameters.get(p.id) ?? "" }

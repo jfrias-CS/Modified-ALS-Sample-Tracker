@@ -42,13 +42,12 @@ function CellTextfield(settings: CellSubcomponentParameters) {
         // We also don't ever want carriage returns in our parameters,
         // so we're going to consistently prevent the default.
         event.preventDefault();
-
         break;
     }
 
     // If a key was entered that allowed movement, we are assuming that the
     // key is not one that can change the effective value in the input element,
-    // so we're okay with replying on the value of validationState even though we
+    // so we're okay with relying on the value of validationState even though we
     // haven't re-validated based on the effect of this keypress.
     if (didMove) {
       if (inputValue == settings.value) {
@@ -115,12 +114,16 @@ function CellTextfield(settings: CellSubcomponentParameters) {
   function save() {
     // If the save is successful we expect settings.value to change
     // which will update the control.
-    const result = settings.cellFunctions.save(inputValue);
-    if (result.status == CellValidationStatus.Success) {
-      setValidationState(InputValidationState.NotTriggered);
-      setValidationMessage(null);
-    } else {
+    if (settings.isReadOnly) {
       reset();
+    } else {
+      const result = settings.cellFunctions.save(inputValue);
+      if (result.status == CellValidationStatus.Success) {
+        setValidationState(InputValidationState.NotTriggered);
+        setValidationMessage(null);
+      } else {
+        reset();
+      }
     }
   }
 

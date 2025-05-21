@@ -184,6 +184,10 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
   function selectItem(item: ParameterChoice): SelectingStatus {
     // If the save is successful we expect settings.value to change
     // which will update the control.
+    if (settings.isReadOnly) {
+      reset();
+      return SelectingStatus.Failure;
+    }
     const result = settings.cellFunctions.save(item.name);
     if (result.status == CellValidationStatus.Success) {
       setSelectedItem(item);
