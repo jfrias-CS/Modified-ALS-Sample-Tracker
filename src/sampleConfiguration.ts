@@ -129,10 +129,10 @@ export class SampleConfigurationSet {
   }
 
 
-  // Generate and return a series of c objects suitable for
+  // Generate and return an array of SampleConfiguration objects suitable for
   // sending to the server for the creation of new configurations in this set.
   // This includes creating default parameter values that respect uniqueness constraints
-  // relative to the existing configurations in this set.
+  // relative to the existing configurations.
   generateNewConfigurationsWithDefaults(quantity: number, scanTypeName: ScanTypeName, suggestedName?: string, suggestedDescription?: string): SampleConfiguration[] {
 
     const scanTypesByName = this.scanTypesReference.typesByName;

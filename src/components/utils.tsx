@@ -14,7 +14,7 @@ export type Guid = string & { __brand: 'GUID' };
 //    A-3
 //    A-13
 //    bbb12342bfb333b-1-2-3-011
-//    bbb12342bfb333b-1-2-31-01
+//    bbb12342bfb333b-1-2-21-01
 export function sortWithNumberParsing(a:string, b:string):number {
   var result = 0;
 
@@ -78,7 +78,7 @@ export function sortWithNumberParsing(a:string, b:string):number {
       bNumberString = [];
 
     // If the a segment is a number and the b segment is not, don't bother
-    // parsing the number.  Give the number priority.
+    // parsing the number, just give it priority.
     } else if (aNumberString.length > 0) {
       result = -1;
     // Same in the other direction.
@@ -248,8 +248,8 @@ export function generateUniqueNames(existingNames: string[], suggestedName: stri
   }
 
   // If we need to optimize, caching this set somewhere would be
-  // a good start.  Currently it's a bit tricky because undo/redo
-  // state can invalidate it, and we modift the set farther down.
+  // a good start.  Currently it's tricky because undo/redo
+  // state can invalidate it, and we modify the set below.
   let existingNameSet: Set<string> = new Set();
   existingNames.forEach((v) => { existingNameSet.add(v) });
 
