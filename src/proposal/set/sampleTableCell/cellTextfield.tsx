@@ -80,7 +80,9 @@ function CellTextfield(settings: CellSubcomponentParameters) {
     const value = event.target.value;
     if (debounceTimer) { clearTimeout(debounceTimer); }
     setDebounceTimer(setTimeout(() => inputCompleted(value), 100));
-    setInputValue(value);
+    if (!settings.isReadOnly) {
+      setInputValue(value);
+    }
     setTypingState(InputTypingState.IsTyping);
     setValidationState(InputValidationState.NotTriggered);
     setValidationMessage(null);

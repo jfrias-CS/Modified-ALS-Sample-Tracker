@@ -141,9 +141,12 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
   // We trigger a short delay before searching, and in the meantime
   // we set the UI to show no matches and no selection.
   function inputChanged(value:string) {
+    const trimmedValue = value.trimStart();
     if (debounceTimer) { clearTimeout(debounceTimer); }
-    setDebounceTimer(setTimeout(() => inputCompleted(value), 150));
-    setInputValue(value);
+    if (!settings.isReadOnly) {
+      setDebounceTimer(setTimeout(() => inputCompleted(trimmedValue), 150));
+      setInputValue(trimmedValue);
+    }
     setMatchedItems([]);
     setFocusedItemIndex(null);
     setSelectedItem(null);
@@ -218,7 +221,7 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
         style={ { width: settings.lastMinimumWidth || "unset" } }
         placeholder="Select a value"
         onChange={ (event) => {
-          inputChanged(event.target.value.trimStart())
+          inputChanged(event.target.value)
         } }
         autoComplete="off"
         autoCorrect="off"
@@ -258,7 +261,7 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
             return (
               <tr key={ index }
                 className={ isFocused(index) ? "dropdown-item focused" : "dropdown-item" }
-                onClick={ () => { selectItem(item); } }
+                onMouseDown={ () => { selectItem(item); } } // onClick isn't fast enough and the table closes the selection.
                 style={ {display: "table-row"} }
               >
                 <td>{ highlightSearchTermsInString(item.name, [inputValue]) }</td>
