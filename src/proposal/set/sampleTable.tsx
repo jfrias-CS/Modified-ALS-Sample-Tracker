@@ -11,7 +11,7 @@ import { updateConfig } from '../../metadataApi.ts';
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
 import { SampleTableCell } from './sampleTableCell/cell.tsx';
-import { CellFunctions, CellValidationStatus, CellValidationResult, CellNavigationDirection } from './sampleTableCell/cellDto.ts';
+import { CellFunctions, CellActivationStatus, CellValidationStatus, CellValidationResult, CellNavigationDirection } from './sampleTableCell/cellDto.ts';
 import { SampleTableClipboardContent } from './sampleClipboard.ts';
 import './sampleTable.css';
 
@@ -57,6 +57,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   const [tableHasFocus, setTableHasFocus] = useState<boolean>(false);
   const [cellFocusX, setCellFocusX] = useState<number | null>(null);
   const [cellFocusY, setCellFocusY] = useState<number | null>(null);
+  const [lastActivationMethod, setLastActivationMethod] = useState<CellActivationStatus>(CellActivationStatus.Inactive);
 
   const [cellMouseDown, setCellMouseDown] = useState<boolean>(false);
   const [cellMouseDownX, setCellMouseDownX] = useState<number | null>(null);
@@ -145,6 +146,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     // It doesn't matter where the mouse came up,
     // we go by the last valid cell the mouse was moved in.
     if ((cellMouseDownX == cellMouseMoveX) && (cellMouseDownY == cellMouseMoveY)) {
+      setLastActivationMethod(CellActivationStatus.ByMouse);
       setCellFocusX(cellMouseDownX);
       setCellFocusY(cellMouseDownY);
     } else {
@@ -402,7 +404,11 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         travelVector = {x: 1, y: 0};
         break;
     }
-    return switchEditingToNearbyCell({x: x, y: y}, travelVector);
+    const result = switchEditingToNearbyCell({x: x, y: y}, travelVector);
+    if (result == CellValidationStatus.Success) {
+        setLastActivationMethod(CellActivationStatus.ByKeyboard);
+    }
+    return result;
   }
 
 
@@ -643,6 +649,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                     // readOnly may not be defined, so this could effectively still be true | false | undefined.
                     const readOnly = scanParameterSettings?.readOnly;
                     const activated = (cellFocusX === (paramIndex+FIXED_COLUMN_COUNT)) && cellFocusOnThisY;
+                    const activationStatus = activated ? lastActivationMethod : CellActivationStatus.Inactive;
                     const cellClasses = truthyJoin(
                             "samplecell",
                             (unused && "unused"),
@@ -661,7 +668,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                                     key={ p.id }
                                     cellKey={ p.id }
                                     isUnused={unused}
-                                    isActivated={activated}
+                                    activationStatus={activationStatus}
                                     isReadOnly={readOnly}
                                     cellFunctions={cellFunctions}
                                     description={ p.description }
@@ -683,7 +690,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                         <SampleTableCell x={0} y={sampleIndex}
                             key="name"
                             cellKey="name"
-                            isActivated={(cellFocusX === 0) && cellFocusOnThisY}
+                            activationStatus={((cellFocusX === 0) && cellFocusOnThisY) ? lastActivationMethod : CellActivationStatus.Inactive}
                             cellFunctions={cellFunctions}
                             value={ sample.name } />
                       </td>
@@ -696,7 +703,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                         <SampleTableCell x={1} y={sampleIndex}
                             key="description"
                             cellKey="description"
-                            isActivated={(cellFocusX === 1) && cellFocusOnThisY}
+                            activationStatus={((cellFocusX === 1) && cellFocusOnThisY) ? lastActivationMethod : CellActivationStatus.Inactive}
                             cellFunctions={cellFunctions}
                             value={ sample.description } />
                       </td>
@@ -709,9 +716,10 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                         <SampleTableCell x={2} y={sampleIndex}
                             key="scantype"
                             cellKey="scantype"
-                            isActivated={(cellFocusX === 2) && cellFocusOnThisY}
+                            activationStatus={((cellFocusX === 2) && cellFocusOnThisY) ? lastActivationMethod : CellActivationStatus.Inactive}
                             cellFunctions={cellFunctions}
                             value={ sample.scanType }
+                            description="Scan Type to use for this sample."
                             choices={ scanTypesAsChoices } />
                       </td>
                       { cells }

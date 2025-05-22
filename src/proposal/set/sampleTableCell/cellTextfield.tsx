@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import 'bulma/css/bulma.min.css';
 
-import { CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellSubcomponentParameters } from './cellDto.ts';
-
+import { CellActivationStatus, CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellSubcomponentParameters } from './cellDto.ts';
 
 
 // Internal state tracking
@@ -64,13 +63,13 @@ function CellTextfield(settings: CellSubcomponentParameters) {
   // "display:none" from the parent div.  Trying to .focus() on an element that
   // isn't being displayed does nothing.  So we watch justActivated for a delayed effect. 
   useEffect(() => {
-    if (settings.triggerFocus) {
+    if (settings.activationStatus != CellActivationStatus.Inactive) {
       if (inputRef.current) {
         inputRef.current.focus();
         inputRef.current.setSelectionRange(0, inputRef.current.value.length)
       }
     }
-  }, [settings.triggerFocus]);
+  }, [settings.activationStatus]);
 
 
   // Deal with changes to the input value.

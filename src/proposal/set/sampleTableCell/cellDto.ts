@@ -1,5 +1,7 @@
 // Data types and interfaces used by the editable cell and its subcomponents (text field, pulldown, etc)
 
+enum CellActivationStatus { Inactive, ByKeyboard, ByMouse };
+
 enum CellValidationStatus { Success, Failure };
 interface CellValidationResult {
   status: CellValidationStatus;
@@ -43,7 +45,7 @@ interface CellSubcomponentFunctions {
 
 // Settings passed to cell subcomponents, e.g. text and autocomplete fields
 interface CellSubcomponentParameters {
-  triggerFocus: boolean;
+  activationStatus: CellActivationStatus;
   value: string;
   description?: string;
   isReadOnly?: boolean;
@@ -53,5 +55,5 @@ interface CellSubcomponentParameters {
 }
 
 
-export { CellValidationStatus, CellNavigationDirection, CellHelpStatus }
+export { CellActivationStatus, CellValidationStatus, CellNavigationDirection, CellHelpStatus }
 export type { CellValidationResult, CellFunctions, CellHelpMessage, CellSubcomponentFunctions, CellSubcomponentParameters }

@@ -3,7 +3,7 @@ import 'bulma/css/bulma.min.css';
 
 import { truthyJoin } from '../../../components/utils.tsx';
 import { ParameterChoice } from '../../../scanTypes.ts';
-import { CellFunctions, CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellNavigationDirection, CellSubcomponentFunctions } from './cellDto.ts';
+import { CellFunctions, CellActivationStatus, CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellNavigationDirection, CellSubcomponentFunctions } from './cellDto.ts';
 import { CellTextfield } from './cellTextfield.tsx';
 import { CellAutocomplete } from './cellAutocomplete.tsx';
 
@@ -13,7 +13,7 @@ interface EditableCellParameters {
   cellKey: string;
   x: number;
   y: number;
-  isActivated: boolean;
+  activationStatus: CellActivationStatus;
   value: string;
   description?: string;
   // If this is set, a read-only alert will be appended to the description,
@@ -54,7 +54,7 @@ function findCellSize(node: HTMLElement): { h: number, w: number } | null {
 
 function SampleTableCell(settings: EditableCellParameters) {
 
-  const [justActivated, setJustActivated] = useState<boolean>(settings.isActivated);
+  const [justActivated, setJustActivated] = useState<CellActivationStatus>(settings.activationStatus);
   const [lastMinimumHeight, setLastMinimumHeight] = useState<string>("unset");
   const [lastMinimumWidth, setLastMinimumWidth] = useState<string>("unset");
   const [helpMessage, setHelpMessage] = useState<CellHelpMessage>({status: CellHelpStatus.Hide });
@@ -127,7 +127,7 @@ function SampleTableCell(settings: EditableCellParameters) {
     // When the state goes from inactive to active,
     // we measure the size of the cell and set the input element to match
     // before revealing it.
-    if (settings.isActivated) {
+    if (settings.activationStatus != CellActivationStatus.Inactive) {
       var w = "unset";
       var h = "unset";
       if (valueRef.current) {
@@ -150,9 +150,9 @@ function SampleTableCell(settings: EditableCellParameters) {
     // Otherwise we would be attempting to measure a table cell that has already
     // revealed the input field, and the value element would have width of 0
     // since it's hidden by "display: none".
-    setJustActivated(settings.isActivated);
+    setJustActivated(settings.activationStatus);
     return () => {};
-  }, [settings.isActivated]);
+  }, [settings.activationStatus]);
 
 
   // Now we have all the functions we need 
@@ -184,7 +184,7 @@ function SampleTableCell(settings: EditableCellParameters) {
     }
   }
 
-  const divClass = truthyJoin(justActivated && "editing");
+  const divClass = truthyJoin((justActivated != CellActivationStatus.Inactive) && "editing");
   const helpClass = truthyJoin("notify", help && "disclosed");
 
   return (
@@ -193,7 +193,7 @@ function SampleTableCell(settings: EditableCellParameters) {
         <div className="cellTableInput">{
             settings.choices ?
             (<CellAutocomplete
-              triggerFocus={ justActivated }
+              activationStatus={ justActivated }
               value={ settings.value }
               choices={ settings.choices }
               description={ settings.description }
@@ -201,7 +201,7 @@ function SampleTableCell(settings: EditableCellParameters) {
               lastMinimumWidth={ lastMinimumWidth }
               cellFunctions={ cellSubcomponentFunctions } />)
             : (<CellTextfield
-              triggerFocus={ justActivated }
+              activationStatus={ justActivated }
               value={ settings.value }
               description={ settings.description }
               isReadOnly={ settings.isReadOnly }

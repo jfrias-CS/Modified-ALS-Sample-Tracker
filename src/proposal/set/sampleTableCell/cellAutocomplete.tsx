@@ -3,7 +3,7 @@ import 'bulma/css/bulma.min.css';
 import './cellAutocomplete.css';
 
 import { ParameterChoice } from '../../../scanTypes.ts';
-import { CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellSubcomponentParameters } from './cellDto.ts';
+import { CellActivationStatus, CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellSubcomponentParameters } from './cellDto.ts';
 import { highlightSearchTermsInString } from "../../../components/utils.tsx";
 
 
@@ -32,6 +32,7 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
   const [matchedItems, setMatchedItems] = useState<ParameterChoice[]>([]);
   const [selectedItem, setSelectedItem] = useState<ParameterChoice | null>(currentParameter);
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [startedTyping, setStartedTyping] = useState<boolean>(false);
   const [justBlurred, setJustBlurred] = useState<boolean>(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,10 +41,15 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
   // When this control is first focused, there is no autocomplete pulldown
   // visible, so we want to show the description of the parameter.
   useEffect(() => {
-    if (settings.triggerFocus) {
+    if (settings.activationStatus != CellActivationStatus.Inactive) {
       setShowHelp(true);
+      if (settings.activationStatus == CellActivationStatus.ByKeyboard) {
+        setStartedTyping(true);
+      } else {
+        setStartedTyping(false);
+      }
     }
-  }, [settings.triggerFocus]);
+  }, [settings.activationStatus]);
 
 
   // If any relevant state changes, update the pop-under help for the cell.
@@ -58,7 +64,7 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
 
 
   function isDropdownActive(): boolean {
-    return  (selectedItem == null) &&
+    return  ((selectedItem == null) || (startedTyping == false)) &&
             (matchedItems.length > 0)
   }
 
@@ -81,13 +87,13 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
   // element would do that once, but we also want to select the entire contents
   // of the input box afterwards.
   useEffect(() => {
-    if (settings.triggerFocus) {
+    if (settings.activationStatus != CellActivationStatus.Inactive) {
       if (inputRef.current) {
         inputRef.current.focus();
         inputRef.current.setSelectionRange(0, inputRef.current.value.length)
       }
     }
-  }, [settings.triggerFocus]);
+  }, [settings.activationStatus]);
 
 
   // This handles keyboard-based selection in the dropdown.
@@ -132,6 +138,7 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
       // dropdown, we'll assume it changed the value of the search box, which would
       // require showing the search pulldown.  That means we need to get the help box
       // out of the way.
+      setStartedTyping(true);
       setShowHelp(false);
     }
   }
@@ -156,12 +163,16 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
   function inputCompleted(value:string) {
 
     const trimmedContent = value.replace(/^[\s\u3000]+|[\s\u3000]+$/g, '');
+    var matches = [];
+    if ((trimmedContent == inputValue) && (settings.choices.length < 10) && (startedTyping == false)) {
+      matches = settings.choices;
 
-    const searchStringLower = trimmedContent.toLowerCase();
-    const matches = settings.choices.filter((s) =>
-                      s.name.toLowerCase().includes(searchStringLower) ||
-                      s.description.toLowerCase().includes(searchStringLower));
-  
+    } else {
+      const searchStringLower = trimmedContent.toLowerCase();
+      matches = settings.choices.filter((s) =>
+                        s.name.toLowerCase().includes(searchStringLower) ||
+                        s.description.toLowerCase().includes(searchStringLower));
+    }
     setMatchedItems(matches);
     if (matches.length == 1) {
       setFocusedItemIndex(0);
@@ -261,7 +272,7 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
             return (
               <tr key={ index }
                 className={ isFocused(index) ? "dropdown-item focused" : "dropdown-item" }
-                onMouseDown={ () => { selectItem(item); } } // onClick isn't fast enough and the table closes the selection.
+                onMouseDown={ () => { selectItem(item); } } // onClick isn't immediate enough, and the table would close the selection.
                 style={ {display: "table-row"} }
               >
                 <td>{ highlightSearchTermsInString(item.name, [inputValue]) }</td>
@@ -283,6 +294,9 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
         <div className="dropdown-menu" role="menu">
           <div className="dropdown-content">
             { dropdownItems() }
+            <div className="help is-info">
+              { settings.description }
+            </div>
           </div>
         </div>
       </div>
