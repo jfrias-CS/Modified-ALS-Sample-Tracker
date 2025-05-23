@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faExclamationTriangle, faSpinner, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faSpinner, faCheck, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
 import { Guid, truthyJoin, sortWithNumberParsing } from '../../components/utils.tsx';
@@ -328,9 +328,10 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
           editedConfig.parameters.set(paramType.id, c.alternateTextData!);
         }
 
+        editedConfigs.push(editedConfig);
+
         // This may not be the right behavior
         sampleConfigurations[upperLeftY+y] = editedConfig;
-        editedConfigs.push(editedConfig);
         y++;
       }
 
@@ -507,6 +508,20 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
+  function clickedUndo() {
+    thisSet!.undo();
+    metadataContext.changed();
+    contentChanged();
+  }
+
+
+  function clickedRedo() {
+    thisSet!.redo();
+    metadataContext.changed();
+    contentChanged();
+  }
+
+
   // At this point we've defined all the functions we need to pass
   // to each editable cell in the table.
   const cellFunctions: CellFunctions = {
@@ -518,7 +533,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
   function contentChanged() {
     if (syncTimer) { clearTimeout(syncTimer); }
-    setSyncTimer(setTimeout(() => syncTimerExpired(), 1000));
+    setSyncTimer(setTimeout(() => syncTimerExpired(), 1500));
     if (syncState != SyncState.Requested) {
       setSyncState(SyncState.Pending);
     }
@@ -527,7 +542,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
   async function syncTimerExpired() {
     // If another save is pending while the previous one is still
-    // in progress, we renew the timer and exit, until the previous
+    // in progress (requested), we renew the timer and exit, until the previous
     // one reports either Completed or Failed.
     if (syncState == SyncState.Requested) {
       setSyncTimer(setTimeout(() => syncTimerExpired(), 1000));
@@ -572,13 +587,13 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   });
 
 
-  var syncStatusIcon: JSX.Element | null = null;
+  var syncStatusMessag: JSX.Element | null = null;
   if (syncState == SyncState.Requested) {
-    syncStatusIcon = (<FontAwesomeIcon icon={faSpinner} spin={true} />); 
+    syncStatusMessag = (<div><FontAwesomeIcon icon={faSpinner} spin={true} /> Saving Changes</div>); 
   } else if (syncState == SyncState.Completed) {
-    syncStatusIcon = (<FontAwesomeIcon icon={faCheck} />);
+    syncStatusMessag = (<div><FontAwesomeIcon icon={faCheck} /> Changes Saved</div>);
   } else if (syncState == SyncState.Failed) {
-    syncStatusIcon = (<FontAwesomeIcon icon={faExclamationTriangle} color="darkred" />);
+    syncStatusMessag = (<div><FontAwesomeIcon icon={faExclamationTriangle} color="darkred" /> Error Saving! Are you logged in?</div>);
   }
 
   const allowSampleImport = false;
@@ -591,9 +606,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
           <div className="level-item">
             <p className="subtitle is-5"><strong>{ sampleConfigurations.length }</strong> samples</p>
           </div>
-        </div>
-
-        <div className="level-right">
           { allowSampleImport && (
             <div className="level-item">
               <ImportSamples />
@@ -602,17 +614,35 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
           <div className="level-item">
             <AddSamples />
           </div>
+
+        </div>
+        <div className="level-right">
+
           <div className="level-item">
-              <span className="icon">
-                { syncStatusIcon }
-              </span>
+              { syncStatusMessag }
           </div>
+
+          <div className="level-item">
+            <div className="field has-addons">
+              <p className="control">
+                <button className="button" onClick={ clickedUndo } title="Undo" disabled={!thisSet!.canUndo()}>
+                  <FontAwesomeIcon icon={faUndo} />
+                </button>
+              </p>
+              <p className="control">
+                <button className="button" onClick={ clickedRedo } title="Redo" disabled={!thisSet!.canRedo()}>
+                  <FontAwesomeIcon icon={faRedo} />
+                </button>
+              </p>
+            </div>
+          </div>
+
         </div>
       </nav>
 
       <div className="block">
         { sampleConfigurations.length == 0 ? (
-          <p>( Use the button on the right to add Samples. )</p>
+          <p>( Use the "Add Samples" button to get started. )</p>
         ) : (
           <table className="sampletable"
                   tabIndex={0}

@@ -44,6 +44,7 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
     if (settings.activationStatus != CellActivationStatus.Inactive) {
       setShowHelp(true);
       if (settings.activationStatus == CellActivationStatus.ByKeyboard) {
+        // Navigating into this cell via keyboard counts as "starting typing".
         setStartedTyping(true);
       } else {
         setStartedTyping(false);

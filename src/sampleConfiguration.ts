@@ -1,6 +1,6 @@
 import { ScanTypes, ParamUid, ScanTypeName } from './scanTypes.ts';
 import { Guid, sortWithNumberParsing, generateUniqueNames } from "./components/utils.tsx";
-import { ObjectWithGuid, EditQueueEntry, UndoHistory, UndoHistoryEntry } from "./undoHistory.ts";
+import { ObjectWithGuid, ChangeSet, EditQueueEntry, UndoHistory, UndoHistoryEntry } from "./undoHistory.ts";
 
 // Class definitions to represent sample configurations,
 // sets of sample configurations, and undo/redo history for changes
@@ -268,9 +268,9 @@ export class SampleConfigurationSet {
     this.findRelevantParameters();
   }
 
-	undo() {
+	undo(): ChangeSet | null {
     const edit = this.history.undo();
-    if (!edit) { return; }
+    if (!edit) { return null; }
 
     const currentSet = this.configurationsById;
     edit.additions.forEach((a) => {
@@ -282,11 +282,12 @@ export class SampleConfigurationSet {
 
     // The set of relevant parameters may have changed.
     this.findRelevantParameters();
+    return edit;
 	}
 
-  redo() {
+  redo(): ChangeSet | null {
     const edit = this.history.redo();
-    if (!edit) { return; }
+    if (!edit) { return null; }
 
     const currentSet = this.configurationsById;
     edit.additions.forEach((a) => {
@@ -298,6 +299,7 @@ export class SampleConfigurationSet {
 
     // The set of relevant parameters may have changed.
     this.findRelevantParameters();
+    return edit;
 	}
 
   canRedo(): boolean {

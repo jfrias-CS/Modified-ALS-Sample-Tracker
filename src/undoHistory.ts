@@ -10,7 +10,7 @@ export interface ObjectWithGuid {
 
 
 // Represents one set of changes to content of a SampleConfigurationSet
-class ChangeSet {
+export class ChangeSet {
 
   preferNewer: boolean;
   additions: Array<ObjectWithGuid>;
