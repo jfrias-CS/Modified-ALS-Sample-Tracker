@@ -72,6 +72,10 @@ table.sampletable td.samplecell > div > div.value {
   padding: .275rem 1rem;
 }
 
+table.sampletable td.samplecell.invalid > div > div.value {
+  color: red;
+}
+
 table.sampletable td.samplecell.readonly > div > div.value {
   color: rgba(160,160,160,0.5);
 }

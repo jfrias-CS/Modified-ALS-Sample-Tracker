@@ -51,7 +51,9 @@ function CellTextfield(settings: CellSubcomponentParameters) {
     if (didMove) {
       if (inputValue == settings.value) {
         reset();
-      } else if (validationState == InputValidationState.Succeeded) {
+      //} else if (validationState == InputValidationState.Succeeded) {
+      // We used to only save if the value was valid.  Now we accept invalid values and alert the user to correct them.
+      } else {
         save();
       }
     }
@@ -78,7 +80,7 @@ function CellTextfield(settings: CellSubcomponentParameters) {
   function inputOnChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const value = event.target.value;
     if (debounceTimer) { clearTimeout(debounceTimer); }
-    setDebounceTimer(setTimeout(() => inputCompleted(value), 100));
+    setDebounceTimer(setTimeout(() => inputCompleted(value), 130));
     if (!settings.isReadOnly) {
       setInputValue(value);
     }
@@ -90,13 +92,11 @@ function CellTextfield(settings: CellSubcomponentParameters) {
 
   function inputCompleted(value: string) {
     setTypingState(InputTypingState.StoppedTyping);
-    value = value.replace(/&nbsp;|\u202F|\u00A0/g, ' ');
-    value = value.replace(/\n/g, '');
+    value = value.replace(/\u202F|\u00A0/g, ' ');
+    value = value.replace(/\n/g, ' ');
     value = value.trim();
-    if (value != settings.value) {
-      const result = settings.cellFunctions.validate(value);
-      gotValidationResult(result);
-    }
+    const result = settings.cellFunctions.validate(value);
+    gotValidationResult(result);
   }
 
 
@@ -118,11 +118,10 @@ function CellTextfield(settings: CellSubcomponentParameters) {
     if (settings.isReadOnly) {
       reset();
     } else {
+      setValidationState(InputValidationState.NotTriggered);
+      setValidationMessage(null);
       const result = settings.cellFunctions.save(inputValue);
-      if (result.status == CellValidationStatus.Success) {
-        setValidationState(InputValidationState.NotTriggered);
-        setValidationMessage(null);
-      } else {
+      if (result.status != CellValidationStatus.Success) {
         reset();
       }
     }
@@ -138,60 +137,58 @@ function CellTextfield(settings: CellSubcomponentParameters) {
   function inputOnFocus() {
 //    setValidationState(InputValidationState.NotTriggered);
 //    setValidationMessage(null);
-//    inputCompleted(inputValue);
+    inputCompleted(settings.value);
   }
 
 
   function inputOnBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement, Element>) {
-    if ((validationState == InputValidationState.Succeeded) && (inputValue != settings.value)) {
+    // We used to only save if the value was valid.  Now we accept invalid values and alert the user to correct them.
+    if (inputValue != settings.value) {
+    //if ((validationState == InputValidationState.Succeeded) && (inputValue != settings.value)) {
       save();
     } else {
       reset();
     }
   }
   
-
   // If any relevant state changes, update the pop-under help for the cell.
   useEffect(() => {
-    var help: CellHelpMessage = { status: CellHelpStatus.Hide };
+    var help: CellHelpMessage[] = [];
     if (typingState != InputTypingState.IsTyping) {
-
       // Show a description of the value, if available, but only if the user isn't typing.
       if (settings.description) {
-        help = { status: CellHelpStatus.Info, message: settings.description };
+        help.push({ status: CellHelpStatus.Info, message: settings.description });
       }
-  
-      // Only show validation if the value has been edited (differs from value specified in settings)
-      if (inputValue != settings.value) {
-  
-        help = { status: CellHelpStatus.Normal, message: "Press Enter to save. Press Esc to cancel." };
-        if (validationMessage) {
-          if (validationState == InputValidationState.Failed) {
-            help = { status: CellHelpStatus.Danger, message: validationMessage };
-          } else {
-            help = { status: CellHelpStatus.Normal, message: validationMessage };
-          }
+
+      if (validationMessage) {
+        if (validationState == InputValidationState.Failed) {
+          help.push({ status: CellHelpStatus.Danger, message: validationMessage });
+        } else {
+          help.push({ status: CellHelpStatus.Normal, message: validationMessage });
         }
+      } else if (inputValue != settings.value) {  
+        help.push({ status: CellHelpStatus.Normal, message: "Press Enter to save. Press Esc to cancel." });
       }
     }
+
     settings.cellFunctions.setHelp(help);
   }, [typingState, inputValue, validationMessage, validationState]);
 
-    return (
-          <textarea
-            placeholder={ "Enter value" }
-            onChange={ inputOnChange }
-            autoCorrect="off"
-            value={ inputValue }
-            ref={ inputRef }
-            onKeyDown={ inputOnKeyDown }
-            onFocus={ inputOnFocus }
-            onBlur={ inputOnBlur }
-            style={ {
-                height: settings.lastMinimumHeight || "unset", 
-                width: settings.lastMinimumWidth || "unset"
-              } }
-          />
+  return (
+        <textarea
+          placeholder={ "Enter value" }
+          onChange={ inputOnChange }
+          autoCorrect="off"
+          value={ inputValue }
+          ref={ inputRef }
+          onKeyDown={ inputOnKeyDown }
+          onFocus={ inputOnFocus }
+          onBlur={ inputOnBlur }
+          style={ {
+              height: settings.lastMinimumHeight || "unset", 
+              width: settings.lastMinimumWidth || "unset"
+            } }
+        />
   );
 
 /*

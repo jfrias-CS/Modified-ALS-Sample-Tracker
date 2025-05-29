@@ -26,7 +26,7 @@ interface CellFunctions {
 }
 
 
-enum CellHelpStatus { Hide, Normal, Info, Danger };
+enum CellHelpStatus { Normal, Info, Danger };
 interface CellHelpMessage {
   status: CellHelpStatus;
   message?: string | null;
@@ -38,7 +38,7 @@ interface CellHelpMessage {
 interface CellSubcomponentFunctions {
   validate: (inputString: string) => CellValidationResult;
   save: (inputString: string) => CellValidationResult;
-  setHelp: (help: CellHelpMessage) => void;
+  setHelp: (help: CellHelpMessage[]) => void;
   testKeyForMovement: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, useArrows: boolean) => boolean;
 }
 

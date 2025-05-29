@@ -21,12 +21,12 @@ export interface SampleConfigurationDto extends ObjectWithGuid {
   // Key/value parameter set. Keys should only be valid for the chosen ScanType.
   // This is not strictly enforced, so old inapplicable values can be preserved
   // in case a previous ScanType selection is re-selected.
-  parameters: Map<ParamUid, string|null>
+  parameters: { [key: string]: string|null };
 }
 
 
 // Represents the configuration for one sample
-export class SampleConfiguration implements SampleConfigurationDto {
+export class SampleConfiguration {
 
   // A unique identifier generated on the server.
   id: Guid;
@@ -52,20 +52,31 @@ export class SampleConfiguration implements SampleConfigurationDto {
     this.isValid = p.isValid;
 		this.description = p.description || "";
 		this.scanType = p.scanType;
-		this.parameters = new Map(p.parameters);
+		this.parameters = new Map();
+
+    // Anything in p.parameters is treated as a Scan Type parameter
+    // and its value is added to the parameter map.
+    for (const [key, value] of Object.entries(p.parameters)) {
+          this.parameters.set(key as ParamUid, value as string);
+    }
 	}
 
-  clone() {
-    return new SampleConfiguration({
+  clone():SampleConfiguration {
+    return new SampleConfiguration(this.asDto());
+  }
+
+  asDto():SampleConfigurationDto {
+    return {
       id: this.id,
       setId: this.setId,
       name: this.name,
       isValid: this.isValid,
       description: this.description,
       scanType: this.scanType,
-      parameters: this.parameters // Copied during creation
-  	});
+      parameters: Object.fromEntries(this.parameters)
+  	}
   }
+
 }
 
 
@@ -205,7 +216,7 @@ export class SampleConfigurationSet {
           isValid: true,
           description: suggestedDescription || "",
           scanType: scanType.name,
-          parameters: parameters
+          parameters: Object.fromEntries(parameters)
         })
       );
       index++;

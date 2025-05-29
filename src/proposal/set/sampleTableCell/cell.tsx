@@ -57,7 +57,7 @@ function SampleTableCell(settings: EditableCellParameters) {
   const [justActivated, setJustActivated] = useState<CellActivationStatus>(settings.activationStatus);
   const [lastMinimumHeight, setLastMinimumHeight] = useState<string>("unset");
   const [lastMinimumWidth, setLastMinimumWidth] = useState<string>("unset");
-  const [helpMessage, setHelpMessage] = useState<CellHelpMessage>({status: CellHelpStatus.Hide });
+  const [helpMessages, setHelpMessages] = useState<JSX.Element[]>([]);
 
   const valueRef = useRef<HTMLDivElement>(null);
 
@@ -69,9 +69,9 @@ function SampleTableCell(settings: EditableCellParameters) {
 
   function save(inputValue: string): CellValidationResult {
     // Filtering out strange versions of space, for sanity.
-    var value = inputValue.replace(/&nbsp;|\u202F|\u00A0/g, ' ');
+    var value = inputValue.replace(/\u202F|\u00A0/g, ' ');
     // No multi-line inputs are allowed for table cells.
-    value = value.replace(/\n/g, '');
+    value = value.replace(/\n/g, ' ');
     value = value.trim();
     // If the save is successful we expect settings.value to change
     // which will update the control.
@@ -79,8 +79,20 @@ function SampleTableCell(settings: EditableCellParameters) {
   }
 
 
-  function setHelp(help: CellHelpMessage) {
-    setHelpMessage(help);
+  function setHelp(help: CellHelpMessage[]) {
+    const helpElements = help.map((m, i) => {
+      if (m.status == CellHelpStatus.Info) {
+        return (<p key={i} className="help is-info">{ m.message }</p>);
+      } else if (m.status == CellHelpStatus.Danger) {
+        return (<p key={i} className="help is-danger">{ m.message }</p>);
+      } else {
+        return (<p key={i} className="help">{ m.message }</p>);
+      }
+    });
+    if (settings.isReadOnly) {
+      helpElements.push((<p key="ro" className="help is-warning">This value is read-only.</p>));
+    }
+    setHelpMessages(helpElements);
   }
 
 
@@ -110,13 +122,10 @@ function SampleTableCell(settings: EditableCellParameters) {
         } else {
           didMove = settings.cellFunctions.move(settings.x, settings.y, CellNavigationDirection.Right);
         }
-        if (didMove == CellValidationStatus.Success) {
-          event.preventDefault();
-        }
         break;
     }
-
     if (didMove == CellValidationStatus.Success) {
+      event.preventDefault();
       return true;
     }
     return false;
@@ -163,29 +172,8 @@ function SampleTableCell(settings: EditableCellParameters) {
     testKeyForMovement: testKeyForMovement
   }
 
-
-  var inputColor = "";
-  var help: JSX.Element | null = null;
-  if (helpMessage.status != CellHelpStatus.Hide && helpMessage.message) {
-
-    if (helpMessage.status == CellHelpStatus.Info) {
-      help = (<p className="help is-info">{ helpMessage.message }</p>);
-
-    } else if (helpMessage.status == CellHelpStatus.Danger) {
-      help = (<p className="help is-danger">{ helpMessage.message }</p>);
-      inputColor = "is-danger";
-
-    } else {
-      help = (<p className="help">{ helpMessage.message }</p>);
-    }
-
-    if (settings.isReadOnly) {
-      help = (<>{ help }<p className="help is-warning">This value is read-only.</p></>);
-    }
-  }
-
   const divClass = truthyJoin((justActivated != CellActivationStatus.Inactive) && "editing");
-  const helpClass = truthyJoin("notify", help && "disclosed");
+  const helpClass = truthyJoin("notify", (helpMessages.length > 0) && "disclosed");
 
   return (
       <div className={ divClass }>
@@ -210,7 +198,7 @@ function SampleTableCell(settings: EditableCellParameters) {
               cellFunctions={ cellSubcomponentFunctions } />)
           }<div className={ helpClass }> 
             <div className="notify-content">
-              { help }
+              { helpMessages }
             </div>
           </div>
         </div>

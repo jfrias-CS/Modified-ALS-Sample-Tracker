@@ -36,7 +36,7 @@ interface AlsSampleTrackingObject {
   set_id: string,
   scan_type: ScanTypeName,
   valid: boolean,
-  parameters: { [key: string]: string|null|boolean }
+  parameters: { [key: string]: string|null }
 };
 
 // We keep our data under one property inside "sampleCharacteristics", to (try to) make it disinct
@@ -105,15 +105,8 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
       const sc = r.sampleCharacteristics!.als_sample_tracking!;
       const setId = sc.set_id as Guid;
 
-      const parameters:Map<ParamUid, string|null> = new Map();
-
       // Anything in sampleCharacteristics.als_sample_tracking.parameters 
       // is treated as a Scan Type parameter and its value is added to the parameter set.
-      // (Technically this laundering of the parameters object is not needed, but it's good practice.)
-      for (const [key, value] of Object.entries(sc.parameters)) {
-            parameters.set(key as ParamUid, value as string);
-      }
-
       const newConfig = new SampleConfiguration({
         id: r.id as Guid,
         setId: setId,
@@ -121,7 +114,7 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
         isValid: true,
         description: sc.description,
         scanType: sc.scan_type,
-        parameters: parameters
+        parameters: sc.parameters
       });
 
       return newConfig;
@@ -218,7 +211,7 @@ async function createNewConfiguration(proposalId: string, setId: Guid, name: str
       isValid: true,
       description: description,
       scanType: scanType as ScanTypeName,
-      parameters: parameters
+      parameters: alsSampleTracking.parameters
     });
 
     return { success: true, response: newConfig };
@@ -241,7 +234,7 @@ async function updateSet(set: SampleConfigurationSet): Promise<ResponseWrapper<S
         "type": AlsSampeTrackingObjectType.Set,
         "description": set.description,
         "valid": true
-      }      
+      }
     }
   };
 

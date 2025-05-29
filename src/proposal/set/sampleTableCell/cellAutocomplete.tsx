@@ -55,10 +55,10 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
 
   // If any relevant state changes, update the pop-under help for the cell.
   useEffect(() => {
-    var help: CellHelpMessage = { status: CellHelpStatus.Hide };
+    var help: CellHelpMessage[] = [];
     // Show a description of the value, if available, but only if the user isn't typing.
     if (showHelp) {
-      help = { status: CellHelpStatus.Info, message: settings.description };
+      help.push({ status: CellHelpStatus.Info, message: settings.description });
     }
     settings.cellFunctions.setHelp(help);
   }, [showHelp]);
@@ -215,7 +215,14 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
     }
   }
 
-  
+
+  function itemOnPointerDown(event: React.PointerEvent<HTMLElement>, item: ParameterChoice ) {
+    event.stopPropagation();
+    event.preventDefault();
+    selectItem(item);
+  }
+
+
   function inputOnFocus() {
     inputCompleted(inputValue);
   }
@@ -273,7 +280,7 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
             return (
               <tr key={ index }
                 className={ isFocused(index) ? "dropdown-item focused" : "dropdown-item" }
-                onMouseDown={ () => { selectItem(item); } } // onClick isn't immediate enough, and the table would close the selection.
+                onPointerDown={ (e) => { itemOnPointerDown(e, item); }  } // onClick isn't immediate enough, and the table would close the selection.
                 style={ {display: "table-row"} }
               >
                 <td>{ highlightSearchTermsInString(item.name, [inputValue]) }</td>
