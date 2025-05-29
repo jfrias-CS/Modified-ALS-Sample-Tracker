@@ -89,7 +89,7 @@ const ImportSamples: React.FC = () => {
       isValid: true,
       description: "This is the second sample.",
       scanType: "two_parameter_generic" as ScanTypeName,
-      parameters: new Map()
+      parameters: {}
     });
     thisSet.addOrReplaceWithHistory([newConfig]);
     metadataContext.changed();
