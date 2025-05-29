@@ -25,7 +25,12 @@ const AddSamples: React.FC = () => {
   const [newName, setNewName] = useState<string>("Sample");
   const [quantity, setQuantity] = useState<string>("1");
   const [description, setDescription] = useState<string>("");
-  const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(null)
+
+  // Currently we just auto-set the pulldown to the first ScanType in the display order,
+  // but this will need to change on a per-beamline or per-project basis eventually.
+  const firstTypeName = metadataContext.scanTypes.typeNamesInDisplayOrder[0] || null;
+  const initialScanTypeValue = firstTypeName ? metadataContext.scanTypes.typesByName.get(firstTypeName)! : null;
+  const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(initialScanTypeValue)
 
   const [validQuantity, setValidQuantity] = useState<boolean>(true);
   const [validName, setValidName] = useState<boolean>(true);
@@ -99,41 +104,34 @@ const AddSamples: React.FC = () => {
     const thisSet = getSet();
     if (!thisSet) { return; }
 
-    var error: string | null = null;
-
-    var count = Math.max(parseInt(quantity, 10), 1);
-    var uniqueNames = thisSet.generateUniqueNames(newName, count);
-    var openLocations = thisSet.generateOpenLocations(count);
-
     setSubmitErrorMessage(null);
     setInProgress(true);
 
+    var count = Math.max(parseInt(quantity, 10), 1);
+    // These are new config objects but they don't have real Guid values.
+    // Those will be added when they're round-tripped to the server below.
+    const newConfigTemplates = thisSet.generateNewConfigurationsWithDefaults(count, scanTypeValue!.name, newName, description);
+
+    count = 0;
     var newConfigs = [];
-    while (count > 0 && (error === null)) {
+    var error: string | null = null;
 
-      // Make a set of parameters for the chosen ScanType, with default or blank values.
-      const parameters:Map<ParamUid, string|null> = new Map();
-      scanTypeValue!.parameters.forEach((p) => {
-        const parameterType = metadataContext.scanTypes.parametersById.get(p);
-        if (parameterType) { parameters.set(parameterType.id, parameterType.default ?? ""); }
-      });
-
+    while (count < newConfigTemplates.length && (error === null)) {
+      const c = newConfigTemplates[count];
       const result = await createNewConfiguration(
                       metadataContext.proposalId!,
-                      thisSet.id,
-                      uniqueNames[count-1],
-                      description,
-                      scanTypeValue!.name,
-                      openLocations[count-1],
-                      parameters);
+                      c.setId,
+                      c.name,
+                      c.description,
+                      c.scanType,
+                      c.parameters);
 
       if (result.success) {
         newConfigs.push(result.response!);
       } else {
         error = result.message || "";
       }
-
-      count--;
+      count++;
     }
 
     thisSet.addOrReplaceWithHistory(newConfigs);
@@ -144,7 +142,8 @@ const AddSamples: React.FC = () => {
     } else {
       setIsOpen(false);
     }
-  };
+  }
+
 
   function clickedClose() {
     if (!inProgress && isOpen) { setSubmitErrorMessage(null); setIsOpen(false); }
@@ -220,7 +219,6 @@ const AddSamples: React.FC = () => {
             <div className="field">
               <label className="label">Scan Type</label>
                 <ScanTypeAutocomplete
-                    value=""
                     selectedItem={scanTypeValue}
                     searchFunctions={scanTypeSearchFunctions} />
             </div>

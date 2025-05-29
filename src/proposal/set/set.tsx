@@ -166,6 +166,7 @@ const Set: React.FC = () => {
             value={set.description}
             placeholder="Describe this bar"
             isTextArea={true}
+            useCtrlToSave={false}
             showHelp={true}
             textAreaRows={2}
             editFunctions={{

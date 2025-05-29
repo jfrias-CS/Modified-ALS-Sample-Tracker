@@ -1,5 +1,7 @@
 // Data types and interfaces used by the editable cell and its subcomponents (text field, pulldown, etc)
 
+enum CellActivationStatus { Inactive, ByKeyboard, ByMouse };
+
 enum CellValidationStatus { Success, Failure };
 interface CellValidationResult {
   status: CellValidationStatus;
@@ -24,7 +26,7 @@ interface CellFunctions {
 }
 
 
-enum CellHelpStatus { Hide, Normal, Info, Danger };
+enum CellHelpStatus { Normal, Info, Danger };
 interface CellHelpMessage {
   status: CellHelpStatus;
   message?: string | null;
@@ -36,21 +38,22 @@ interface CellHelpMessage {
 interface CellSubcomponentFunctions {
   validate: (inputString: string) => CellValidationResult;
   save: (inputString: string) => CellValidationResult;
-  setHelp: (help: CellHelpMessage) => void;
+  setHelp: (help: CellHelpMessage[]) => void;
   testKeyForMovement: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, useArrows: boolean) => boolean;
 }
 
 
 // Settings passed to cell subcomponents, e.g. text and autocomplete fields
 interface CellSubcomponentParameters {
-  triggerFocus: boolean;
+  activationStatus: CellActivationStatus;
   value: string;
   description?: string;
+  isReadOnly?: boolean;
   lastMinimumWidth?: string;
   lastMinimumHeight?: string;
   cellFunctions: CellSubcomponentFunctions;
 }
 
 
-export { CellValidationStatus, CellNavigationDirection, CellHelpStatus }
+export { CellActivationStatus, CellValidationStatus, CellNavigationDirection, CellHelpStatus }
 export type { CellValidationResult, CellFunctions, CellHelpMessage, CellSubcomponentFunctions, CellSubcomponentParameters }

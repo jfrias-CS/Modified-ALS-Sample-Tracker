@@ -1,4 +1,5 @@
-import { SampleConfiguration } from '../../sampleConfiguration.ts';
+import { SampleConfigurationDto, SampleConfiguration } from '../../sampleConfiguration.ts';
+import { ParamUid } from '../../scanTypes.ts';
 
 export class SampleTableClipboardContent {
 
@@ -55,23 +56,44 @@ export class SampleTableClipboardContent {
 		// If this isn't set, the content didn't come from us.
 		if (!c.fromAlsSampleConfigureApp) { return; }
 
-    	this.content = c.content;
+    	this.content = c.content.map((configDto:SampleConfigurationDto) => new SampleConfiguration(configDto));
         this.selectedFields = new Set(c.selectedFields);
         this.selectedParameters = new Set(c.selectedParameters);
 	}
 
-	isEmpty() {
-		if (this.content) { return false; }
-		return true;
+	getField(fieldName:string) {
+		return this.content.map((c) => {
+			switch(fieldName) {
+				case "name":
+					return c.name
+				case "description":
+					return c.description
+				case "scanType":
+					return c.scanType
+			}
+		}).map((v) => v === undefined ? null : v);
 	}
 
-	sendToClipboard (event: React.ClipboardEvent<Element>) {
+	getParameter(parameterName:ParamUid) {
+		return this.content.map(
+			(c) => c.parameters.get(parameterName)
+		).map(
+			(v) => v === undefined ? null : v)
+		;
+	}
+
+	isEmpty() {
+		if (this.content.length == 0) { return true; }
+		return false;
+	}
+
+	sendToClipboard(event: React.ClipboardEvent<Element>) {
 
 		if (this.isEmpty()) { return ; }
 
 		const forClipboard = {
 			fromAlsSampleConfigureApp: true,
-			content: this.content,
+			content: this.content.map((oneConfig) => oneConfig.asDto()),
 			selectedFields: [...this.selectedFields],
 			selectedParameters: [...this.selectedParameters]
 		};
@@ -81,7 +103,6 @@ export class SampleTableClipboardContent {
 
 		event.preventDefault();
 		event.clipboardData!.setData("text/json", JSON.stringify(forClipboard));
-		console.log(forClipboard);
 
 		//navigator.permissions.query({name: 'clipboard-write'}).then((result) => {
 		//	if (result.state === 'granted' || result.state === 'prompt') {

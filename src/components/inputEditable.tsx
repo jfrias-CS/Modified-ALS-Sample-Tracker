@@ -4,6 +4,7 @@ import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { faExclamationTriangle, faSpinner, faCheck, faX } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
+import { truthyJoin } from './utils.tsx';
 import './inputEditable.css';
 
 
@@ -37,6 +38,7 @@ interface InputEditableParameters {
   label?: string;
   isReadOnly?: boolean;
   isTextArea?: boolean;
+  useCtrlToSave?: boolean;
   textAreaRows?: number;
   debounceTime?: number;
   editFunctions: EditFunctions;
@@ -46,12 +48,6 @@ interface InputEditableParameters {
 // Internal state tracking
 enum InputTypingState { NotTyping, IsTyping, StoppedTyping };
 enum InputValidationState { NotTriggered, Succeeded, Failed };
-
-
-// Just a small helper function to concatenate CSS class names
-function classNames(...names:(string|null|undefined)[]): string {
-  return names.filter((name) => (name !== undefined) && (name !== null) && (name.length > 0)).join(" "); 
-}
 
 
 function InputEditable(settings: InputEditableParameters) {
@@ -65,6 +61,10 @@ function InputEditable(settings: InputEditableParameters) {
   const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [justBlurred, setJustBlurred] = useState<boolean>(false);
 
+  // Note the use of '===' in the following.
+  // If useCtrlToSave is defined but false, this should be false.
+  // If it's undefined, fall back to whether we're using a textarea versus a text input element.
+  const useCtrlToSave = ((settings.useCtrlToSave === undefined) && settings.isTextArea) || (settings.useCtrlToSave === true)
 
   // Triggered one time only, whenever the input is blurred.
   // Used to ensure the latest state values are being validated (instead of old ones),
@@ -84,7 +84,9 @@ function InputEditable(settings: InputEditableParameters) {
       reset();
       // Defocus?
     } else if (event.key == "Enter") {
-      if (!settings.isTextArea || event.ctrlKey) {
+      // If both are true or both are false, but not otherwise
+      if (useCtrlToSave == event.ctrlKey) {
+        event.preventDefault();
         if (inputValue == settings.value) {
           reset();
         } else if (validationState == InputValidationState.Succeeded) {
@@ -171,7 +173,7 @@ function InputEditable(settings: InputEditableParameters) {
   // Only show decoration if the value has been edited (differs from value specified in settings)
   if (inputValue != settings.value) {
 
-    if (settings.isTextArea) {
+    if (useCtrlToSave) {
       help = (<p className="help">Press Ctrl + Enter to save. Press Ctrl + Esc to cancel.</p>);
     } else {
       help = (<p className="help">Press Enter to save. Press Esc to cancel.</p>);
@@ -209,10 +211,10 @@ function InputEditable(settings: InputEditableParameters) {
     }
   }
 
-  const controlClass = classNames("control", "is-expanded", inputIcon ? "has-icons-left" : "", statusIcon ? "has-icons-right" : "");
+  const controlClass = truthyJoin("control", "is-expanded", inputIcon && "has-icons-left", statusIcon && "has-icons-right");
 
   return (
-    <div className={ classNames("editableinput", "field", settings.addedClass) }>
+    <div className={ truthyJoin("editableinput", "field", settings.addedClass) }>
       { (settings.label && (
           <label className="label">{ settings.label }</label>)
       ) }
@@ -223,7 +225,7 @@ function InputEditable(settings: InputEditableParameters) {
               { (settings.isTextArea ? (
 
                   <textarea
-                    className={ classNames("textarea", inputColor, settings.inputSize || "is-normal") }
+                    className={ truthyJoin("textarea", inputColor, settings.inputSize || "is-normal") }
                     id={ "debouncer-editable-" + (settings.elementId || "default") }
                     placeholder={ settings.placeholder || "Enter value" }
                     value={ inputValue }
@@ -247,7 +249,7 @@ function InputEditable(settings: InputEditableParameters) {
                 ) : (
 
                   <input type="text"
-                    className={ classNames("input", inputColor, settings.inputSize || "is-normal") }
+                    className={ truthyJoin("input", inputColor, settings.inputSize || "is-normal") }
                     id={ "debouncer-editable-" + (settings.elementId || "default") }
                     placeholder={ settings.placeholder || "Enter value" }
                     value={ inputValue }
@@ -270,12 +272,12 @@ function InputEditable(settings: InputEditableParameters) {
                 ))
               }
               { (inputIcon && (
-                  <span className={ classNames( "icon", "is-left", settings.iconSize) }>
+                  <span className={ truthyJoin( "icon", "is-left", settings.iconSize) }>
                     { inputIcon }
                   </span>)
               ) }
               { (statusIcon && (
-                  <span className={ classNames( "icon", "is-right", settings.iconSize) }>
+                  <span className={ truthyJoin( "icon", "is-right", settings.iconSize) }>
                     { statusIcon }
                   </span>)
               ) }
@@ -283,7 +285,7 @@ function InputEditable(settings: InputEditableParameters) {
             { showCancelButton && (
                 <div className="control reset">
                   <button className="button" onClick={ () => { reset() }}>
-                    <span className={ classNames( "icon", "is-right", "is-small") }>
+                    <span className={ truthyJoin( "icon", "is-right", "is-small") }>
                       <FontAwesomeIcon icon={faX} />
                     </span>
                   </button>
@@ -293,7 +295,7 @@ function InputEditable(settings: InputEditableParameters) {
             { showSaveButton && (
               <div className="control save">
                 <button className="button" onClick={ () => { save() }}>
-                  <span className={ classNames( "icon", "is-right", "is-small") }>
+                  <span className={ truthyJoin( "icon", "is-right", "is-small") }>
                     <FontAwesomeIcon icon={faCheck} />
                   </span>
                 </button>

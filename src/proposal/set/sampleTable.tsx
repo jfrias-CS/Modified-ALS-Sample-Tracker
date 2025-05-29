@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faExclamationTriangle, faSpinner, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faSpinner, faCheck, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { Guid } from '../../components/utils.tsx';
-import { ScanTypeName, ParameterChoice } from '../../scanTypes.ts';
+import { Guid, truthyJoin, sortWithNumberParsing } from '../../components/utils.tsx';
+import { ScanTypeName, ParamUid, ScanParameterSettings, ParameterChoice } from '../../scanTypes.ts';
 import { SampleConfiguration } from '../../sampleConfiguration.ts';
 import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
 import { updateConfig } from '../../metadataApi.ts';
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
 import { SampleTableCell } from './sampleTableCell/cell.tsx';
-import { CellFunctions, CellValidationStatus, CellValidationResult, CellNavigationDirection } from './sampleTableCell/cellDto.ts';
+import { CellFunctions, CellActivationStatus, CellValidationStatus, CellValidationResult, CellNavigationDirection } from './sampleTableCell/cellDto.ts';
 import { SampleTableClipboardContent } from './sampleClipboard.ts';
 import './sampleTable.css';
 
@@ -23,6 +23,11 @@ interface SampleTableProps {
 enum SyncState { Idle, Pending, Requested, Failed, Completed };
 
 type Coordinates = {x: number, y: number};
+
+// It's a magic number I know, and that's annoying, but this is the number of
+// standard non-parameter fields that are always displayed on the left side of the table.
+const FIXED_COLUMN_COUNT = 3;
+
 
 // Given a DOM node, walks up the tree looking for a node of type "td"
 // with "sampleX" and "sampleY" values in its dataset.
@@ -42,16 +47,27 @@ function findAnEditableCell(node: HTMLElement): Coordinates | null {
 }
 
 
+// Given a DOM node, walks up the tree looking for a node of type "table".
+// If found, return it, otherwise return null.
+function findEnclosingTable(node: HTMLElement): HTMLElement | null {
+  var n = node.nodeName || "";
+  if (n.trim().toLowerCase() == "table") { return node; }
+  const p = node.parentNode;
+  if (!p) { return null; } else { return findEnclosingTable(p as HTMLElement); }
+}
+
+
 const SampleTable: React.FC<SampleTableProps> = (props) => {
 
   const setId = props.setid;
 
   const metadataContext = useContext(MetadataContext);
-  const [sampleConfigurations, setSampleConfigurations] = useState<SampleConfiguration[]>([]);
+  const [sortedSampleIds, setSortedSampleIds] = useState<Guid[]>([]);
 
   const [tableHasFocus, setTableHasFocus] = useState<boolean>(false);
   const [cellFocusX, setCellFocusX] = useState<number | null>(null);
   const [cellFocusY, setCellFocusY] = useState<number | null>(null);
+  const [lastActivationMethod, setLastActivationMethod] = useState<CellActivationStatus>(CellActivationStatus.Inactive);
 
   const [cellMouseDown, setCellMouseDown] = useState<boolean>(false);
   const [cellMouseDownX, setCellMouseDownX] = useState<number | null>(null);
@@ -64,8 +80,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
 
   useEffect(() => {
-//    console.log(`sampleTable setId:${setId} changeCounter:${metadataContext.changeCounter} setsLoadingState:${metadataContext.setsLoadingState} scanTypesLoadingState:${metadataContext.scanTypesLoadingState}`);
-
     if ((setId === undefined) || (!setId.trim())) { return; }
 
     if (metadataContext.loadingState != MetaDataLoadingState.Succeeded) { return; }
@@ -73,8 +87,9 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     const thisSet = metadataContext.sets.getById(setId.trim() as Guid);
     if (thisSet === undefined) { return; }
 
-    const sortedSamples = thisSet.all().sort((a, b) => a.mmFromLeftEdge - b.mmFromLeftEdge);
-    setSampleConfigurations(sortedSamples);
+    const sortedSampleIds = thisSet.all().sort((a, b) => { return sortWithNumberParsing(a.name, b.name)}).map((s) => s.id);
+    setSortedSampleIds(sortedSampleIds);
+
   }, [setId, metadataContext.changeCounter, metadataContext.loadingState]);
 
 
@@ -98,7 +113,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
-  function tableOnMouseDown(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function tableOnPointerDown(event: React.PointerEvent<HTMLElement>) {
     const foundCell = findAnEditableCell(event.target as HTMLElement);
     if (foundCell) {
       setCellMouseDown(true);
@@ -110,6 +125,13 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         setCellFocusX(null);
         setCellFocusY(null);
       }
+      // We can't do this either because it redirects all incoming events so their
+      // target is the table itself, obscuring the element that the pointer was originally over,
+      // and rendering the event useless to us.
+      //const foundTable = findEnclosingTable(event.target as HTMLElement);
+      //if (foundTable) {
+      //  foundTable.setPointerCapture(event.pointerId);
+      //}
       // We can't do this because it creates a reference to the function in a previous
       // iteration of the SampleTable react object, which contains the old useState values.
       // document.addEventListener("mouseup", tableOnMouseUp, {once: true});
@@ -123,7 +145,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
-  function tableOnMouseOver(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function tableOnPointerOver(event: React.PointerEvent<HTMLElement>) {
     // We do no tracking if the mouse isn't down
     if (!cellMouseDown) { return; }
     const foundCell = findAnEditableCell(event.target as HTMLElement);
@@ -137,11 +159,17 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
-  function tableOnMouseUp(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  function tableOnPointerUp(event: React.PointerEvent<HTMLElement>) {
     setCellMouseDown(false);
+    //const foundTable = findEnclosingTable(event.target as HTMLElement);
+    //if (foundTable) {
+    //  foundTable.releasePointerCapture(event.pointerId);
+    //}
+
     // It doesn't matter where the mouse came up,
     // we go by the last valid cell the mouse was moved in.
     if ((cellMouseDownX == cellMouseMoveX) && (cellMouseDownY == cellMouseMoveY)) {
+      setLastActivationMethod(CellActivationStatus.ByMouse);
       setCellFocusX(cellMouseDownX);
       setCellFocusY(cellMouseDownY);
     } else {
@@ -169,10 +197,10 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   function selectionBorderClasses(x: number, y: number) {
     // If the table doesn't have focus, don't show the selection to avoid confusion
     // over what else might be selected for copy/paste on the page.
-    if (!tableHasFocus) { return; }
+    if (!tableHasFocus) { return []; }
     // If there is a cell in focus for editing, we don't draw the selection border.
     if ((cellFocusX !== null) && (cellFocusY !== null)) {
-      return "";
+      return [];
     }
     var borderClasses = [];
     // If one is true and the other false, regardless of which one, we're on either side of a transition
@@ -193,7 +221,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     if (isWithinSelection(x, y)) {
       borderClasses.push("inSelection");
     }
-    return borderClasses.join(" ") || "";
+    return borderClasses;
   }
 
 
@@ -202,7 +230,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     return (<div></div>)
   }
 
-  // For the standard "scan type" column, which users the autocomplete widget
+  // For the standard "scan type" column, which uses the autocomplete widget
   const scanTypesAsChoices: ParameterChoice[] =
     metadataContext.scanTypes.typeNamesInDisplayOrder.map((name) => { return { name: name, description: "" }});
 
@@ -212,6 +240,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
 
   function tableOnCopy(event: React.ClipboardEvent) {
+    console.log("copy");
     // If it's an element within the table, don't intercept the event.
     // We're only interested in copy events where the table element itself has focus.
     if (!tableHasFocus) { return; }
@@ -223,27 +252,32 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     if ((cellMouseDownX === null) || (cellMouseMoveX === null)) { return; }
     const c:SampleTableClipboardContent = new SampleTableClipboardContent();
 
+    // The rect of the current selection.
+    const lowerX = Math.min(cellMouseDownX, cellMouseMoveX);
+    const lowerY = Math.min(cellMouseDownY, cellMouseMoveY);
+    const higherX = Math.max(cellMouseDownX, cellMouseMoveX);
+    const higherY = Math.max(cellMouseDownY, cellMouseMoveY);
+
     var sampleRows = [];
-    for (var y = Math.min(cellMouseDownY, cellMouseMoveY); y <= Math.max(cellMouseDownY, cellMouseMoveY); y++) {
-      sampleRows.push(sampleConfigurations[y]);
+    for (var y = lowerY; y <= higherY; y++) {
+      sampleRows.push(thisSet!.configurationsById.get(sortedSampleIds[y])!);
     }
 
-    // The first four columns of the table always represent these fields in order:
-    const fields = ["mmFromLeftEdge", "name", "description", "scanType"];
+    // The first FIXED_COLUMN_COUNT columns of the table always represent these fields in order:
+    const fields = ["name", "description", "scanType"];
     var selectedFields = [];
     // If the selection overlaps those columns, we push the relevant field names. 
-    var lowX = Math.min(cellMouseDownX, cellMouseMoveX);
-    const highX = Math.max(cellMouseDownX, cellMouseMoveX);
-    while (lowX <= Math.min(highX, 3)) {
+    var lowX = lowerX;
+    while (lowX <= Math.min(higherX, FIXED_COLUMN_COUNT-1)) {
       selectedFields.push(fields[lowX]);
       lowX++;
     }
 
     var selectedParameters = [];
     // If the selection overlaps those columns, we push the relevant field names. 
-    var lowX = Math.max(Math.min(cellMouseDownX, cellMouseMoveX), 4);
-    while (lowX <= highX) {
-      selectedParameters.push(displayedParameterIds[lowX-4]);
+    var lowX = Math.max(lowerX, FIXED_COLUMN_COUNT);
+    while (lowX <= higherX) {
+      selectedParameters.push(displayedParameterIds[lowX-FIXED_COLUMN_COUNT]);
       lowX++;
     }
 
@@ -287,53 +321,81 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     // Possible different behavior if just one column is selected
     const pastingToOneColumn = lowerRightX == upperLeftX ? true : false;
 
-    console.log(`zeroColumns: ${zeroColumns}`);
+    // If we're bulk-pasting raw text to a single column,
+    // or bulk-pasting a single column of 1 or more values to a single column:
+    if (pastingToOneColumn && ((validRawText && zeroColumns) || (oneColumn && (c.content.length > 0)))) {
 
-    // If we're bulk-pasting raw text to a single column that isn't "from left edge" or "name":
-    if (zeroColumns && pastingToOneColumn && validRawText && (upperLeftX >= 2)) {
+      var pasteValues = [c.alternateTextData];
+      if (oneColumn) {
+        if (c.selectedFields.size == 1) {
+          const f = new Array(...c.selectedFields);
+          pasteValues = c.getField(f[0]);
+        } else {
+          const p = new Array(...c.selectedParameters);
+          console.log(p);
+          pasteValues = c.getParameter(p[0] as ParamUid);
+          console.log(pasteValues);
+        }
+      }
 
       var editedConfigs = [];
-      var y = 0;
-      while (upperLeftY+y <= lowerRightY) {
 
-        var editedConfig = sampleConfigurations[upperLeftY+y].clone();
+      var stopAtRow = Math.min(lowerRightY + 1, sortedSampleIds.length);
+      // If we're pasting multiple values from a single column,
+      // only paste as many values as we have, while also stopping at the bottom of the current selection if we reach it.
+      if (pasteValues.length > 1) {
+        stopAtRow = Math.min(upperLeftY + pasteValues.length, sortedSampleIds.length);
+      }
+
+      var y = 0;
+      while (upperLeftY+y < stopAtRow) {
+
+        var editedConfig = thisSet!.configurationsById.get(sortedSampleIds[upperLeftY+y])!.clone();
+        var pasteValue = pasteValues.length == 1 ? pasteValues[0] : pasteValues[y];
+        if (pasteValue === null) { pasteValue = ""; }
+
+        // Name
+        if ((upperLeftX === 0) && (pasteValue !== "")) {  // Don't allow blank names
+          editedConfig.name = pasteValue;
 
         // Description
-        if (upperLeftX === 2) {
-          editedConfig.description = c.alternateTextData!;
+        } else if (upperLeftX === 1) {
+          editedConfig.description = pasteValue;
 
         // Scan Type
-        } else if (upperLeftX === 3) {
-          const asScanTypeName = c.alternateTextData! as ScanTypeName;
-          editedConfig.scanType = asScanTypeName;
+        } else if (upperLeftX === 2) {
+          const asScanTypeName = pasteValue as ScanTypeName;
           const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
-          newScanType!.parameters.forEach((p) => {
-            const parameterType = metadataContext.scanTypes.parametersById.get(p);
-            if (parameterType) {
-              // Set any missing parameters to defaults.
-              if (!editedConfig.parameters.has(parameterType!.id)) {
-                editedConfig.parameters.set(parameterType.id, parameterType.default ?? "");
+          // If the text doesn't resolve to a known Scan Type name, skip all this.
+          // We accept invalid values in most columns but accepting one in ScanType would make very ambiguous behavior,
+          // since it affects which columns are displayed in the table.
+          if (newScanType) {
+            editedConfig.scanType = asScanTypeName;
+            newScanType!.parameters.forEach((p) => {
+              const parameterType = metadataContext.scanTypes.parametersById.get(p.typeId);
+              if (parameterType) {
+                // Set any missing parameters to defaults.
+                if (!editedConfig.parameters.has(parameterType!.id)) {
+                  editedConfig.parameters.set(parameterType.id, parameterType.default ?? "");
+                }
               }
-            }
-          });
-
+            });
+          }
         // Validate scan parameters
-        } else if ((upperLeftX >= 4) && ((upperLeftX-4) < displayedParameters.length)) {
-          const paramType = displayedParameters[upperLeftX - 4];
-          editedConfig.parameters.set(paramType.id, c.alternateTextData!);
+        } else if ((upperLeftX >= FIXED_COLUMN_COUNT) && ((upperLeftX-FIXED_COLUMN_COUNT) < displayedParameters.length)) {
+          const paramType = displayedParameters[upperLeftX - FIXED_COLUMN_COUNT];
+          editedConfig.parameters.set(paramType.id, pasteValue);
         }
 
-        // This may not be the right behavior
-        sampleConfigurations[upperLeftY+y] = editedConfig;
         editedConfigs.push(editedConfig);
         y++;
       }
 
       thisSet!.addOrReplaceWithHistory(editedConfigs);
+      metadataContext.changed();
       contentChanged();
     }
   }
-
 
   // Add the vector to the given currentPosition until it points to a table cell that is
   // valid for editing, then return that position, or return null if we run off the edge of the table.
@@ -341,23 +403,23 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     // Sanity check
     if ((vector.x == 0) && (vector.y == 0)) { return null; }
     const nextPosition = { x: currentPosition.x + vector.x, y: currentPosition.y + vector.y };
-    const xMax = displayedParameters.length + 4;  // Four additional columns on the left
-    const yMax = sampleConfigurations.length;
+    const xMax = displayedParameters.length + FIXED_COLUMN_COUNT;  // Standard field columns on the left
+    const yMax = sortedSampleIds.length;
     if ((nextPosition.x < 0) || (nextPosition.y < 0) || (nextPosition.x >= xMax) || (nextPosition.y >= yMax)) {
       return null;
     }
     // At this point we know the cell we're looking at is within the table.
-    if (nextPosition.x < 4) {
-      // The first four cells are always editable.
+    if (nextPosition.x < FIXED_COLUMN_COUNT) {
+      // The field cells are assumed to be always editable.
       return nextPosition;
     }
     // The only thing to ask now is whether the cell is for a ScanParameterType that's
     // _actually_used_ by the ScanType set by that row's SampleConfiguration.
-    const thisParameter = displayedParameters[nextPosition.x - 4];
-    const thisConfig = sampleConfigurations[nextPosition.y];
+    const thisParameter = displayedParameters[nextPosition.x - FIXED_COLUMN_COUNT];
+    const thisConfig = thisSet!.configurationsById.get(sortedSampleIds[nextPosition.y]);
 
-    const allowedParameters = metadataContext.scanTypes.typesByName.get(thisConfig.scanType)!.parameters;
-    if (allowedParameters.some((p) => p == thisParameter.id)) {
+    const allowedParameters = metadataContext.scanTypes.typesByName.get(thisConfig!.scanType)!.parameters;
+    if (allowedParameters.some((p) => p.typeId == thisParameter.id)) {
       return nextPosition;
     }
 
@@ -399,50 +461,45 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         travelVector = {x: 1, y: 0};
         break;
     }
-    return switchEditingToNearbyCell({x: x, y: y}, travelVector);
+    const result = switchEditingToNearbyCell({x: x, y: y}, travelVector);
+    if (result == CellValidationStatus.Success) {
+        setLastActivationMethod(CellActivationStatus.ByKeyboard);
+    }
+    return result;
   }
 
 
   // A function passed to every SampleTableCell (non-header table cell in samples table)
+  // and used when rendering the table,
   // that validates the given input value based on its cell's x,y location in the table.
   // It relies on the displayedParameters constant, calculated just above.
   function cellValidator(x: number, y: number, value: string): CellValidationResult {
 
-    // Validate "mm From Left Edge"
-    if (x === 0) {
-      const inputNumber = parseFloat(value);
-      if (isNaN(inputNumber)) {
-        return { status: CellValidationStatus.Failure, message: "Offset must be a number." };
-      } else if (sampleConfigurations.some((sample) => sample.mmFromLeftEdge == inputNumber)) {
-        return { status: CellValidationStatus.Failure, message: "Location must be unique on bar." };
-      }
-      return { status: CellValidationStatus.Success, message: null };
-
     // Validate Name
-    } else if (x === 1) {
+    if (x === 0) {
       if (value == "") {
         return { status: CellValidationStatus.Failure, message: "Name cannot be blank." };
-      } else if (sampleConfigurations.some((sample) => sample.name == value)) {
+      } else if (sortedSampleIds.filter((sId) => thisSet!.configurationsById.get(sId)!.name == value).length > 1) {
         return { status: CellValidationStatus.Failure, message: "Name must be unique on bar." };
       }
       return { status: CellValidationStatus.Success, message: null };
 
     // Validate Description
-    } else if (x === 2) {
+    } else if (x === 1) {
       // Description can be anything
       return { status: CellValidationStatus.Success, message: null };
 
     // Validate Scan Type
-    } else if (x === 3) {
+    } else if (x === 2) {
       if (metadataContext.scanTypes.typeNamesInDisplayOrder.some((name) => name == value)) {
         return { status: CellValidationStatus.Success, message: null };
       }
       return { status: CellValidationStatus.Failure, message: "Must be the name of a Scan Type." };
 
     // Validate scan parameters
-    } else if ((x > 3) && ((x-4) < displayedParameters.length)) {
+    } else if ((x >= FIXED_COLUMN_COUNT) && ((x-FIXED_COLUMN_COUNT) < displayedParameters.length)) {
 
-      const paramType = displayedParameters[x - 4];
+      const paramType = displayedParameters[x - FIXED_COLUMN_COUNT];
       if (paramType.validator !== undefined) {
         const result = paramType.validator(value);
         if (result !== null) {
@@ -462,53 +519,65 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   // It relies on the displayedParameters constant, calculated just above.
   function cellSave(x: number, y: number, newValue: string): CellValidationResult {
 
-    const thisConfig = sampleConfigurations[y];
+    const thisConfig = thisSet!.configurationsById.get(sortedSampleIds[y]);
     if (!thisConfig) {
       return { status: CellValidationStatus.Failure, message: "Error: SampleConfiguration does not exist!" }
     }
 
     var editedConfig = thisConfig.clone();
 
-    // "mm From Left Edge"
-    if (x === 0) {
-      editedConfig.mmFromLeftEdge = parseFloat(newValue);
-
     // Name
-    } else if (x === 1) {
+    if (x === 0) {
       editedConfig.name = newValue;
 
     // Description
-    } else if (x === 2) {
+    } else if (x === 1) {
       editedConfig.description = newValue;
 
     // Scan Type
-    } else if (x === 3) {
+    } else if (x === 2) {
       const asScanTypeName = newValue as ScanTypeName;
-      editedConfig.scanType = asScanTypeName;
       const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
-      newScanType!.parameters.forEach((p) => {
-        const parameterType = metadataContext.scanTypes.parametersById.get(p);
-        if (parameterType) {
-          // Set any missing parameters to defaults.
-          if (!editedConfig.parameters.has(parameterType!.id)) {
-            editedConfig.parameters.set(parameterType.id, parameterType.default ?? "");
+      // If the text doesn't resolve to a known Scan Type name, skip all this.
+      // We accept invalid values in most columns but accepting one in ScanType would make very ambiguous behavior,
+      // since it affects which columns are displayed in the table.
+      if (newScanType) {
+        editedConfig.scanType = asScanTypeName;
+        newScanType!.parameters.forEach((p) => {
+          const parameterType = metadataContext.scanTypes.parametersById.get(p.typeId);
+          if (parameterType) {
+            // Set any missing parameters to defaults.
+            if (!editedConfig.parameters.has(parameterType!.id)) {
+              editedConfig.parameters.set(parameterType.id, parameterType.default ?? "");
+            }
           }
-        }
-      });
-
+        });
+      }
     // Validate scan parameters
-    } else if ((x >= 4) && ((x-4) < displayedParameters.length)) {
-      const paramType = displayedParameters[x - 4];
+    } else if ((x >= FIXED_COLUMN_COUNT) && ((x-FIXED_COLUMN_COUNT) < displayedParameters.length)) {
+      const paramType = displayedParameters[x - FIXED_COLUMN_COUNT];
       editedConfig.parameters.set(paramType.id, newValue);
     }
 
     thisSet!.addOrReplaceWithHistory([editedConfig]);
+    metadataContext.changed();
     contentChanged();
 
-    // This may not be the right behavior
-    sampleConfigurations[y] = editedConfig;
-
     return { status: CellValidationStatus.Success, message: null };
+  }
+
+
+  function clickedUndo() {
+    thisSet!.undo();
+    metadataContext.changed();
+    contentChanged();
+  }
+
+
+  function clickedRedo() {
+    thisSet!.redo();
+    metadataContext.changed();
+    contentChanged();
   }
 
 
@@ -523,7 +592,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
   function contentChanged() {
     if (syncTimer) { clearTimeout(syncTimer); }
-    setSyncTimer(setTimeout(() => syncTimerExpired(), 1000));
+    setSyncTimer(setTimeout(() => syncTimerExpired(), 1500));
     if (syncState != SyncState.Requested) {
       setSyncState(SyncState.Pending);
     }
@@ -532,7 +601,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
   async function syncTimerExpired() {
     // If another save is pending while the previous one is still
-    // in progress, we renew the timer and exit, until the previous
+    // in progress (requested), we renew the timer and exit, until the previous
     // one reports either Completed or Failed.
     if (syncState == SyncState.Requested) {
       setSyncTimer(setTimeout(() => syncTimerExpired(), 1000));
@@ -567,7 +636,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
 
   var tableHeaders = [
-      (<th key="mm" scope="col">From Left Edge</th>),
       (<th key="name" scope="col">Name</th>),
       (<th key="description" scope="col">Description</th>),
       (<th key="scantype" scope="col">Scan Type</th>)
@@ -578,43 +646,61 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   });
 
 
-  var syncStatusIcon: JSX.Element | null = null;
+  var syncStatusMessage: JSX.Element | null = null;
   if (syncState == SyncState.Requested) {
-    syncStatusIcon = (<FontAwesomeIcon icon={faSpinner} spin={true} />); 
+    syncStatusMessage = (<div><FontAwesomeIcon icon={faSpinner} spin={true} /> Saving Changes</div>); 
   } else if (syncState == SyncState.Completed) {
-    syncStatusIcon = (<FontAwesomeIcon icon={faCheck} />);
+    syncStatusMessage = (<div><FontAwesomeIcon icon={faCheck} /> Changes Saved</div>);
   } else if (syncState == SyncState.Failed) {
-    syncStatusIcon = (<FontAwesomeIcon icon={faExclamationTriangle} color="darkred" />);
+    syncStatusMessage = (<div><FontAwesomeIcon icon={faExclamationTriangle} color="darkred" /> Error Saving! Are you logged in?</div>);
   }
+
+  const allowSampleImport = false;
 
   return (
     <>
 
       <nav className="level">
+
         <div className="level-left">
           <div className="level-item">
-            <p className="subtitle is-5"><strong>{ sampleConfigurations.length }</strong> samples</p>
+            <p className="subtitle is-5"><strong>{ sortedSampleIds.length }</strong> samples</p>
+          </div>
+          { allowSampleImport && (
+            <div className="level-item">
+              <ImportSamples />
+            </div>)
+          }
+          <div className="level-item">
+            <AddSamples />
           </div>
         </div>
 
         <div className="level-right">
           <div className="level-item">
-            <ImportSamples />
+              { syncStatusMessage }
           </div>
           <div className="level-item">
-            <AddSamples />
-          </div>
-          <div className="level-item">
-              <span className="icon">
-                { syncStatusIcon }
-              </span>
+            <div className="field has-addons">
+              <p className="control">
+                <button className="button" onClick={ clickedUndo } title="Undo" disabled={!thisSet!.canUndo()}>
+                  <FontAwesomeIcon icon={faUndo} />
+                </button>
+              </p>
+              <p className="control">
+                <button className="button" onClick={ clickedRedo } title="Redo" disabled={!thisSet!.canRedo()}>
+                  <FontAwesomeIcon icon={faRedo} />
+                </button>
+              </p>
+            </div>
           </div>
         </div>
+
       </nav>
 
       <div className="block">
-        { sampleConfigurations.length == 0 ? (
-          <p>( Use the buttons on the right to add Samples. )</p>
+        { sortedSampleIds.length == 0 ? (
+          <p>( Use the "Add Samples" button to get started. )</p>
         ) : (
           <table className="sampletable"
                   tabIndex={0}
@@ -622,9 +708,9 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                   onBlur={ tableOnBlur }
                   onCopy={ tableOnCopy }
                   onPaste={ tableOnPaste }
-                  onMouseOver={ tableOnMouseOver }
-                  onMouseDown={ tableOnMouseDown }
-                  onMouseUp={ tableOnMouseUp }
+                  onPointerOver={ tableOnPointerOver }
+                  onPointerDown={ tableOnPointerDown }
+                  onPointerUp={ tableOnPointerUp }
               >
             <thead>
               <tr key="headers">
@@ -633,90 +719,106 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
             </thead>
             <tbody>
               {
-                sampleConfigurations.map((sample, sampleIndex) => {
+                sortedSampleIds.map((sampleId, sampleIndex) => {
+                  const sample = thisSet!.configurationsById.get(sampleId)!;
                   var cells: JSX.Element[] = [];
+                  const thisScanType = metadataContext.scanTypes.typesByName.get(sample.scanType)!;
 
                   const cellFocusOnThisY = (cellFocusY === sampleIndex);
-                  const allowedParameters = new Set(metadataContext.scanTypes.typesByName.get(sample.scanType)!.parameters);
+                  const allowedParameters = new Set(thisScanType.parameters.map((p) => p.typeId));
+                  // Build a temporary map, from parameter Ids to their ScanParameterSettings in this row's (config's) scan type.
+                  // This may be an incomplete mapping, because some parameters we need to display may not be in the scan type.
+                  const scanParameterSettingsMap: Map<ParamUid, ScanParameterSettings> =
+                          new Map(thisScanType.parameters.map((sp) => [sp.typeId, sp]));
 
                   displayedParameters.forEach((p, paramIndex) => {
+                    const scanParameterSettings:ScanParameterSettings | undefined = scanParameterSettingsMap.get(p.id)
+
                     const unused = !allowedParameters.has(p.id);
-                    const activated = (cellFocusX === (paramIndex+4)) && cellFocusOnThisY;
-                    const cellClass = "samplecell " + (unused ? "unused " : "") + selectionBorderClasses(paramIndex+4, sampleIndex);
+                    // readOnly may not be defined, so this could effectively still be true | false | undefined.
+                    const readOnly = scanParameterSettings?.readOnly;
+                    const activated = (cellFocusX === (paramIndex+FIXED_COLUMN_COUNT)) && cellFocusOnThisY;
+                    const activationStatus = activated ? lastActivationMethod : CellActivationStatus.Inactive;
+                    const paramValue = sample.parameters.get(p.id) ?? "";
+                    const validationResult = cellValidator(paramIndex+FIXED_COLUMN_COUNT, sampleIndex, paramValue);
+                    const validValue = validationResult.status == CellValidationStatus.Success ? true : false;
+                    const cellClasses = truthyJoin(
+                            "samplecell",
+                            (!validValue && "invalid"),
+                            (unused && "unused"),
+                            (readOnly && "readonly"),
+                            ...selectionBorderClasses(paramIndex+FIXED_COLUMN_COUNT, sampleIndex)
+                          );
                     const td = (
-                      <td key={ p.id }
-                          data-sample-x={paramIndex+4}
+                      <td key={ `${p.id}-${metadataContext.changeCounter}` }
+                          data-sample-x={paramIndex+FIXED_COLUMN_COUNT}
                           data-sample-y={sampleIndex}
+                          data-sample-readonly={readOnly || 0}
                           data-sample-unused={unused || 0}
-                          className={ cellClass }
+                          className={ cellClasses }
                         >
-                        <SampleTableCell x={paramIndex+4} y={sampleIndex}
-                                    key={ p.id }
-                                    cellKey={ p.id }
-                                    isUnused={unused}
-                                    isActivated={activated}
-                                    cellFunctions={cellFunctions}
+                        <SampleTableCell x={paramIndex+FIXED_COLUMN_COUNT} y={sampleIndex}
+                                    key={ `${p.id}-${metadataContext.changeCounter}` }
+                                    cellKey={ `${p.id}-${metadataContext.changeCounter}` }
+                                    isUnused={ unused }
+                                    activationStatus={ activationStatus }
+                                    isReadOnly={ readOnly }
+                                    cellFunctions={ cellFunctions }
                                     description={ p.description }
-                                    value={ sample.parameters.get(p.id) ?? "" }
+                                    value={ paramValue }
                                     choices={ p.choices }
                             />
                       </td>);
                     cells.push(td);
                   });
 
+                  const nameValidationResult = cellValidator(0, sampleIndex, sample.name);
+                  const nameValidValue = nameValidationResult.status == CellValidationStatus.Success ? true : false;
+
+                  const descriptionValidationResult = cellValidator(1, sampleIndex, sample.description);
+                  const descriptionValidValue = descriptionValidationResult.status == CellValidationStatus.Success ? true : false;
+
                   return (
-                    <tr key={sample["id"]}>
-                      <td key="mm"
+                    <tr key={ `${sampleId}-${metadataContext.changeCounter}` }>
+                      <td key={ `${sampleId}-${metadataContext.changeCounter}-name` }
                           data-sample-x={0}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
-                          className={"samplecell " + selectionBorderClasses(0, sampleIndex)}
+                          className={truthyJoin("samplecell", (!nameValidValue && "invalid"), ...selectionBorderClasses(0, sampleIndex))}
                         >
                         <SampleTableCell x={0} y={sampleIndex}
-                            key="mm"
-                            cellKey="mm"
-                            isActivated={(cellFocusX === 0) && cellFocusOnThisY}
-                            cellFunctions={cellFunctions}
-                            value={ sample.mmFromLeftEdge.toString() } />
-                      </td>
-                      <td key="name"
-                          data-sample-x={1}
-                          data-sample-y={sampleIndex}
-                          data-sample-unused={0}
-                          className={"samplecell " + selectionBorderClasses(1, sampleIndex)}
-                        >
-                        <SampleTableCell x={1} y={sampleIndex}
-                            key="name"
-                            cellKey="name"
-                            isActivated={(cellFocusX === 1) && cellFocusOnThisY}
+                            key={ `${sampleId}-${metadataContext.changeCounter}-name` }
+                            cellKey={ `${sampleId}-${metadataContext.changeCounter}-name` }
+                            activationStatus={((cellFocusX === 0) && cellFocusOnThisY) ? lastActivationMethod : CellActivationStatus.Inactive}
                             cellFunctions={cellFunctions}
                             value={ sample.name } />
                       </td>
-                      <td key="description"
-                          data-sample-x={2}
+                      <td key={ `${sampleId}-${metadataContext.changeCounter}-description` }
+                          data-sample-x={1}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
-                          className={"samplecell " + selectionBorderClasses(2, sampleIndex)}
+                          className={truthyJoin("samplecell", (!descriptionValidValue && "invalid"), ...selectionBorderClasses(1, sampleIndex))}
                         >
-                        <SampleTableCell x={2} y={sampleIndex}
-                            key="description"
-                            cellKey="description"
-                            isActivated={(cellFocusX === 2) && cellFocusOnThisY}
+                        <SampleTableCell x={1} y={sampleIndex}
+                            key={ `${sampleId}-${metadataContext.changeCounter}-description` }
+                            cellKey={ `${sampleId}-${metadataContext.changeCounter}-description` }
+                            activationStatus={((cellFocusX === 1) && cellFocusOnThisY) ? lastActivationMethod : CellActivationStatus.Inactive}
                             cellFunctions={cellFunctions}
                             value={ sample.description } />
                       </td>
-                      <td key="scantype"
-                          data-sample-x={3}
+                      <td key={ `${sampleId}-${metadataContext.changeCounter}-scantype` }
+                          data-sample-x={2}
                           data-sample-y={sampleIndex}
                           data-sample-unused={0}
-                          className={"samplecell " + selectionBorderClasses(3, sampleIndex)}
+                          className={truthyJoin("samplecell", ...selectionBorderClasses(2, sampleIndex))}
                         >
-                        <SampleTableCell x={3} y={sampleIndex}
-                            key="scantype"
-                            cellKey="scantype"
-                            isActivated={(cellFocusX === 3) && cellFocusOnThisY}
+                        <SampleTableCell x={2} y={sampleIndex}
+                            key={ `${sampleId}-${metadataContext.changeCounter}-scantype` }
+                            cellKey={ `${sampleId}-${metadataContext.changeCounter}-scantype` }
+                            activationStatus={((cellFocusX === 2) && cellFocusOnThisY) ? lastActivationMethod : CellActivationStatus.Inactive}
                             cellFunctions={cellFunctions}
                             value={ sample.scanType }
+                            description="Scan Type to use for this sample."
                             choices={ scanTypesAsChoices } />
                       </td>
                       { cells }

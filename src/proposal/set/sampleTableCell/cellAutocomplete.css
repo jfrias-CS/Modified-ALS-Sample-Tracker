@@ -1,54 +1,62 @@
-div.cellautocomplete table {
+div.cellautocomplete .dropdown .dropdown-menu .dropdown-content {
+  padding-top: 0;
+}
+
+div.cellautocomplete .dropdown .dropdown-menu .dropdown-content table {
   width: 30vw;
 }
 
-div.cellautocomplete tr {
+div.cellautocomplete .dropdown .dropdown-menu .dropdown-content tr {
   transition-duration: 294ms;
   transition-property: background-color, border-color, color;
 }
 
-div.cellautocomplete tr.focused {
+div.cellautocomplete .dropdown .dropdown-menu .dropdown-content tr.focused {
   color: hsl(237, 86%, 34%);
   background-color: hsl(221, 34%, 84%);
 }
 
-div.cellautocomplete tr:hover {
+div.cellautocomplete .dropdown .dropdown-menu .dropdown-content tr:hover {
   color: hsl(237, 86%, 64%);
   background-color: hsl(221, 34%, 93%);
   cursor: pointer;
 }
 
-div.cellautocomplete td {
+div.cellautocomplete .dropdown .dropdown-menu .dropdown-content td {
   padding: .375rem 1rem;
 }
 
-div.cellautocomplete td:first-child {
+div.cellautocomplete .dropdown .dropdown-menu .dropdown-content td:first-child {
   white-space: nowrap;
 }
 
-div.cellautocomplete td:last-child {
+div.cellautocomplete .dropdown .dropdown-menu .dropdown-content td:last-child {
   font-size: 0.85rem;
 }
 
-div.cellautocomplete tr:not(:hover) td:last-child {
+div.cellautocomplete .dropdown .dropdown-menu .dropdown-content tr:not(:hover) td:last-child {
   opacity: 72%;
 }
 
-div.cellautocomplete tr:not(:hover):not(.focused) td b {
+div.cellautocomplete .dropdown .dropdown-menu .dropdown-content tr:not(:hover):not(.focused) td b {
   color: rgba(220, 170, 0, 1);
 }
 
+div.cellautocomplete .dropdown .dropdown-menu .dropdown-content .help {
+  padding-left: 1em;
+}
+
 @media (prefers-color-scheme: dark) {
-  div.cellautocomplete tr:not(:hover):not(.focused) td b {
+  div.cellautocomplete .dropdown .dropdown-menu .dropdown-content tr:not(:hover):not(.focused) td b {
     color: gold;
   }
   
-  div.cellautocomplete tr.focused {
+  div.cellautocomplete .dropdown .dropdown-menu .dropdown-content tr.focused {
     color: #535bf2;
     background-color: hsl(221, 14%, calc(20%));
   }
   
-  div.cellautocomplete tr:hover {
+  div.cellautocomplete .dropdown .dropdown-menu .dropdown-content tr:hover {
     color: #535bf2;
     background-color: hsl(221, 14%, calc(20%));
   }

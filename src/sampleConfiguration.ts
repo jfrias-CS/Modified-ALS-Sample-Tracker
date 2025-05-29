@@ -1,6 +1,6 @@
-import { ScanTypes, ParamUid, ScanTypeName, ScanType } from './scanTypes.ts';
-import { Guid, generateUniqueNames } from "./components/utils.tsx";
-import { ObjectWithGuid, EditQueueEntry, UndoHistory, UndoHistoryEntry } from "./undoHistory.ts";
+import { ScanTypes, ParamUid, ScanTypeName } from './scanTypes.ts';
+import { Guid, sortWithNumberParsing, generateUniqueNames } from "./components/utils.tsx";
+import { ObjectWithGuid, ChangeSet, EditQueueEntry, UndoHistory, UndoHistoryEntry } from "./undoHistory.ts";
 
 // Class definitions to represent sample configurations,
 // sets of sample configurations, and undo/redo history for changes
@@ -15,20 +15,18 @@ export interface SampleConfigurationDto extends ObjectWithGuid {
   // If set to false, this SampleConfiguration should be ignored in the UI,
   // and should be deleted on the server as soon as undo history is purged.
   isValid: boolean;
-  // Intended to be a unique number, but not enforced, for editing convenience.
-  mmFromLeftEdge: number;
   // Meant to be longer than the name.  Can be blank.
   description: string;
   scanType: ScanTypeName;
   // Key/value parameter set. Keys should only be valid for the chosen ScanType.
   // This is not strictly enforced, so old inapplicable values can be preserved
   // in case a previous ScanType selection is re-selected.
-  parameters: Map<ParamUid, string|null>
+  parameters: { [key: string]: string|null };
 }
 
 
 // Represents the configuration for one sample
-export class SampleConfiguration implements SampleConfigurationDto {
+export class SampleConfiguration {
 
   // A unique identifier generated on the server.
   id: Guid;
@@ -39,8 +37,6 @@ export class SampleConfiguration implements SampleConfigurationDto {
   // If set to false, this SampleConfiguration should be ignored in the UI,
   // and should be deleted on the server as soon as undo history is purged.
   isValid: boolean;
-  // Intended to be a unique number, but not enforced, for editing convenience.
-  mmFromLeftEdge: number;
   // Meant to be longer than the name.  Can be blank.
   description: string;
   scanType: ScanTypeName;
@@ -54,24 +50,33 @@ export class SampleConfiguration implements SampleConfigurationDto {
 		this.setId = p.setId;
 		this.name = p.name;
     this.isValid = p.isValid;
-		this.mmFromLeftEdge = p.mmFromLeftEdge || 0;
 		this.description = p.description || "";
 		this.scanType = p.scanType;
-		this.parameters = new Map(p.parameters);
+		this.parameters = new Map();
+
+    // Anything in p.parameters is treated as a Scan Type parameter
+    // and its value is added to the parameter map.
+    for (const [key, value] of Object.entries(p.parameters)) {
+          this.parameters.set(key as ParamUid, value as string);
+    }
 	}
 
-  clone() {
-    return new SampleConfiguration({
+  clone():SampleConfiguration {
+    return new SampleConfiguration(this.asDto());
+  }
+
+  asDto():SampleConfigurationDto {
+    return {
       id: this.id,
       setId: this.setId,
       name: this.name,
       isValid: this.isValid,
-      mmFromLeftEdge: this.mmFromLeftEdge,
       description: this.description,
       scanType: this.scanType,
-      parameters: this.parameters // Copied during creation
-  	});
+      parameters: Object.fromEntries(this.parameters)
+  	}
   }
+
 }
 
 
@@ -87,8 +92,8 @@ export class SampleConfigurationSet {
   // Undo/redo history tracker
   history: UndoHistory;
   // A cached value used as a reference by e.g. findRelevantParameters.
-  // This can be undefined until legitimate ScanType information is available.
-  scanTypesByName!: Map<ScanTypeName, ScanType>;
+  // This can stay undefined until legitimate ScanType information is available.
+  scanTypesReference!: ScanTypes;
 
   constructor(id: Guid, name: string, description: string) {
     this.id = id;
@@ -99,35 +104,126 @@ export class SampleConfigurationSet {
     this.history = new UndoHistory();
   }
 
-  setScanTypes(scanTypesCache: ScanTypes) {
-    this.scanTypesByName = scanTypesCache.typesByName;
+  setScanTypes(scanTypesReference: ScanTypes) {
+    this.scanTypesReference = scanTypesReference;
     this.findRelevantParameters();
+  }
+
+  getSortedSamples() {
+    const sortedSamples = this.all().sort((a, b) => { return sortWithNumberParsing(a.name, b.name)});
+    return sortedSamples;
   }
 
   // Look through all the current sample configurations for scan parameters,
   // and gather all the unique parameter names into a list, in the order encountered.
   // Used for deciding which parameter columns to render in the interface.
   findRelevantParameters() {
-    const scanTypesByName = this.scanTypesByName;
+    const scanTypesByName = this.scanTypesReference.typesByName;
     let workingSet: Set<ParamUid> = new Set();
     let relevantParameters: ParamUid[] = [];
 
-    // Start from the SampleConfiguration closest to the left edge,
+    // We default to sorting SampleConfiguration records by name,
     // since that's the default sort when displaying them.
-    const sortedSamples = this.all().sort((a, b) => a.mmFromLeftEdge - b.mmFromLeftEdge);
+    const sortedSamples = this.getSortedSamples();
 
     sortedSamples.forEach((v) => {
       if (!scanTypesByName.has(v.scanType)) { return; }
       const t = scanTypesByName.get(v.scanType)!;
       t.parameters.forEach((p) => {
-        if (!workingSet.has(p)) {
-          relevantParameters.push(p);
-          workingSet.add(p);
+        if (!workingSet.has(p.typeId)) {
+          relevantParameters.push(p.typeId);
+          workingSet.add(p.typeId);
         }
       });
     });
     this.relevantParameters = relevantParameters;
   }
+
+
+  // Generate and return an array of SampleConfiguration objects suitable for
+  // sending to the server for the creation of new configurations in this set.
+  // This includes creating default parameter values that respect uniqueness constraints
+  // relative to the existing configurations.
+  generateNewConfigurationsWithDefaults(quantity: number, scanTypeName: ScanTypeName, suggestedName?: string, suggestedDescription?: string): SampleConfiguration[] {
+
+    const scanTypesByName = this.scanTypesReference.typesByName;
+    const parametersById = this.scanTypesReference.parametersById;
+    const configsById = this.configurationsById;
+
+    if (!scanTypesByName.has(scanTypeName)) { return []; }
+    const scanType = scanTypesByName.get(scanTypeName)!;
+
+    const uniqueNames = this.generateUniqueNames(suggestedName ?? "Sample", quantity);
+
+    const parametersThatNeedUniqueValues = 
+      scanType.parameters.filter((p) => {
+        const parameterType = parametersById.get(p.typeId);
+        return parameterType?.uniqueInSet
+      });
+
+    var uniqueParameterValues: Map<ParamUid, number[]> = new Map();
+
+    // For each parameter that needs a unique value, create a list of acceptable values,
+    // long enough to meet out quantity demand.
+    parametersThatNeedUniqueValues.forEach((p) => {
+      const parameterType = parametersById.get(p.typeId);
+      var values = [];
+      var index = 0;
+
+      const interval = parseFloat((parameterType!.autoGenerateInterval || "1") as string);
+      const defaultValue = parseFloat(p.default ?? parameterType!.default ?? "0");
+
+      // We're starting with the default, but if there are any existing configs,
+      // we check their parameters for a value and, if it's higher than what we already have,
+      // we use that (plus the interval) as the starting point.
+      var value = defaultValue;
+      configsById.forEach((c) => {
+        const paramValue = parseFloat(c.parameters.get(parameterType!.id) ?? "");
+        if (!isNaN(paramValue)) { value = Math.max(paramValue+interval, value); }
+      });
+
+      // Create an array of values, separated by the interval
+      while (index < quantity) {
+        values.push(value);
+        value += interval;
+        index++;
+      }
+      uniqueParameterValues.set(parameterType!.id, values);
+    });
+
+    var newConfigs: SampleConfiguration[] = [];
+    var index = 0;
+    while (index < quantity) {
+
+      // Make a set of parameters for the chosen ScanType, with default or blank values.
+      const parameters:Map<ParamUid, string|null> = new Map();
+      scanType.parameters.forEach((p) => {
+        const parameterType = parametersById.get(p.typeId);
+        if (parameterType) { parameters.set(parameterType.id, p.default ?? parameterType.default ?? ""); }
+      });
+      // For all the parameters that need unique defaults, select one from our prepared arrays.
+      parametersThatNeedUniqueValues.forEach((p) => {
+        const uniqueValues = uniqueParameterValues.get(p.typeId) as number[];
+        const v = uniqueValues[index];
+        parameters.set(p.typeId, `${v}`)
+      });
+
+      newConfigs.push(
+        new SampleConfiguration({
+          id: "" as Guid,
+          setId: this.id,
+          name: uniqueNames[index],
+          isValid: true,
+          description: suggestedDescription || "",
+          scanType: scanType.name,
+          parameters: Object.fromEntries(parameters)
+        })
+      );
+      index++;
+    }
+    return newConfigs;
+  }
+
 
   generateUniqueNames(suggestedName: string, quantity?: number, startIndex?: number | null): string[] {
     let existingNames: string[] = [];
@@ -136,26 +232,6 @@ export class SampleConfigurationSet {
     return generateUniqueNames(existingNames, suggestedName, quantity, startIndex);
   }
 
-  // Generate bar locations that are at least 13mm beyond the current
-  // rightmost config location, and 13mm apart from each other, with a default minimum of 3mm.
-  generateOpenLocations(quantity?: number) {
-    var chosenQuantity = Math.max(quantity||1, 1);
-
-    var maxUniqueLocation = 3;
-    this.configurationsById.forEach((v) => {
-      maxUniqueLocation = Math.max(v.mmFromLeftEdge, maxUniqueLocation);
-    });
-
-    maxUniqueLocation += 13;
-
-    var goodLocations: number[] = [];
-    while (chosenQuantity > 0) {
-      goodLocations.push(maxUniqueLocation);
-      maxUniqueLocation += 13;
-      chosenQuantity--;
-    }
-    return goodLocations;
-  }
 
   all() {
     return Array.from(this.configurationsById.values());
@@ -203,9 +279,9 @@ export class SampleConfigurationSet {
     this.findRelevantParameters();
   }
 
-	undo() {
+	undo(): ChangeSet | null {
     const edit = this.history.undo();
-    if (!edit) { return; }
+    if (!edit) { return null; }
 
     const currentSet = this.configurationsById;
     edit.additions.forEach((a) => {
@@ -217,11 +293,12 @@ export class SampleConfigurationSet {
 
     // The set of relevant parameters may have changed.
     this.findRelevantParameters();
+    return edit;
 	}
 
-  redo() {
+  redo(): ChangeSet | null {
     const edit = this.history.redo();
-    if (!edit) { return; }
+    if (!edit) { return null; }
 
     const currentSet = this.configurationsById;
     edit.additions.forEach((a) => {
@@ -233,6 +310,7 @@ export class SampleConfigurationSet {
 
     // The set of relevant parameters may have changed.
     this.findRelevantParameters();
+    return edit;
 	}
 
   canRedo(): boolean {

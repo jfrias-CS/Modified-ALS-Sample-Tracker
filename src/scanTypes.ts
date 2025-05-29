@@ -24,17 +24,27 @@ export interface ScanParameterType {
   default?: string;
   // If a non-blank value is mandatory for this parameter
   required?: boolean;
+  // If the value should be unique across all samples in the same set.
+  uniqueInSet?: boolean;
+  // When new instances are generated, and the value should be unique, use this interval when auto-generating new values.
+  autoGenerateInterval?: number;
   // Validates the input. Any return value other than null is considered an error and displayed as an error message.
   validator?: (value:string) => null | string;
 }
 
+export interface ScanParameterSettings {
+  typeId: ParamUid;
+  readOnly?: boolean;
+  // If present, this will override the default in the ScanParameter definition.
+  default?: string;
+}
 
 export interface ScanType {
   name: ScanTypeName;
   description: string;
   referenceUrl?: string;
   // Which parameters are valid for this ScanType. Given in order meant to be displayed.
-  parameters: Array<ParamUid>;
+  parameters: Array<ScanParameterSettings>;
 }
 
 
@@ -62,7 +72,18 @@ function listSumsTo(a:number, v:string):boolean { return v.split(",").map(parseF
 export function getScanTypes(): ScanTypes {
 
   const parameters: ScanParameterType[] = [
-
+    { id: "fromleftedge" as ParamUid,
+      name: "From Left Edge" as ScanParameterName,
+      description: "Distance in mm from the left edge of the sample bar to the center of this sample. Should be unique with respect to the other samples on the bar.",
+      default: "18",
+      required: true,
+      uniqueInSet: true,
+      autoGenerateInterval: 12.7,
+      validator: (v) => {
+        if (atOrBetween(1, 200, v)) { return null; }
+        return "Must be a number between 1 and 200.";
+      },
+    },
     { id: "incangles" as ParamUid,
       name: "Incident Angles" as ScanParameterName,
       description: "A list of incident angles to use, between -30 and 30 degrees. For example 0.13, 0.15, 0.17. Or enter \"auto\" to use the auto-incident angle routine.",
@@ -94,11 +115,11 @@ export function getScanTypes(): ScanTypes {
     },
     { id: "expmax" as ParamUid,
       name: "Max Exposure Time" as ScanParameterName,
-      description: "The upper limit for exposure time in seconds. Can be up to 120.",
-      default: "120",
+      description: "The upper limit for exposure time in seconds. Can be up to 30.",
+      default: "30",
       validator: (v) => {
-        if (atOrBetween(1, 120, v)) { return null; }
-        return "Must be a number from 1 to 120.";
+        if (atOrBetween(1, 30, v)) { return null; }
+        return "Must be a number from 1 to 30.";
       },
     },
     { id: "imgtype" as ParamUid,
@@ -142,28 +163,41 @@ export function getScanTypes(): ScanTypes {
     {
       name: "GIWAXS" as ScanTypeName,
       description: "Standard GIWAXS.  All samples will be measured.",
-      parameters: ["incangles" as ParamUid, "exptime" as ParamUid, "mspots" as ParamUid, "expmax" as ParamUid, "imgtype" as ParamUid]
-    },
-    {
-      name: "GIWAXS with gpCAM" as ScanTypeName,
-      description: "Search for the best sample based on a percentage mixture of components.  Some samples may be skipped during the search.",
-      parameters: ["incangles" as ParamUid, "exptime" as ParamUid, "expmax" as ParamUid, "imgtype" as ParamUid, "gpcam_params" as ParamUid]
-    },
-    {
-      name: "Test" as ScanTypeName,
-      description: "Test ScanType. Not to be used in production. Has two parameters: \"testunused\" and \"imgtype\".",
-      parameters: ["testunused" as ParamUid, "imgtype" as ParamUid]
+      parameters: [
+        { typeId: "fromleftedge" as ParamUid },
+        { typeId: "incangles" as ParamUid },
+        { typeId: "mspots" as ParamUid },
+        { typeId: "exptime" as ParamUid, readOnly: true, default: "auto" },
+        { typeId: "expmax" as ParamUid },
+        { typeId: "imgtype" as ParamUid }
+      ]
     }
-//      {
-//        name: "GIWAXS with 3-parameter gpCAM" as ScanTypeName,
-//        description: "GIWAXS with gpCAM optimization. Not all samples may be scanned.",
-//        parameters: ["2" as ParamUid, "5" as ParamUid, "6" as ParamUid, "7" as ParamUid]
-//      },
-//      {
-//        name: "GIWAXS with 6-parameter gpCAM" as ScanTypeName,
-//        description: "GIWAXS with gpCAM optimization. Not all samples may be scanned.",
-//        parameters: ["2" as ParamUid, "5" as ParamUid, "6" as ParamUid, "7" as ParamUid]
-//      }
+//    {
+//      name: "GIWAXS with gpCAM" as ScanTypeName,
+//      description: "Search for the best sample based on a percentage mixture of components.  Some samples may be skipped during the search.",
+//      parameters: [
+//        { typeId: "incangles" as ParamUid },
+//        { typeId: "gpcam_params" as ParamUid },
+//        { typeId: "exptime" as ParamUid, readOnly: true, default: "auto" },
+//        { typeId: "expmax" as ParamUid },
+//        { typeId: "imgtype" as ParamUid }
+//      ]
+//    },
+//    {
+//      name: "Test" as ScanTypeName,
+//      description: "Test ScanType. Not to be used in production. Has two parameters: \"testunused\" and \"imgtype\".",
+//      parameters: ["testunused" as ParamUid, "imgtype" as ParamUid]
+//    },
+//    {
+//      name: "GIWAXS with 3-parameter gpCAM" as ScanTypeName,
+//      description: "GIWAXS with gpCAM optimization. Not all samples may be scanned.",
+//      parameters: ["2" as ParamUid, "5" as ParamUid, "6" as ParamUid, "7" as ParamUid]
+//    },
+//    {
+//      name: "GIWAXS with 6-parameter gpCAM" as ScanTypeName,
+//      description: "GIWAXS with gpCAM optimization. Not all samples may be scanned.",
+//      parameters: ["2" as ParamUid, "5" as ParamUid, "6" as ParamUid, "7" as ParamUid]
+//    }
   ];
 
   var typeMap = new Map<ScanTypeName, ScanType>();
