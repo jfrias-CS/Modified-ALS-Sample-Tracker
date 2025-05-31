@@ -232,26 +232,22 @@ export function highlightSearchTermsInString(targetStr:string, searchTerms:strin
 // Or, if a startIndex of "2" is provided, a given name of "abc-10-123"
 // would first try "abc-10-2", and proceed upwards from there.
 export function generateUniqueNames(existingNames: string[], suggestedName: string, quantity?: number, startIndex?: number | null) {
-  var chosenPrefix = suggestedName;
   var chosenQuantity = Math.max(quantity||1, 1);
   var chosenStartIndex = startIndex || 1;
 
-  if (suggestedName.length > 0) {
-    const findTrailingNumber = /([0-9]+)$/;
-    const match = findTrailingNumber.exec(suggestedName);
+  const findTrailingNumber = /-([0-9]+)$/;
+  // If any of the existing names look like this one with a number tacked on the end,
+  // use the highest number as the chosen start index.
+  existingNames.forEach((n) => {
+    const match = findTrailingNumber.exec(n);
     if (match) {
-      chosenPrefix = suggestedName.slice(0, suggestedName.length - match[0].length);
-      const detectedIndex = parseInt(match[0], 10);
-      chosenStartIndex = startIndex || detectedIndex || 1;
-    } else {
-      // If we have a suggestedName but it has no trailing number,
-      // we're going to add a number to it.
-      // Here we'll put a dash between them.
-      if (!suggestedName.endsWith("-")) {
-        chosenPrefix = suggestedName + "-";
+      const thisPrefix = n.slice(0, n.length - match[0].length);
+      if (thisPrefix == suggestedName) {
+        const detectedIndex = parseInt(match[0], 10);
+        chosenStartIndex = Math.max(chosenStartIndex, detectedIndex+1);
       }
     }
-  }
+  });
 
   // If we need to optimize, caching this set somewhere would be
   // a good start.  Currently it's tricky because undo/redo
@@ -260,10 +256,19 @@ export function generateUniqueNames(existingNames: string[], suggestedName: stri
   existingNames.forEach((v) => { existingNameSet.add(v) });
 
   var goodNames = [];
+
+  // This weird sequence causes us to go with the suggested name, with no suffix, only if
+  // we are generating a single name and the suggested name is unique.
+  // If that name is not unique, we add a suffix.
+  // If we are generating more than one name, we always add a suffix
+  // (starting with "-1" if no other index is suggested or required.)
   var goodName = suggestedName;
+  if (chosenQuantity > 1) {
+      goodName = suggestedName + '-' + chosenStartIndex.toString();
+  }
   while (chosenQuantity > 0) {
     while (existingNameSet.has(goodName)) {
-      goodName = chosenPrefix + chosenStartIndex.toString();
+      goodName = suggestedName + '-' + chosenStartIndex.toString();
       chosenStartIndex++;
     }
     goodNames.push(goodName);
