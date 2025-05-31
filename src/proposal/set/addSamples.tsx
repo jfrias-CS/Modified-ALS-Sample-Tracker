@@ -110,7 +110,8 @@ const AddSamples: React.FC = () => {
     var count = Math.max(parseInt(quantity, 10), 1);
     // These are new config objects but they don't have real Guid values.
     // Those will be added when they're round-tripped to the server below.
-    const newConfigTemplates = thisSet.generateNewConfigurationsWithDefaults(count, scanTypeValue!.name, newName, description);
+    const filteredNewName = newName.replace(/[^A-Za-z0-9\-_]/g, "_");
+    const newConfigTemplates = thisSet.generateNewConfigurationsWithDefaults(count, scanTypeValue!.name, filteredNewName, description);
 
     count = 0;
     var newConfigs = [];
