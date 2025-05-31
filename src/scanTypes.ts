@@ -66,14 +66,15 @@ function atOrBelow(a:number, v:string):boolean { const n = parseFloat(v); return
 function atOrBetween(a:number, b:number, v:string):boolean { return atOrAbove(a, v) && atOrBelow(b, v); };
 function commaList(test:(v:string) => boolean, c:string):boolean { return c.split(",").every(test) };
 function listSumsTo(a:number, v:string):boolean { return v.split(",").map(parseFloat).reduce((acc, cur) => acc+cur, 0) == a };
+function isStrictAlphaNumeric(v:string):boolean { return v.search(/[^A-Za-z0-9\-_]/g) < 0 };
 
 
 // This may eventually have to be an asynchronous function
 export function getScanTypes(): ScanTypes {
 
   const parameters: ScanParameterType[] = [
-    { id: "fromleftedge" as ParamUid,
-      name: "From Left Edge" as ScanParameterName,
+    { id: "sample_center_position" as ParamUid,
+      name: "Sample Center Position" as ScanParameterName,
       description: "Distance in mm from the left edge of the sample bar to the center of this sample. Should be unique with respect to the other samples on the bar.",
       default: "18",
       required: true,
@@ -84,17 +85,27 @@ export function getScanTypes(): ScanTypes {
         return "Must be a number between 1 and 200.";
       },
     },
-    { id: "incangles" as ParamUid,
+    { id: "incident_angles" as ParamUid,
       name: "Incident Angles" as ScanParameterName,
-      description: "A list of incident angles to use, between -30 and 30 degrees. For example 0.13, 0.15, 0.17. Or enter \"auto\" to use the auto-incident angle routine.",
+      description: "A list of incident angles to use, between 0.1 and 0.4 degrees. For example 0.13, 0.15, 0.17.",
+      default: "0.14",
+      required: true,
+      validator: (v) => {
+        if (commaList((n) => atOrBetween(0.1, 0.4, n), v)) { return null; }
+        return "Must be a comma-separated list of numbers, each between 0.1 and 0.4.";
+      },
+    },
+    { id: "incident_angles_with_auto" as ParamUid,
+      name: "Incident Angles" as ScanParameterName,
+      description: "A list of incident angles to use, between -30 and 30 degrees. For example 0.13, 0.15, 0.17. Or enter \"auto\" to use the auto-incidence angle routine.",
       default: "auto",
       required: true,
       validator: (v) => {
-        if (isAuto(v) || commaList(isNumber, v)) { return null; }
-        return "Must be either a comma-separated list of numbers, or \"auto\".";
+        if (isAuto(v) || commaList((n) => atOrBetween(0.1, 0.4, n), v)) { return null; }
+        return "Must be \"auto\", or a comma-separated list of numbers, each between 0.1 and 0.4.";
       },
     },
-    { id: "exptime" as ParamUid,
+    { id: "exposure_time" as ParamUid,
       name: "Exposure Time" as ScanParameterName,
       description: "The number of exposure seconds needed, or enter \"auto\" if auto exposure is desired.",
       default: "auto",
@@ -104,16 +115,16 @@ export function getScanTypes(): ScanTypes {
         return "Must be either a number, or \"auto\".";
       },
     },
-    { id: "mspots" as ParamUid,
+    { id: "measurement_spots" as ParamUid,
       name: "Measurement Spots" as ScanParameterName,
-      description: "The number of measurement spots per sample (2 mm apart, around center of sample, including center spot.)",
+      description: "The number of measurement spots, 2mm apart, relative to the center of the sample. (For example, 2 would measure at positions -1 and +1 relative to the center, and 3 would measure at -2, 0, 2.)",
       default: "1",
       validator: (v) => {
         if (isInt(v) && atOrAbove(1, v)) { return null; }
         return "Must be an integer, 1 or greater.";
       },
     },
-    { id: "expmax" as ParamUid,
+    { id: "exposure_max" as ParamUid,
       name: "Max Exposure Time" as ScanParameterName,
       description: "The upper limit for exposure time in seconds. Can be up to 30.",
       default: "30",
@@ -122,7 +133,7 @@ export function getScanTypes(): ScanTypes {
         return "Must be a number from 1 to 30.";
       },
     },
-    { id: "imgtype" as ParamUid,
+    { id: "image_type" as ParamUid,
       name: "Image Type" as ScanParameterName,
       description: "The type of image to generate",
       required: true,
@@ -164,29 +175,29 @@ export function getScanTypes(): ScanTypes {
       name: "GIWAXS" as ScanTypeName,
       description: "Standard GIWAXS.  All samples will be measured.",
       parameters: [
-        { typeId: "fromleftedge" as ParamUid },
-        { typeId: "incangles" as ParamUid },
-        { typeId: "mspots" as ParamUid },
-        { typeId: "exptime" as ParamUid, readOnly: true, default: "auto" },
-        { typeId: "expmax" as ParamUid },
-        { typeId: "imgtype" as ParamUid }
+        { typeId: "sample_center_position" as ParamUid },
+        { typeId: "incident_angles" as ParamUid },
+        { typeId: "measurement_spots" as ParamUid, readOnly: true },
+        { typeId: "exposure_time" as ParamUid, readOnly: true, default: "auto" },
+        { typeId: "exposure_max" as ParamUid },
+        { typeId: "image_type" as ParamUid }
       ]
     }
 //    {
 //      name: "GIWAXS with gpCAM" as ScanTypeName,
 //      description: "Search for the best sample based on a percentage mixture of components.  Some samples may be skipped during the search.",
 //      parameters: [
-//        { typeId: "incangles" as ParamUid },
+//        { typeId: "incident_angles" as ParamUid },
 //        { typeId: "gpcam_params" as ParamUid },
-//        { typeId: "exptime" as ParamUid, readOnly: true, default: "auto" },
-//        { typeId: "expmax" as ParamUid },
-//        { typeId: "imgtype" as ParamUid }
+//        { typeId: "exposure_time" as ParamUid, readOnly: true, default: "auto" },
+//        { typeId: "exposure_max" as ParamUid },
+//        { typeId: "image_type" as ParamUid }
 //      ]
 //    },
 //    {
 //      name: "Test" as ScanTypeName,
-//      description: "Test ScanType. Not to be used in production. Has two parameters: \"testunused\" and \"imgtype\".",
-//      parameters: ["testunused" as ParamUid, "imgtype" as ParamUid]
+//      description: "Test ScanType. Not to be used in production. Has two parameters: \"testunused\" and \"image_type\".",
+//      parameters: ["testunused" as ParamUid, "image_type" as ParamUid]
 //    },
 //    {
 //      name: "GIWAXS with 3-parameter gpCAM" as ScanTypeName,
