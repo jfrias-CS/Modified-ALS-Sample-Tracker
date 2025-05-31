@@ -188,7 +188,10 @@ const AddSamples: React.FC = () => {
             </div>
 
             <div className="field">
-              <label className="label">Name</label>
+              { validQuantity && (parseInt(quantity, 10) > 1) ?
+                (<label className="label">Prefix</label>) :
+                (<label className="label">Name</label>)
+              }
               <div className="control has-icons-right">
                 <input className={ validName ? "input" : "input is-danger" }
                   type="text"
