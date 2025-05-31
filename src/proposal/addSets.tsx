@@ -86,7 +86,8 @@ const AddSets: React.FC = () => {
   async function pressedSubmit() {
 
     var count = Math.max(parseInt(quantity, 10), 1);
-    var uniqueNames = metadataContext.sets.generateUniqueNames(newName, count);
+    const filteredNewName = newName.replace(/[^A-Za-z0-9\-_]/g, "_");
+    var uniqueNames = metadataContext.sets.generateUniqueNames(filteredNewName, count);
     var error: string | null = null;
 
     setSubmitErrorMessage(null);

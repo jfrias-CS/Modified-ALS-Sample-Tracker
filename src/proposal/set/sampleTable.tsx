@@ -356,7 +356,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
         // Name
         if ((upperLeftX === 0) && (pasteValue !== "")) {  // Don't allow blank names
-          editedConfig.name = pasteValue;
+          editedConfig.name = pasteValue.replace(/[^A-Za-z0-9\-_]/g, "_");
 
         // Description
         } else if (upperLeftX === 1) {
@@ -481,6 +481,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         return { status: CellValidationStatus.Failure, message: "Name cannot be blank." };
       } else if (sortedSampleIds.filter((sId) => thisSet!.configurationsById.get(sId)!.name == value).length > 1) {
         return { status: CellValidationStatus.Failure, message: "Name must be unique on bar." };
+      } else if (value.search(/[^A-Za-z0-9\-_]/g) >= 0) {
+        return { status: CellValidationStatus.Failure, message: "Name must consist only of letters, numbers, underscore, or dash." };
       }
       return { status: CellValidationStatus.Success, message: null };
 
@@ -528,7 +530,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     // Name
     if (x === 0) {
-      editedConfig.name = newValue;
+      editedConfig.name = newValue.replace(/[^A-Za-z0-9\-_]/g, "_");
 
     // Description
     } else if (x === 1) {
