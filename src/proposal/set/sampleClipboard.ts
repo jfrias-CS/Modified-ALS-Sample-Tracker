@@ -6,17 +6,17 @@ export class SampleTableClipboardContent {
     // SampleConfigurationDto objects representing the copied data
 	content: SampleConfiguration[];
 	// List of SampleConfoguration fields that were selected during copy 
-    selectedFields: Set<string>;
-	// Set of Parameter IDs that were selected during copy
-    selectedParameters: Set<string>;
+    selectedFields: string[];
+	// List of Parameter IDs that were selected during copy
+    selectedParameters: string[];
 	// If no SampleConfigurationDto objects were found on the clipboard,
 	// we possibly fall back to raw text data.
 	alternateTextData: string | null;
 
 	constructor() {
 		this.content = [];
-        this.selectedFields = new Set();
-        this.selectedParameters = new Set();
+        this.selectedFields = [];
+        this.selectedParameters = [];
 		this.alternateTextData = null;
 	}
 
@@ -25,9 +25,52 @@ export class SampleTableClipboardContent {
         this.content = c.map((oneConfig) => {
             return oneConfig.clone();
         });
-        this.selectedFields = new Set(selectedFields);
-        this.selectedParameters = new Set(selectedParameters);
+        this.selectedFields = selectedFields;
+        this.selectedParameters = selectedParameters;
     }
+
+	asGridOfValues():(string|null)[][] {
+		const thisClipboard = this;
+
+		if ((this.content.length == 0) && (this.alternateTextData !== null)) {
+			return [[this.alternateTextData]];
+		}
+		var rows = this.content.map((c) => {
+			// Push values for selected fields, then selected parameters, in order found.
+			var row:(string|null)[] = [];
+			thisClipboard.selectedFields.forEach((f) => {
+				row.push(thisClipboard.getField(c, f));
+			});
+			thisClipboard.selectedParameters.forEach((f) => {
+				row.push(thisClipboard.getParameter(c, f as ParamUid));
+			});
+			return row;
+		});
+		return rows;
+	}
+
+	getField(c:SampleConfiguration, fieldName:string):string | null {
+		var v = undefined;
+		switch(fieldName) {
+			case "name":
+				v = c.name
+				break;
+			case "description":
+				v = c.description
+				break;
+			case "scanType":
+				v = c.scanType
+				break;
+		}
+		if (v === undefined) { v = null; }
+		return v;
+	}
+
+	getParameter(c:SampleConfiguration, parameterName:ParamUid):string | null {
+		var v = c.parameters.get(parameterName)
+		if (v === undefined) { v = null; }
+		return v;
+	}
 
 	// The object we expect from the clipboard: {
 	//	  fromAlsSampleConfigureApp: true
@@ -35,9 +78,9 @@ export class SampleTableClipboardContent {
 	//    selectedColumns: string[]
 	// }
 	fromClipboardPasteEvent(event: React.ClipboardEvent<Element>) {
-		this.content = []
-        this.selectedFields = new Set(); 
-        this.selectedParameters = new Set();
+		this.content = [];
+        this.selectedFields = []; 
+        this.selectedParameters = [];
 		this.alternateTextData = null;
 
         // Can't get data from the event? Leave this object blank.
@@ -57,29 +100,8 @@ export class SampleTableClipboardContent {
 		if (!c.fromAlsSampleConfigureApp) { return; }
 
     	this.content = c.content.map((configDto:SampleConfigurationDto) => new SampleConfiguration(configDto));
-        this.selectedFields = new Set(c.selectedFields);
-        this.selectedParameters = new Set(c.selectedParameters);
-	}
-
-	getField(fieldName:string) {
-		return this.content.map((c) => {
-			switch(fieldName) {
-				case "name":
-					return c.name
-				case "description":
-					return c.description
-				case "scanType":
-					return c.scanType
-			}
-		}).map((v) => v === undefined ? null : v);
-	}
-
-	getParameter(parameterName:ParamUid) {
-		return this.content.map(
-			(c) => c.parameters.get(parameterName)
-		).map(
-			(v) => v === undefined ? null : v)
-		;
+        this.selectedFields = c.selectedFields;
+        this.selectedParameters = c.selectedParameters;
 	}
 
 	isEmpty() {
@@ -94,8 +116,8 @@ export class SampleTableClipboardContent {
 		const forClipboard = {
 			fromAlsSampleConfigureApp: true,
 			content: this.content.map((oneConfig) => oneConfig.asDto()),
-			selectedFields: [...this.selectedFields],
-			selectedParameters: [...this.selectedParameters]
+			selectedFields: this.selectedFields,
+			selectedParameters: this.selectedParameters
 		};
 
 		//const asBlob = new Blob([JSON.stringify(forClipboard)], {type: 'text/plain'});

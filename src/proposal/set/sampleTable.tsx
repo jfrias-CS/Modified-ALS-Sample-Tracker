@@ -306,11 +306,10 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     // Is there only one sample on the clipboard to work with?
     // This will influence our pasting behavior.
     const oneSample = c.content.length == 1 ? true : false;
-    // Was there only one field/parameter column selected when the data was copied?
-    // Are there none selected, as we would get from a paste of raw text?
+    // Were there no columns selected, as we would get from a copy of raw text?
     // This also will influence out pasting behavior.
-    const oneColumn = (c.selectedFields.size + c.selectedParameters.size) == 1 ? true : false;
-    const zeroColumns = (c.selectedFields.size + c.selectedParameters.size) == 0 ? true : false;
+    const clipboardColumnCount = c.selectedFields.length + c.selectedParameters.length; 
+    const zeroColumns = clipboardColumnCount == 0 ? true : false;
 
     // The rect of the current selection.  We may re-form this in the process of pasting.
     var upperLeftX = Math.min(cellMouseDownX, cellMouseMoveX);
@@ -318,73 +317,90 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     var lowerRightX = Math.max(cellMouseDownX, cellMouseMoveX);
     var lowerRightY = Math.max(cellMouseDownY, cellMouseMoveY);
 
-    // Possible different behavior if just one column is selected
-    const pastingToOneColumn = lowerRightX == upperLeftX ? true : false;
+    // If we had no columns selected in the copy, but we do have valid raw text...
+    // Or if we have at least 1 column in the copy, and at least one sample to draw from:
+    if ((validRawText && zeroColumns) || (!zeroColumns && (c.content.length > 0))) {
 
-    // If we're bulk-pasting raw text to a single column,
-    // or bulk-pasting a single column of 1 or more values to a single column:
-    if (pastingToOneColumn && ((validRawText && zeroColumns) || (oneColumn && (c.content.length > 0)))) {
-
-      var pasteValues = [c.alternateTextData];
-      if (oneColumn) {
-        if (c.selectedFields.size == 1) {
-          const f = new Array(...c.selectedFields);
-          pasteValues = c.getField(f[0]);
-        } else {
-          const p = new Array(...c.selectedParameters);
-          console.log(p);
-          pasteValues = c.getParameter(p[0] as ParamUid);
-          console.log(pasteValues);
-        }
-      }
+      var pasteValues = c.asGridOfValues();
 
       var editedConfigs = [];
 
-      var stopAtRow = Math.min(lowerRightY + 1, sortedSampleIds.length);
-      // If we're pasting multiple values from a single column,
-      // only paste as many values as we have, while also stopping at the bottom of the current selection if we reach it.
-      if (pasteValues.length > 1) {
-        stopAtRow = Math.min(upperLeftY + pasteValues.length, sortedSampleIds.length);
+      // If we have multiple rows of data to use for pasting, we should stop pasting when we run out of them.
+      var stopAtRow = upperLeftY + pasteValues.length;
+      // If we are pasting to a selection that's more than one row, we should stop pasting when we hit the bottom of the selection,
+      // regardless of how many rows are on the clipboard.
+      if (lowerRightY - upperLeftY > 1) {
+        stopAtRow = lowerRightY + 1;
+        // And if we're also pasting mutliple rows of data, we should stop at the end of them,
+        // or the end of the selection, whichever is smaller.
+        // (If we're just pasting one row, we can duplicate the values for the whole selection.)
+        if (pasteValues.length > 1) {
+          stopAtRow = Math.min(stopAtRow, upperLeftY + pasteValues.length);
+        }
       }
+      // We should always stop pasting if we reach the bottom of the table.
+      stopAtRow = Math.min(stopAtRow, sortedSampleIds.length);
+
+      // Typically we should paste as many columns as we had selected in the clipboard copy.
+      var stopAtColumn = upperLeftX + clipboardColumnCount;
+      // But if we are pasting to a selection that's more than one column, we should stop at the end of the selection,
+      // regardless of how many columns are available.
+      if (lowerRightX - upperLeftX > 1) {
+        stopAtColumn = lowerRightX + 1;
+        // And if we're also pasting mutliple columns of data, we should stop at the end of them,
+        // or the end of the selection, whichever is smaller.
+        // (If we're just pasting one column, we can duplicate the values for the whole selection.)
+        if (clipboardColumnCount > 1) {
+          stopAtColumn = Math.min(stopAtColumn, upperLeftX + clipboardColumnCount);
+        }
+      }
+      // We should always stop pasting if we reach the right side of the table.
+      stopAtColumn = Math.min(stopAtColumn, FIXED_COLUMN_COUNT + displayedParameters.length);
 
       var y = 0;
       while (upperLeftY+y < stopAtRow) {
 
         var editedConfig = thisSet!.configurationsById.get(sortedSampleIds[upperLeftY+y])!.clone();
-        var pasteValue = pasteValues.length == 1 ? pasteValues[0] : pasteValues[y];
-        if (pasteValue === null) { pasteValue = ""; }
+        const currentClipboardRow = pasteValues.length == 1 ? pasteValues[0] : pasteValues[y];
 
-        // Name
-        if ((upperLeftX === 0) && (pasteValue !== "")) {  // Don't allow blank names
-          editedConfig.name = pasteValue.replace(/[^A-Za-z0-9\-_]/g, "_");
+        var x = 0;
+        while (upperLeftX+x < stopAtColumn) {
+          var pasteValue = currentClipboardRow.length == 1 ? currentClipboardRow[0] : currentClipboardRow[x];
+          if (pasteValue === null) { pasteValue = ""; }
 
-        // Description
-        } else if (upperLeftX === 1) {
-          editedConfig.description = pasteValue;
+          // Name
+          if ((upperLeftX+x === 0) && (pasteValue !== "")) {  // Don't allow blank names
+            editedConfig.name = pasteValue.replace(/[^A-Za-z0-9\-_]/g, "_");
 
-        // Scan Type
-        } else if (upperLeftX === 2) {
-          const asScanTypeName = pasteValue as ScanTypeName;
-          const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
-          // If the text doesn't resolve to a known Scan Type name, skip all this.
-          // We accept invalid values in most columns but accepting one in ScanType would make very ambiguous behavior,
-          // since it affects which columns are displayed in the table.
-          if (newScanType) {
-            editedConfig.scanType = asScanTypeName;
-            newScanType!.parameters.forEach((p) => {
-              const parameterType = metadataContext.scanTypes.parametersById.get(p.typeId);
-              if (parameterType) {
-                // Set any missing parameters to defaults.
-                if (!editedConfig.parameters.has(parameterType!.id)) {
-                  editedConfig.parameters.set(parameterType.id, parameterType.default ?? "");
+          // Description
+          } else if (upperLeftX+x === 1) {
+            editedConfig.description = pasteValue;
+
+          // Scan Type
+          } else if (upperLeftX+x === 2) {
+            const asScanTypeName = pasteValue as ScanTypeName;
+            const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
+            // If the text doesn't resolve to a known Scan Type name, skip all this.
+            // We accept invalid values in most columns but accepting one in ScanType would make very ambiguous behavior,
+            // since it affects which columns are displayed in the table.
+            if (newScanType) {
+              editedConfig.scanType = asScanTypeName;
+              newScanType!.parameters.forEach((p) => {
+                const parameterType = metadataContext.scanTypes.parametersById.get(p.typeId);
+                if (parameterType) {
+                  // Set any missing parameters to defaults.
+                  if (!editedConfig.parameters.has(parameterType!.id)) {
+                    editedConfig.parameters.set(parameterType.id, parameterType.default ?? "");
+                  }
                 }
-              }
-            });
+              });
+            }
+          // Validate scan parameters
+          } else if ((upperLeftX+x >= FIXED_COLUMN_COUNT) && (((upperLeftX+x)-FIXED_COLUMN_COUNT) < displayedParameters.length)) {
+            const paramType = displayedParameters[(upperLeftX+x)-FIXED_COLUMN_COUNT];
+            editedConfig.parameters.set(paramType.id, pasteValue);
           }
-        // Validate scan parameters
-        } else if ((upperLeftX >= FIXED_COLUMN_COUNT) && ((upperLeftX-FIXED_COLUMN_COUNT) < displayedParameters.length)) {
-          const paramType = displayedParameters[upperLeftX - FIXED_COLUMN_COUNT];
-          editedConfig.parameters.set(paramType.id, pasteValue);
+          x++;
         }
 
         editedConfigs.push(editedConfig);
