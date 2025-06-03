@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faExclamationTriangle, faSpinner, faCheck, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faAngleDown, faAngleRight, faSpinner, faCheck, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
 import { Guid, truthyJoin, sortWithNumberParsing } from '../../components/utils.tsx';
@@ -77,6 +77,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
   const [syncTimer, setSyncTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [syncState, setSyncState] = useState<SyncState>(SyncState.Idle);
+  const [tableHelpDisclosed, setTableHelpDisclosed] = useState<boolean>(false);
 
 
   useEffect(() => {
@@ -102,6 +103,15 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       setCellFocusY(null);
     }
   }, [tableHasFocus]);
+
+
+  function onTableHelpShow() {
+    setTableHelpDisclosed(true);
+  }
+
+  function onTableHelpHide() {
+    setTableHelpDisclosed(false);
+  }
 
 
   function tableOnFocus() {
@@ -718,7 +728,35 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
       <div className="block">
         { sortedSampleIds.length == 0 ? (
-          <p>( Use the "Add Samples" button to get started. )</p>
+          !tableHelpDisclosed ? (
+              <nav className="level">
+                <div className="level-left">
+                  <div className="level-item">
+                    <p>(You might want to check out this brief</p>
+                  </div>
+                  <div className="level-item">
+                    <button className="button" onClick={ onTableHelpShow }>Tutorial</button>
+                  </div>
+                  <div className="level-item">
+                    <p>on sample editing.)</p>
+                  </div>
+                </div>
+              </nav>
+            ) : (        
+              <div className="modal is-active">
+                <div className="modal-background"></div>
+                <div className="modal-card">
+                  <header className="modal-card-head">
+                    <p className="modal-card-title">How To Edit Samples</p>
+                    <button className="delete" aria-label="close" onClick={ onTableHelpHide }></button>
+                  </header>
+                  <section className="modal-card-body">
+                    How To Edit Samples
+                  </section>
+                </div>
+              </div>
+              
+            )
         ) : (
           <table className="sampletable"
                   tabIndex={0}
