@@ -184,8 +184,7 @@ export class SampleConfigurationSet {
 
       // Create an array of values, separated by the interval
       while (index < quantity) {
-        values.push(value);
-        value += interval;
+        values.push(value + (index * interval));
         index++;
       }
       uniqueParameterValues.set(parameterType!.id, values);
