@@ -83,6 +83,7 @@ export class SampleConfiguration {
 export class SampleConfigurationSet {
   id: Guid;
   name: string;
+  isValid: boolean;
   // Can remain empty
   description: string;
   configurationsById: Map<string, SampleConfiguration>;
@@ -95,11 +96,12 @@ export class SampleConfigurationSet {
   // This can stay undefined until legitimate ScanType information is available.
   scanTypesReference!: ScanTypes;
 
-  constructor(id: Guid, name: string, description: string) {
+  constructor(id: Guid, name: string, isValid: boolean, description: string) {
     this.id = id;
     this.name = name;
     this.configurationsById = new Map();
     this.description = description;
+    this.isValid = isValid;
     this.relevantParameters = [];
     this.history = new UndoHistory();
   }
@@ -109,8 +111,8 @@ export class SampleConfigurationSet {
     this.findRelevantParameters();
   }
 
-  getSortedSamples() {
-    const sortedSamples = this.all().sort((a, b) => { return sortWithNumberParsing(a.name, b.name)});
+  getSortedValidSamples() {
+    const sortedSamples = this.allValid().sort((a, b) => { return sortWithNumberParsing(a.name, b.name)});
     return sortedSamples;
   }
 
@@ -124,7 +126,7 @@ export class SampleConfigurationSet {
 
     // We default to sorting SampleConfiguration records by name,
     // since that's the default sort when displaying them.
-    const sortedSamples = this.getSortedSamples();
+    const sortedSamples = this.getSortedValidSamples();
 
     sortedSamples.forEach((v) => {
       if (!scanTypesByName.has(v.scanType)) { return; }
@@ -236,7 +238,13 @@ export class SampleConfigurationSet {
     return Array.from(this.configurationsById.values());
   }
 
+  allValid() {
+    const all = this.all();
+    return all.filter((c) => c.isValid);
+  }
 
+  // Add or replace the given SampleConfiguration objects,
+  // making an undo history entry along the way.
   addOrReplaceWithHistory(input: SampleConfiguration[]) {
     const h = new UndoHistoryEntry();
     const currentSet = this.configurationsById;
@@ -260,6 +268,33 @@ export class SampleConfigurationSet {
     // The set of relevant parameters may have changed.
     this.findRelevantParameters();
   }
+
+
+  // Mark the SampleConfiguration objects with the given Guids as deleted,
+  // making an undo history entry along the way.
+  deleteWithHistory(input: Guid[]) {
+    const h = new UndoHistoryEntry();
+    const currentSet = this.configurationsById;
+
+    // Make sure what we're deleting exists
+    const existingIds = input.filter((id) => !currentSet.has(id));
+    if (existingIds.length < 1) { return; }
+
+    // Every given Guid to delete is a new change in forward history
+    existingIds.forEach((id) => h.forwardDelete(currentSet.get(id)!));
+    // Every SampleConfiguration that's deleted
+    // should be preserved and restored if we go backward in history (undo)
+    existingIds.forEach((id) => h.backwardAdd(currentSet.get(id)!));
+
+    // Event construction is complete.
+    this.history.do(h);
+
+    // Now that we've updated undo/redo history, write the changes.
+    existingIds.forEach((id) => currentSet.delete(id));
+    // The set of relevant parameters may have changed.
+    this.findRelevantParameters();
+  }
+
 
   // Adds the given SampleConfiguration objects to the set without doing any checking.
   // Used to build up an initial state.
@@ -380,6 +415,11 @@ export class SampleConfigurationSets {
 
   all() {
     return Array.from(this.setsById.values());
+  }
+
+  allValid() {
+    const all = this.all();
+    return all.filter((c) => c.isValid);
   }
 }
 

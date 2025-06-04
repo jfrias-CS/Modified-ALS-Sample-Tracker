@@ -72,7 +72,7 @@ const AddSets: React.FC = () => {
     const trimmed = name.toString().trim();
     if (trimmed.length < 1) {
       validName = false;
-    } else if (metadataContext.sets.all().some((c) => c.name == trimmed)) {
+    } else if (metadataContext.sets.allValid().some((c) => c.name == trimmed)) {
       validName = false;
       uniqueName = false;
     }

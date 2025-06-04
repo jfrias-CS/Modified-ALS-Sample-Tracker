@@ -27,7 +27,7 @@ const SetLabels: React.FC = () => {
       setLoading(LoadingState.Failure);
       setLoadingMessage("Failed to load Sets. Are you sure you're still logged in?");
     } else if (metadataContext.loadingState == MetaDataLoadingState.Succeeded) {
-      const sortedSets = metadataContext.sets.all().sort((a, b) => { return sortWithNumberParsing(a.name, b.name)});
+      const sortedSets = metadataContext.sets.allValid().sort((a, b) => { return sortWithNumberParsing(a.name, b.name)});
       setSets(sortedSets);
       setLoading(LoadingState.Success);
     }

@@ -88,7 +88,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     const thisSet = metadataContext.sets.getById(setId.trim() as Guid);
     if (thisSet === undefined) { return; }
 
-    const sortedSampleIds = thisSet.all().sort((a, b) => { return sortWithNumberParsing(a.name, b.name)}).map((s) => s.id);
+    const sortedSampleIds = thisSet.allValid().sort((a, b) => { return sortWithNumberParsing(a.name, b.name)}).map((s) => s.id);
     setSortedSampleIds(sortedSampleIds);
 
   }, [setId, metadataContext.changeCounter, metadataContext.loadingState]);

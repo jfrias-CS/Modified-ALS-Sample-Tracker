@@ -87,7 +87,7 @@ const AddSamples: React.FC = () => {
     } else {
       const thisSet = getSet();
       if (thisSet) {
-        if (thisSet.all().some((c) => c.name == trimmed)) {
+        if (thisSet.allValid().some((c) => c.name == trimmed)) {
           validName = false;
           uniqueName = false;
         }
