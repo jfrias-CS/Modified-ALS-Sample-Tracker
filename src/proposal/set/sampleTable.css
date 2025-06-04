@@ -1,3 +1,5 @@
+/* Sample editing Table */
+
 table.sampletable {
   font-size: 0.9rem !important;
   margin-top: 0.5rem;
@@ -44,6 +46,31 @@ table.sampletable td.samplecell > div {
   display: grid;
   height: 100%;
   align-items: stretch;
+}
+
+/* Sortable headers */
+
+table.sampletable th.sortable {
+	cursor: pointer;
+	font-weight: bold;
+	text-decoration: none;
+	background-repeat: no-repeat;
+	background-position: center right;
+}
+
+table.sampletable th.sortable:hover {
+	text-decoration: underline;
+	background-color:#CCF;
+}
+
+table.sampletable th.sortable.sortedup {
+	background-color:#CCC;
+	background-image: url("/table_sort_up.png");
+}
+
+table.sampletable th.sortable.sorteddown {
+	background-color:#CCC;
+	background-image: url("/table_sort_down.png");
 }
 
 /* Table cells with unused parameters */

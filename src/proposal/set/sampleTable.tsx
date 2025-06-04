@@ -5,7 +5,7 @@ import 'bulma/css/bulma.min.css';
 
 import { Guid, truthyJoin, sortWithNumberParsing } from '../../components/utils.tsx';
 import { ScanTypeName, ParamUid, ScanParameterSettings, ParameterChoice } from '../../scanTypes.ts';
-import { SampleConfiguration } from '../../sampleConfiguration.ts';
+import { SampleConfiguration, SampleConfigurationSet, SampleConfigurationField, SampleConfigurationFieldSelection } from '../../sampleConfiguration.ts';
 import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
 import { updateConfig } from '../../metadataApi.ts';
 import AddSamples from './addSamples.tsx';
@@ -69,6 +69,9 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   const [cellFocusY, setCellFocusY] = useState<number | null>(null);
   const [lastActivationMethod, setLastActivationMethod] = useState<CellActivationStatus>(CellActivationStatus.Inactive);
 
+  const [tableSortColumn, setTableSortColumn] = useState<SampleConfigurationFieldSelection>({ field: SampleConfigurationField.Name, parameter: null });
+  const [tableSortReverse, setTableSortReverse] = useState<boolean>(false);
+
   const [cellMouseDown, setCellMouseDown] = useState<boolean>(false);
   const [cellMouseDownX, setCellMouseDownX] = useState<number | null>(null);
   const [cellMouseDownY, setCellMouseDownY] = useState<number | null>(null);
@@ -88,10 +91,28 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     const thisSet = metadataContext.sets.getById(setId.trim() as Guid);
     if (thisSet === undefined) { return; }
 
-    const sortedSampleIds = thisSet.allValid().sort((a, b) => { return sortWithNumberParsing(a.name, b.name)}).map((s) => s.id);
+    const sortedSampleIds = sortSampleIds(thisSet, tableSortColumn);
     setSortedSampleIds(sortedSampleIds);
 
   }, [setId, metadataContext.changeCounter, metadataContext.loadingState]);
+
+
+  function sortSampleIds(thisSet: SampleConfigurationSet, field: SampleConfigurationFieldSelection): Guid[] {
+    const ids = thisSet.allValid();
+    var sorted = [];
+    switch (field.field) {
+      case SampleConfigurationField.Description:
+        sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.description, b.description)});
+        break;
+      case SampleConfigurationField.ScanType:
+        sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.scanType, b.scanType)});
+        break;
+      default:  // Default is to sort by Name
+        sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.name, b.name)});
+        break;
+    }
+    return sorted.map((s) => s.id);
+  }
 
 
   // Triggered one time only, whenever the input is blurred.

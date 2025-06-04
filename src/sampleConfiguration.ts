@@ -6,7 +6,6 @@ import { ObjectWithGuid, ChangeSet, EditQueueEntry, UndoHistory, UndoHistoryEntr
 // sets of sample configurations, and undo/redo history for changes
 // to those sets.
 
-
 export interface SampleConfigurationDto extends ObjectWithGuid {
   // Unique identifier of the set this config belongs to.
   setId: Guid;
@@ -23,6 +22,18 @@ export interface SampleConfigurationDto extends ObjectWithGuid {
   // in case a previous ScanType selection is re-selected.
   parameters: { [key: string]: string|null };
 }
+
+
+// This is a standard data structure used to indicate the selection of
+// a single field, or parameter, in a SampleConfiguration object.
+// For example the sample editing table has columns that refer to fields like "Name", "Description", etc,
+// but also has columns for parameters.  This structure can be used to indicate one of those columns.
+export enum SampleConfigurationField { Id, Name, Description, ScanType, Parameter };
+export interface SampleConfigurationFieldSelection {
+  field: SampleConfigurationField;
+  // If "field" is set to "Parameter", this value becomes relevant.
+  parameter: ParamUid | null
+};
 
 
 // Represents the configuration for one sample
