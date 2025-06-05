@@ -295,7 +295,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     }
 
     // The first FIXED_COLUMN_COUNT columns of the table always represent these fields in order:
-    const fields = ["name", "description", "scanType"];
+    const fields = [SampleConfigurationField.Name, SampleConfigurationField.Description, SampleConfigurationField.ScanType];
     var selectedFields = [];
     // If the selection overlaps those columns, we push the relevant field names. 
     var lowX = lowerX;

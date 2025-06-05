@@ -1,4 +1,4 @@
-import { SampleConfigurationDto, SampleConfiguration } from '../../sampleConfiguration.ts';
+import { SampleConfigurationDto, SampleConfiguration, SampleConfigurationField } from '../../sampleConfiguration.ts';
 import { ParamUid } from '../../scanTypes.ts';
 
 export class SampleTableClipboardContent {
@@ -6,7 +6,7 @@ export class SampleTableClipboardContent {
     // SampleConfigurationDto objects representing the copied data
 	content: SampleConfiguration[];
 	// List of SampleConfoguration fields that were selected during copy 
-    selectedFields: string[];
+    selectedFields: SampleConfigurationField[];
 	// List of Parameter IDs that were selected during copy
     selectedParameters: string[];
 	// If no SampleConfigurationDto objects were found on the clipboard,
@@ -21,7 +21,7 @@ export class SampleTableClipboardContent {
 	}
 
 	// Accepts an object of class LevelChanges
-	fromTable(c:SampleConfiguration[], selectedFields:string[], selectedParameters:string[]) {
+	fromTable(c:SampleConfiguration[], selectedFields:SampleConfigurationField[], selectedParameters:string[]) {
         this.content = c.map((oneConfig) => {
             return oneConfig.clone();
         });
@@ -49,19 +49,22 @@ export class SampleTableClipboardContent {
 		return rows;
 	}
 
-	getField(c:SampleConfiguration, fieldName:string):string | null {
+	getField(c:SampleConfiguration, field:SampleConfigurationField):string | null {
 		var v = undefined;
-		switch(fieldName) {
-			case "name":
+		switch(field) {
+			case SampleConfigurationField.Name:
 				v = c.name
 				break;
-			case "description":
+			case SampleConfigurationField.Description:
 				v = c.description
 				break;
-			case "scanType":
+			case SampleConfigurationField.ScanType:
 				v = c.scanType
 				break;
-		}
+			default:
+				v = c.id;
+				break;
+			}
 		if (v === undefined) { v = null; }
 		return v;
 	}
