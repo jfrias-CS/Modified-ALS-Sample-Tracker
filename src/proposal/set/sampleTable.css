@@ -52,7 +52,6 @@ table.sampletable td.samplecell > div {
 
 table.sampletable th.sortable {
 	cursor: pointer;
-	font-weight: bold;
 	text-decoration: none;
 	background-repeat: no-repeat;
 	background-position: center right;
@@ -60,16 +59,13 @@ table.sampletable th.sortable {
 
 table.sampletable th.sortable:hover {
 	text-decoration: underline;
-	background-color:#CCF;
 }
 
 table.sampletable th.sortable.sortedup {
-	background-color:#CCC;
 	background-image: url("/table_sort_up.png");
 }
 
 table.sampletable th.sortable.sorteddown {
-	background-color:#CCC;
 	background-image: url("/table_sort_down.png");
 }
 

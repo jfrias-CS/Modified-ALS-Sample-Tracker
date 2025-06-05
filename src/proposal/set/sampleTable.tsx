@@ -91,27 +91,49 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     const thisSet = metadataContext.sets.getById(setId.trim() as Guid);
     if (thisSet === undefined) { return; }
 
-    const sortedSampleIds = sortSampleIds(thisSet, tableSortColumn);
+    const sortedSampleIds = sortSampleIds(thisSet, tableSortColumn, tableSortReverse);
     setSortedSampleIds(sortedSampleIds);
 
   }, [setId, metadataContext.changeCounter, metadataContext.loadingState]);
 
 
-  function sortSampleIds(thisSet: SampleConfigurationSet, field: SampleConfigurationFieldSelection): Guid[] {
+  function sortSampleIds(thisSet: SampleConfigurationSet, field: SampleConfigurationFieldSelection, reverse: boolean): Guid[] {
     const ids = thisSet.allValid();
-    var sorted = [];
+    var sorted:SampleConfiguration[] = [];
     switch (field.field) {
       case SampleConfigurationField.Description:
-        sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.description, b.description)});
+        sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.description, b.description, reverse)});
         break;
       case SampleConfigurationField.ScanType:
-        sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.scanType, b.scanType)});
+        sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.scanType, b.scanType, reverse)});
         break;
       default:  // Default is to sort by Name
-        sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.name, b.name)});
+        sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.name, b.name, reverse)});
         break;
-    }
+      case SampleConfigurationField.Parameter:
+        if (field.parameter !== null) {
+          sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.parameters.get(field.parameter!), b.parameters.get(field.parameter!), reverse)});
+        }
+        break;
+      }
     return sorted.map((s) => s.id);
+  }
+
+
+  function clickedTableSortHeader(f:SampleConfigurationFieldSelection) {
+    const thisSet = metadataContext.sets.getById(setId.trim() as Guid);
+    if (thisSet === undefined) { return; }
+
+    if ((f.field == tableSortColumn.field) && (f.parameter == tableSortColumn.parameter)) {
+      const sortedSampleIds = sortSampleIds(thisSet, tableSortColumn, !tableSortReverse);
+      setTableSortReverse(!tableSortReverse);
+      setSortedSampleIds(sortedSampleIds);
+    } else  {
+      const sortedSampleIds = sortSampleIds(thisSet, f, false);
+      setTableSortColumn(f);
+      setTableSortReverse(false);
+      setSortedSampleIds(sortedSampleIds);
+    }
   }
 
 
@@ -694,17 +716,34 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     });
   }
 
+  // Construct table headers
 
+  const sortDirectionStyle = tableSortReverse ? "sortedup" : "sorteddown";
   var tableHeaders = [
-      (<th key="name" scope="col">Name</th>),
-      (<th key="description" scope="col">Description</th>),
-      (<th key="scantype" scope="col">Scan Type</th>)
+      (<th key="name"
+            className={truthyJoin("sortable", (tableSortColumn.field == SampleConfigurationField.Name) && sortDirectionStyle)}
+            onClick={ () => clickedTableSortHeader({ field: SampleConfigurationField.Name, parameter: null }) }
+            scope="col">Name</th>),
+      (<th key="description"
+            className={truthyJoin("sortable", (tableSortColumn.field == SampleConfigurationField.Description) && sortDirectionStyle)}
+            onClick={ () => clickedTableSortHeader({ field: SampleConfigurationField.Description, parameter: null }) }
+            scope="col">Description</th>),
+      (<th key="scantype"
+            className={truthyJoin("sortable", (tableSortColumn.field == SampleConfigurationField.ScanType) && sortDirectionStyle)}
+            onClick={ () => clickedTableSortHeader({ field: SampleConfigurationField.ScanType, parameter: null }) }
+            scope="col">Scan Type</th>)
   ];
 
   displayedParameters.forEach((p) => {
-    tableHeaders.push((<th key={p.id} scope="col">{ p.name }</th>));
+    tableHeaders.push((
+      <th key={p.id}
+          className={truthyJoin("sortable", ((tableSortColumn.field == SampleConfigurationField.Parameter) && (tableSortColumn.parameter == p.id)) && sortDirectionStyle)}
+          onClick={ () => clickedTableSortHeader({ field: SampleConfigurationField.Parameter, parameter: p.id }) }
+          scope="col">{ p.name }</th>
+    ));
   });
 
+  // Construct a message reporting the sync status between this page and the server
 
   var syncStatusMessage: JSX.Element | null = null;
   if (syncState == SyncState.Requested) {
@@ -715,7 +754,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     syncStatusMessage = (<div><FontAwesomeIcon icon={faExclamationTriangle} color="darkred" /> Error Saving! Are you logged in?</div>);
   }
 
-  const allowSampleImport = false;
+  const allowSampleImport = false;  // Bulk sample import form is disabled for now
 
   return (
     <>

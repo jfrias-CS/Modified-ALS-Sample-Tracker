@@ -21,21 +21,24 @@ export function truthyJoin(...names:(string|null|false|undefined)[]): string {
 //    A-13
 //    bbb12342bfb333b-1-2-3-011
 //    bbb12342bfb333b-1-2-21-01
-export function sortWithNumberParsing(a:string, b:string):number {
+// You may ask:  Why do we need a 'reverse' flag when we can just swap values in a calling function?
+// Because with a flag, we can return reversed results for values that are defined,
+// while continuing to sort undefined/empty/null values to the bottom.
+export function sortWithNumberParsing(a:string|undefined|null, b:string|undefined|null, reverse?:boolean):number {
   var result = 0;
 
   // Jsut in case some lunatic passes in non-string things
   if (a === undefined || a === null) {
-    return -1
-  } else if (b === undefined || b === null) {
     return 1
+  } else if (b === undefined || b === null) {
+    return -1
   }
 
   // A empty string gets moved to the bottom
   if (a.length < 1) {
-    return -1
-  } else if (b.length < 1) {
     return 1
+  } else if (b.length < 1) {
+    return -1
   }
 
   var aIndex = 0;
@@ -112,7 +115,7 @@ export function sortWithNumberParsing(a:string, b:string):number {
       }
     }
   }
-  return result;
+  return reverse ? (0-result) : result;
 }
 
 
