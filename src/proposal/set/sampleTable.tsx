@@ -357,9 +357,9 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       var stopAtRow = upperLeftY + pasteValues.length;
       // If we are pasting to a selection that's more than one row, we should stop pasting when we hit the bottom of the selection,
       // regardless of how many rows are on the clipboard.
-      if (lowerRightY - upperLeftY > 1) {
+      if (lowerRightY > upperLeftY) {
         stopAtRow = lowerRightY + 1;
-        // And if we're also pasting mutliple rows of data, we should stop at the end of them,
+        // And if we're also pasting multiple rows of data, we should stop at the end of them,
         // or the end of the selection, whichever is smaller.
         // (If we're just pasting one row, we can duplicate the values for the whole selection.)
         if (pasteValues.length > 1) {
@@ -373,9 +373,9 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       var stopAtColumn = upperLeftX + clipboardColumnCount;
       // But if we are pasting to a selection that's more than one column, we should stop at the end of the selection,
       // regardless of how many columns are available.
-      if (lowerRightX - upperLeftX > 1) {
+      if (lowerRightX > upperLeftX) {
         stopAtColumn = lowerRightX + 1;
-        // And if we're also pasting mutliple columns of data, we should stop at the end of them,
+        // And if we're also pasting multiple columns of data, we should stop at the end of them,
         // or the end of the selection, whichever is smaller.
         // (If we're just pasting one column, we can duplicate the values for the whole selection.)
         if (clipboardColumnCount > 1) {
