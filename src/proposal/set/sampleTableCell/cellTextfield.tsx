@@ -29,10 +29,6 @@ function CellTextfield(settings: CellSubcomponentParameters) {
     switch (event.key) {
       case "Escape":
         reset();
-        // Defocus
-        if (inputRef.current) {
-          inputRef.current.blur();
-        }
         break;
       case "Enter":
         // In the case of "Enter" we always want to save,
@@ -135,8 +131,6 @@ function CellTextfield(settings: CellSubcomponentParameters) {
 
 
   function inputOnFocus() {
-//    setValidationState(InputValidationState.NotTriggered);
-//    setValidationMessage(null);
     inputCompleted(settings.value);
   }
 
@@ -144,12 +138,13 @@ function CellTextfield(settings: CellSubcomponentParameters) {
   function inputOnBlur(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement, Element>) {
     // We used to only save if the value was valid.  Now we accept invalid values and alert the user to correct them.
     if (inputValue != settings.value) {
-    //if ((validationState == InputValidationState.Succeeded) && (inputValue != settings.value)) {
       save();
     } else {
       reset();
     }
+    settings.cellFunctions.close();
   }
+
   
   // If any relevant state changes, update the pop-under help for the cell.
   useEffect(() => {
@@ -185,8 +180,8 @@ function CellTextfield(settings: CellSubcomponentParameters) {
           onFocus={ inputOnFocus }
           onBlur={ inputOnBlur }
           style={ {
-              height: settings.lastMinimumHeight || "unset", 
-              width: settings.lastMinimumWidth || "unset"
+              height: settings.lastKnownHeight || "unset", 
+              width: settings.lastKnownWidth || "unset"
             } }
         />
   );
@@ -202,7 +197,7 @@ function CellTextfield(settings: CellSubcomponentParameters) {
             onKeyDown={ inputOnKeyDown }
             onFocus={ inputOnFocus }
             onBlur={ inputOnBlur }
-            style={ {width: settings.lastMinimumWidth} }
+            style={ {width: settings.lastKnownWidth} }
           />
   );
   */

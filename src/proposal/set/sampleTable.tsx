@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationTriangle, faAngleDown, faAngleRight, faSpinner, faCheck, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
@@ -68,6 +68,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   const [cellFocusX, setCellFocusX] = useState<number | null>(null);
   const [cellFocusY, setCellFocusY] = useState<number | null>(null);
   const [lastActivationMethod, setLastActivationMethod] = useState<CellActivationStatus>(CellActivationStatus.Inactive);
+  const tableRef = useRef<HTMLTableElement>(null);
 
   const [tableSortColumn, setTableSortColumn] = useState<SampleConfigurationFieldSelection>({ field: SampleConfigurationField.Name, parameter: null });
   const [tableSortReverse, setTableSortReverse] = useState<boolean>(false);
@@ -142,8 +143,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   // after a click event on a pulldown item.
   useEffect(() => {
     if (!tableHasFocus) {
-      setCellFocusX(null);
-      setCellFocusY(null);
     }
   }, [tableHasFocus]);
 
@@ -157,12 +156,16 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
-  function tableOnFocus() {
-    setTableHasFocus(true);
+  function tableOnFocus(event: React.FocusEvent<HTMLElement>) {
+    if ((event.target.nodeName.toLowerCase() == "table") && event.target.classList.contains("sampletable")) {
+      setTableHasFocus(true);
+    }
   }
 
-  function tableOnBlur() {
-    setTableHasFocus(false);
+  function tableOnBlur(event: React.FocusEvent<HTMLElement>) {
+    if ((event.target.nodeName.toLowerCase() == "table") && event.target.classList.contains("sampletable")) {
+      setTableHasFocus(false);
+    }
   }
 
 
@@ -174,20 +177,19 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       setCellMouseDownY(foundCell.y);
       setCellMouseMoveX(foundCell.x);
       setCellMouseMoveY(foundCell.y);
-      if ((cellFocusX != foundCell.x) || (cellFocusY != foundCell.y)) {
-        setCellFocusX(null);
-        setCellFocusY(null);
-      }
-      // We can't do this either because it redirects all incoming events so their
+
+      // We can't do this because it creates a reference to the function in a previous
+      // instance of the SampleTable react object, which contains the old useState values,
+      // sowing chaos and confusion.
+      // document.addEventListener("mouseup", tableOnMouseUp, {once: true});
+
+      // We can't do this either because it redirects all subsequent events so their
       // target is the table itself, obscuring the element that the pointer was originally over,
-      // and rendering the event useless to us.
+      // making the event useless to us.
       //const foundTable = findEnclosingTable(event.target as HTMLElement);
       //if (foundTable) {
       //  foundTable.setPointerCapture(event.pointerId);
       //}
-      // We can't do this because it creates a reference to the function in a previous
-      // iteration of the SampleTable react object, which contains the old useState values.
-      // document.addEventListener("mouseup", tableOnMouseUp, {once: true});
     } else {
       setCellMouseDown(false);
       setCellMouseDownX(null);
@@ -212,22 +214,98 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
+  function tableOnDoubleClick(event: React.MouseEvent<HTMLElement>) {
+    const foundCell = findAnEditableCell(event.target as HTMLElement);
+    if (foundCell) {
+      setCellMouseDownX(foundCell.x);
+      setCellMouseDownY(foundCell.y);
+      setCellMouseMoveX(foundCell.x);
+      setCellMouseMoveY(foundCell.y);
+      setCellFocusX(foundCell.x);
+      setCellFocusY(foundCell.y);
+      setCellMouseDown(false);
+      setLastActivationMethod(CellActivationStatus.ByMouse);
+    }
+  }
+
+
   function tableOnPointerUp(event: React.PointerEvent<HTMLElement>) {
     setCellMouseDown(false);
-    //const foundTable = findEnclosingTable(event.target as HTMLElement);
-    //if (foundTable) {
-    //  foundTable.releasePointerCapture(event.pointerId);
-    //}
+    setCellFocusX(null);
+    setCellFocusY(null);
+  }
 
-    // It doesn't matter where the mouse came up,
-    // we go by the last valid cell the mouse was moved in.
-    if ((cellMouseDownX == cellMouseMoveX) && (cellMouseDownY == cellMouseMoveY)) {
-      setLastActivationMethod(CellActivationStatus.ByMouse);
+
+  function tableOnKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key == "Enter") {
+      // If we're already in edit mode for a cell, ignore this.
+      if ((cellFocusX !== null) || (cellFocusY !== null)) {
+        return;
+      }
+      // If we don't have coordinates for a recent mouse down event, ignore this.
+      if ((cellMouseDownX === null) || (cellMouseDownY === null)) {
+        return;
+      }
+      event.preventDefault();
       setCellFocusX(cellMouseDownX);
       setCellFocusY(cellMouseDownY);
-    } else {
-      setCellFocusX(null);
-      setCellFocusY(null);
+      setLastActivationMethod(CellActivationStatus.ByKeyboard);
+    } else if (event.key == "Escape") {
+      if ((cellFocusX === null) || (cellFocusY === null)) {
+        return;
+      }
+
+      // If we're intercepting an Escape key from a cell that is currently being edited,
+      // we should attempt to focus the table.
+      // We don't want to refocus on "close" coming from a cell, because that is called
+      // (among other times) when the cell experiences a blur event,
+      // which can happen because the user is clicking outside the entire table.
+      if (tableRef.current) {
+        tableRef.current.focus();
+      }
+    }
+
+    // We'll only check for movement if we're not currently editing AND there's already a selection.
+    if ((cellFocusX == null) && (cellFocusY == null)) {
+      if ((cellMouseDownX !== null) && (cellMouseDownY !== null)) {
+        var travelVector: Coordinates | null = null;
+        switch (event.key) {
+          case "ArrowUp":
+            travelVector = {x: 0, y: -1};
+            break;
+          case "ArrowDown":
+            travelVector = {x: 0, y: 1};
+            break;
+          case "ArrowLeft":
+            travelVector = {x: -1, y: 0};
+            break;
+          case "ArrowRight":
+            travelVector = {x: 1, y: 0};
+            break;
+        }
+        if (travelVector !== null) {
+          if (event.shiftKey && (cellMouseMoveX !== null) && (cellMouseMoveY !== null)) {
+            const found = lookForAdjacentCell({x: cellMouseMoveX, y: cellMouseMoveY}, travelVector);
+            if (found !== null) {
+              setCellMouseMoveX(found.x);
+              setCellMouseMoveY(found.y);
+            }
+          } else {
+            var found:Coordinates | null = null;
+            if ((cellMouseMoveX !== null) && (cellMouseMoveY !== null)) {
+              found = lookForAdjacentCell({x: cellMouseMoveX, y: cellMouseMoveY}, travelVector);
+            } else {
+              found = lookForAdjacentCell({x: cellMouseDownX, y: cellMouseDownY}, travelVector);
+            }
+            if (found !== null) {
+              setCellMouseDownX(found.x);
+              setCellMouseDownY(found.y);
+              setCellMouseMoveX(found.x);
+              setCellMouseMoveY(found.y);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -293,7 +371,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
 
   function tableOnCopy(event: React.ClipboardEvent) {
-    console.log("copy");
     // If it's an element within the table, don't intercept the event.
     // We're only interested in copy events where the table element itself has focus.
     if (!tableHasFocus) { return; }
@@ -595,6 +672,22 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
+  // A callback function passed to every SampleTableCell (non-header table cell in samples table)
+  // that should be called if the cell is in editing mode and wishes to close.
+  function cellClose(x: number, y: number): void {
+    // We only act on a "close" call coming from the cell that's currently
+    // selected for editing.  If some other cell is selected, the caller is effectively already closed.
+    if ((cellFocusX == x) && (cellFocusY == y)) {
+      setCellFocusX(null);
+      setCellFocusY(null);
+      setCellMouseDownX(cellFocusX);
+      setCellMouseDownY(cellFocusY);
+      setCellMouseMoveX(cellFocusX);
+      setCellMouseMoveY(cellFocusY);
+    }
+  }
+
+
   // A function passed to every SampleTableCell (non-header table cell in samples table)
   // that saves the given input value to the SampleConfiguration indicated by the
   // table cell at the given x,y location.
@@ -668,6 +761,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   const cellFunctions: CellFunctions = {
     validate: cellValidator,
     save: cellSave,
+    close: cellClose,
     move: moveBetweenCells
   }
 
@@ -831,13 +925,16 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         ) : (
           <table className="sampletable"
                   tabIndex={0}
+                  ref={ tableRef }
                   onFocus={ tableOnFocus }
                   onBlur={ tableOnBlur }
                   onCopy={ tableOnCopy }
                   onPaste={ tableOnPaste }
+                  onDoubleClick={ tableOnDoubleClick }
                   onPointerOver={ tableOnPointerOver }
                   onPointerDown={ tableOnPointerDown }
                   onPointerUp={ tableOnPointerUp }
+                  onKeyDown={ tableOnKeyDown }
               >
             <thead>
               <tr key="headers">
