@@ -1,11 +1,14 @@
+/* Sample editing Table */
+
 table.sampletable {
-  font-size: 0.9rem !important;
-  margin-top: 0.5rem;
+  font-size: 0.9em !important;
+  margin-top: 0.5em;
   height: fit-content;
+  outline: unset; /* Override focus decoration */
 }
 
 table.sampletable tr th {
-  padding: 0.3rem 0.6rem;
+  padding: 0.3em 0.6em;
 }
 
 table.sampletable tbody tr:nth-child(odd) {
@@ -44,6 +47,28 @@ table.sampletable td.samplecell > div {
   display: grid;
   height: 100%;
   align-items: stretch;
+}
+
+/* Sortable headers */
+
+table.sampletable th.sortable {
+	cursor: pointer;
+  padding-right: 1em;
+	text-decoration: none;
+	background-repeat: no-repeat;
+	background-position: center right;
+}
+
+table.sampletable th.sortable:hover {
+	text-decoration: underline;
+}
+
+table.sampletable th.sortable.sortedup {
+	background-image: url("/table_sort_up.png");
+}
+
+table.sampletable th.sortable.sorteddown {
+	background-image: url("/table_sort_down.png");
 }
 
 /* Table cells with unused parameters */

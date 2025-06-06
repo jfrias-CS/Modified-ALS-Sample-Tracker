@@ -81,6 +81,7 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
     // This way, a blur that happens because the user clicked on an item in
     // the pulldown won't cause this call to reset the form to the previous value.
     reset();
+    settings.cellFunctions.close();
   }, [justBlurred]);
 
 
@@ -237,7 +238,7 @@ function CellAutocomplete(settings: CellAutocompleteParameters) {
 
     const inputElement = (
       <input type="text"
-        style={ { width: settings.lastMinimumWidth || "unset" } }
+        style={ { width: settings.lastKnownWidth || "unset" } }
         placeholder="Select a value"
         onChange={ (event) => {
           inputChanged(event.target.value)

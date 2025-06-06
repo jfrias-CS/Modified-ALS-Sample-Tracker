@@ -23,6 +23,7 @@ interface CellFunctions {
   validate: CellValidator;
   save: CellValidator;
   move: CellNavigator;
+  close: (x: number, y: number) => void;
 }
 
 
@@ -38,6 +39,7 @@ interface CellHelpMessage {
 interface CellSubcomponentFunctions {
   validate: (inputString: string) => CellValidationResult;
   save: (inputString: string) => CellValidationResult;
+  close: () => void;
   setHelp: (help: CellHelpMessage[]) => void;
   testKeyForMovement: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, useArrows: boolean) => boolean;
 }
@@ -49,8 +51,8 @@ interface CellSubcomponentParameters {
   value: string;
   description?: string;
   isReadOnly?: boolean;
-  lastMinimumWidth?: string;
-  lastMinimumHeight?: string;
+  lastKnownWidth?: string;
+  lastKnownHeight?: string;
   cellFunctions: CellSubcomponentFunctions;
 }
 

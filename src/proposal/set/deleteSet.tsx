@@ -1,14 +1,11 @@
 import React, { useState, useContext } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { appConfiguration } from '../../appConfiguration.ts';
-import { SampleConfigurationSet } from '../../sampleConfiguration.ts';
+import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
 import { Guid } from "../../components/utils.tsx";
 import { MetadataContext } from '../../metadataProvider.tsx';
-import { deleteSet, deleteConfiguration } from '../../metadataApi.ts';
+import { updateConfig, updateSet } from '../../metadataApi.ts';
 
 
 const DeleteSet: React.FC = () => {
@@ -40,42 +37,64 @@ const DeleteSet: React.FC = () => {
     const thisSet = getSet();
     if (!thisSet) { return; }
 
-    var error: string | null = null;
-    const configs = thisSet.all();
+    var errors: string[] = [];
+    const configs = thisSet.allValid();
+    const configIds = configs.map((c) => c.id);
 
     setSubmitErrorMessage(null);
     setInProgress(true);
 
-    var count = configs.length;
-    var deletedConfigs = [];
-    while (count > 0 && (error === null)) {
-      const result = await deleteConfiguration(configs[count-1].id);
-      if (result.success) {
-        thisSet.remove([configs[count-1].id]);
-        deletedConfigs.push(result.response!);
-      } else {
-        error = result.message || "";
+    var configDeleteSuccess = false;
+
+    if (configIds.length == 0) {
+      configDeleteSuccess = true;
+    } else {
+
+      thisSet.deleteWithHistory(configIds);
+      const edits = thisSet.getPendingEdits();
+      if (edits) {
+        const saveCalls = edits.edit.additions.map((e) => updateConfig(e as SampleConfiguration));
+        const deleteCalls = edits.edit.deletions.map((e) => {
+          const c = e as SampleConfiguration;
+          c.isValid = false;
+          return updateConfig(c as SampleConfiguration)
+        });
+
+        Promise.all(saveCalls.concat(deleteCalls)).then((responses) => {
+          if (responses.every((r) => r.success)) {
+            thisSet.catchUpToEdit(edits.index);
+            configDeleteSuccess = true;
+          } else {
+            responses.forEach((r) => {
+              if (!r.success && result.message) {
+                errors.push(result.message);
+              }
+            });
+          }
+        });
+        metadataContext.changed();
       }
-      count--;
     }
 
     // Failed to delete a Configuration?  Don't try deleting the Set.
-    if (error !== null) {
-      setSubmitErrorMessage(error);
+    if (errors.length > 0) {
+      setSubmitErrorMessage(errors.join(', '));
+      setInProgress(false);
       return;
     }
 
-    const result = await deleteSet(thisSet.id);
+    thisSet.isValid = false;
+    const result = await updateSet(thisSet);
     if (result.success) {
-      metadataContext.sets.remove([result.response!]);
+      metadataContext.sets.remove([result.response!.id]);
     } else {
-      error = result.message || "";
+      errors = [result.message || ""];
     }
     metadataContext.changed();
     setInProgress(false);
 
-    if (error !== null) {
-      setSubmitErrorMessage(error);
+    if (errors.length > 0) {
+      setSubmitErrorMessage(errors.join(', '));
     } else {
       setIsOpen(false);
       navigate('../', { relative: "route" });
@@ -83,7 +102,7 @@ const DeleteSet: React.FC = () => {
   };
 
   function clickedClose() {
-    if (!inProgress && isOpen) { setSubmitErrorMessage(null); setIsOpen(false); }
+    if (!inProgress) { setSubmitErrorMessage(null); setIsOpen(false); }
   }
 
   return (

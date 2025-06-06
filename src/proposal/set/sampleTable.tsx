@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faExclamationTriangle, faSpinner, faCheck, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faAngleDown, faAngleRight, faSpinner, faCheck, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
 import { Guid, truthyJoin, sortWithNumberParsing } from '../../components/utils.tsx';
 import { ScanTypeName, ParamUid, ScanParameterSettings, ParameterChoice } from '../../scanTypes.ts';
-import { SampleConfiguration } from '../../sampleConfiguration.ts';
+import { SampleConfiguration, SampleConfigurationSet, SampleConfigurationField, SampleConfigurationFieldSelection } from '../../sampleConfiguration.ts';
 import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
 import { updateConfig } from '../../metadataApi.ts';
 import AddSamples from './addSamples.tsx';
@@ -68,6 +68,10 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   const [cellFocusX, setCellFocusX] = useState<number | null>(null);
   const [cellFocusY, setCellFocusY] = useState<number | null>(null);
   const [lastActivationMethod, setLastActivationMethod] = useState<CellActivationStatus>(CellActivationStatus.Inactive);
+  const tableRef = useRef<HTMLTableElement>(null);
+
+  const [tableSortColumn, setTableSortColumn] = useState<SampleConfigurationFieldSelection>({ field: SampleConfigurationField.Name, parameter: null });
+  const [tableSortReverse, setTableSortReverse] = useState<boolean>(false);
 
   const [cellMouseDown, setCellMouseDown] = useState<boolean>(false);
   const [cellMouseDownX, setCellMouseDownX] = useState<number | null>(null);
@@ -77,6 +81,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
   const [syncTimer, setSyncTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [syncState, setSyncState] = useState<SyncState>(SyncState.Idle);
+  const [tableHelpDisclosed, setTableHelpDisclosed] = useState<boolean>(false);
 
 
   useEffect(() => {
@@ -87,10 +92,50 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     const thisSet = metadataContext.sets.getById(setId.trim() as Guid);
     if (thisSet === undefined) { return; }
 
-    const sortedSampleIds = thisSet.all().sort((a, b) => { return sortWithNumberParsing(a.name, b.name)}).map((s) => s.id);
+    const sortedSampleIds = sortSampleIds(thisSet, tableSortColumn, tableSortReverse);
     setSortedSampleIds(sortedSampleIds);
 
   }, [setId, metadataContext.changeCounter, metadataContext.loadingState]);
+
+
+  function sortSampleIds(thisSet: SampleConfigurationSet, field: SampleConfigurationFieldSelection, reverse: boolean): Guid[] {
+    const ids = thisSet.allValid();
+    var sorted:SampleConfiguration[] = [];
+    switch (field.field) {
+      case SampleConfigurationField.Description:
+        sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.description, b.description, reverse)});
+        break;
+      case SampleConfigurationField.ScanType:
+        sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.scanType, b.scanType, reverse)});
+        break;
+      default:  // Default is to sort by Name
+        sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.name, b.name, reverse)});
+        break;
+      case SampleConfigurationField.Parameter:
+        if (field.parameter !== null) {
+          sorted = ids.sort((a, b) => { return sortWithNumberParsing(a.parameters.get(field.parameter!), b.parameters.get(field.parameter!), reverse)});
+        }
+        break;
+      }
+    return sorted.map((s) => s.id);
+  }
+
+
+  function clickedTableSortHeader(f:SampleConfigurationFieldSelection) {
+    const thisSet = metadataContext.sets.getById(setId.trim() as Guid);
+    if (thisSet === undefined) { return; }
+
+    if ((f.field == tableSortColumn.field) && (f.parameter == tableSortColumn.parameter)) {
+      const sortedSampleIds = sortSampleIds(thisSet, tableSortColumn, !tableSortReverse);
+      setTableSortReverse(!tableSortReverse);
+      setSortedSampleIds(sortedSampleIds);
+    } else  {
+      const sortedSampleIds = sortSampleIds(thisSet, f, false);
+      setTableSortColumn(f);
+      setTableSortReverse(false);
+      setSortedSampleIds(sortedSampleIds);
+    }
+  }
 
 
   // Triggered one time only, whenever the input is blurred.
@@ -98,18 +143,29 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   // after a click event on a pulldown item.
   useEffect(() => {
     if (!tableHasFocus) {
-      setCellFocusX(null);
-      setCellFocusY(null);
     }
   }, [tableHasFocus]);
 
 
-  function tableOnFocus() {
-    setTableHasFocus(true);
+  function onTableHelpShow() {
+    setTableHelpDisclosed(true);
   }
 
-  function tableOnBlur() {
-    setTableHasFocus(false);
+  function onTableHelpHide() {
+    setTableHelpDisclosed(false);
+  }
+
+
+  function tableOnFocus(event: React.FocusEvent<HTMLElement>) {
+    if ((event.target.nodeName.toLowerCase() == "table") && event.target.classList.contains("sampletable")) {
+      setTableHasFocus(true);
+    }
+  }
+
+  function tableOnBlur(event: React.FocusEvent<HTMLElement>) {
+    if ((event.target.nodeName.toLowerCase() == "table") && event.target.classList.contains("sampletable")) {
+      setTableHasFocus(false);
+    }
   }
 
 
@@ -121,20 +177,19 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       setCellMouseDownY(foundCell.y);
       setCellMouseMoveX(foundCell.x);
       setCellMouseMoveY(foundCell.y);
-      if ((cellFocusX != foundCell.x) || (cellFocusY != foundCell.y)) {
-        setCellFocusX(null);
-        setCellFocusY(null);
-      }
-      // We can't do this either because it redirects all incoming events so their
+
+      // We can't do this because it creates a reference to the function in a previous
+      // instance of the SampleTable react object, which contains the old useState values,
+      // sowing chaos and confusion.
+      // document.addEventListener("mouseup", tableOnMouseUp, {once: true});
+
+      // We can't do this either because it redirects all subsequent events so their
       // target is the table itself, obscuring the element that the pointer was originally over,
-      // and rendering the event useless to us.
+      // making the event useless to us.
       //const foundTable = findEnclosingTable(event.target as HTMLElement);
       //if (foundTable) {
       //  foundTable.setPointerCapture(event.pointerId);
       //}
-      // We can't do this because it creates a reference to the function in a previous
-      // iteration of the SampleTable react object, which contains the old useState values.
-      // document.addEventListener("mouseup", tableOnMouseUp, {once: true});
     } else {
       setCellMouseDown(false);
       setCellMouseDownX(null);
@@ -159,22 +214,98 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
+  function tableOnDoubleClick(event: React.MouseEvent<HTMLElement>) {
+    const foundCell = findAnEditableCell(event.target as HTMLElement);
+    if (foundCell) {
+      setCellMouseDownX(foundCell.x);
+      setCellMouseDownY(foundCell.y);
+      setCellMouseMoveX(foundCell.x);
+      setCellMouseMoveY(foundCell.y);
+      setCellFocusX(foundCell.x);
+      setCellFocusY(foundCell.y);
+      setCellMouseDown(false);
+      setLastActivationMethod(CellActivationStatus.ByMouse);
+    }
+  }
+
+
   function tableOnPointerUp(event: React.PointerEvent<HTMLElement>) {
     setCellMouseDown(false);
-    //const foundTable = findEnclosingTable(event.target as HTMLElement);
-    //if (foundTable) {
-    //  foundTable.releasePointerCapture(event.pointerId);
-    //}
+    setCellFocusX(null);
+    setCellFocusY(null);
+  }
 
-    // It doesn't matter where the mouse came up,
-    // we go by the last valid cell the mouse was moved in.
-    if ((cellMouseDownX == cellMouseMoveX) && (cellMouseDownY == cellMouseMoveY)) {
-      setLastActivationMethod(CellActivationStatus.ByMouse);
+
+  function tableOnKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (event.key == "Enter") {
+      // If we're already in edit mode for a cell, ignore this.
+      if ((cellFocusX !== null) || (cellFocusY !== null)) {
+        return;
+      }
+      // If we don't have coordinates for a recent mouse down event, ignore this.
+      if ((cellMouseDownX === null) || (cellMouseDownY === null)) {
+        return;
+      }
+      event.preventDefault();
       setCellFocusX(cellMouseDownX);
       setCellFocusY(cellMouseDownY);
-    } else {
-      setCellFocusX(null);
-      setCellFocusY(null);
+      setLastActivationMethod(CellActivationStatus.ByKeyboard);
+    } else if (event.key == "Escape") {
+      if ((cellFocusX === null) || (cellFocusY === null)) {
+        return;
+      }
+
+      // If we're intercepting an Escape key from a cell that is currently being edited,
+      // we should attempt to focus the table.
+      // We don't want to refocus on "close" coming from a cell, because that is called
+      // (among other times) when the cell experiences a blur event,
+      // which can happen because the user is clicking outside the entire table.
+      if (tableRef.current) {
+        tableRef.current.focus();
+      }
+    }
+
+    // We'll only check for movement if we're not currently editing AND there's already a selection.
+    if ((cellFocusX == null) && (cellFocusY == null)) {
+      if ((cellMouseDownX !== null) && (cellMouseDownY !== null)) {
+        var travelVector: Coordinates | null = null;
+        switch (event.key) {
+          case "ArrowUp":
+            travelVector = {x: 0, y: -1};
+            break;
+          case "ArrowDown":
+            travelVector = {x: 0, y: 1};
+            break;
+          case "ArrowLeft":
+            travelVector = {x: -1, y: 0};
+            break;
+          case "ArrowRight":
+            travelVector = {x: 1, y: 0};
+            break;
+        }
+        if (travelVector !== null) {
+          if (event.shiftKey && (cellMouseMoveX !== null) && (cellMouseMoveY !== null)) {
+            const found = lookForAdjacentCell({x: cellMouseMoveX, y: cellMouseMoveY}, travelVector);
+            if (found !== null) {
+              setCellMouseMoveX(found.x);
+              setCellMouseMoveY(found.y);
+            }
+          } else {
+            var found:Coordinates | null = null;
+            if ((cellMouseMoveX !== null) && (cellMouseMoveY !== null)) {
+              found = lookForAdjacentCell({x: cellMouseMoveX, y: cellMouseMoveY}, travelVector);
+            } else {
+              found = lookForAdjacentCell({x: cellMouseDownX, y: cellMouseDownY}, travelVector);
+            }
+            if (found !== null) {
+              setCellMouseDownX(found.x);
+              setCellMouseDownY(found.y);
+              setCellMouseMoveX(found.x);
+              setCellMouseMoveY(found.y);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -240,7 +371,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
 
   function tableOnCopy(event: React.ClipboardEvent) {
-    console.log("copy");
     // If it's an element within the table, don't intercept the event.
     // We're only interested in copy events where the table element itself has focus.
     if (!tableHasFocus) { return; }
@@ -264,7 +394,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     }
 
     // The first FIXED_COLUMN_COUNT columns of the table always represent these fields in order:
-    const fields = ["name", "description", "scanType"];
+    const fields = [SampleConfigurationField.Name, SampleConfigurationField.Description, SampleConfigurationField.ScanType];
     var selectedFields = [];
     // If the selection overlaps those columns, we push the relevant field names. 
     var lowX = lowerX;
@@ -300,17 +430,11 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     c.fromClipboardPasteEvent(event);
     // If we didn't get any content, give up
-    const validRawText = c.alternateTextData !== null ? true : false;
-    if ((c.content.length == 0) && !validRawText) { return; }
+    if (c.isEmpty()) { return; }
 
-    // Is there only one sample on the clipboard to work with?
-    // This will influence our pasting behavior.
-    const oneSample = c.content.length == 1 ? true : false;
-    // Was there only one field/parameter column selected when the data was copied?
-    // Are there none selected, as we would get from a paste of raw text?
-    // This also will influence out pasting behavior.
-    const oneColumn = (c.selectedFields.size + c.selectedParameters.size) == 1 ? true : false;
-    const zeroColumns = (c.selectedFields.size + c.selectedParameters.size) == 0 ? true : false;
+    // Were there no columns selected, as we would get from a copy of raw text?
+    // This will influence pasting behavior.
+    const clipboardColumnCount = c.selectedFields.length + c.selectedParameters.length; 
 
     // The rect of the current selection.  We may re-form this in the process of pasting.
     var upperLeftX = Math.min(cellMouseDownX, cellMouseMoveX);
@@ -318,52 +442,70 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     var lowerRightX = Math.max(cellMouseDownX, cellMouseMoveX);
     var lowerRightY = Math.max(cellMouseDownY, cellMouseMoveY);
 
-    // Possible different behavior if just one column is selected
-    const pastingToOneColumn = lowerRightX == upperLeftX ? true : false;
+    const pasteValues = c.asGridOfValues();
 
-    // If we're bulk-pasting raw text to a single column,
-    // or bulk-pasting a single column of 1 or more values to a single column:
-    if (pastingToOneColumn && ((validRawText && zeroColumns) || (oneColumn && (c.content.length > 0)))) {
+    var editedConfigs = [];
 
-      var pasteValues = [c.alternateTextData];
-      if (oneColumn) {
-        if (c.selectedFields.size == 1) {
-          const f = new Array(...c.selectedFields);
-          pasteValues = c.getField(f[0]);
-        } else {
-          const p = new Array(...c.selectedParameters);
-          console.log(p);
-          pasteValues = c.getParameter(p[0] as ParamUid);
-          console.log(pasteValues);
-        }
-      }
-
-      var editedConfigs = [];
-
-      var stopAtRow = Math.min(lowerRightY + 1, sortedSampleIds.length);
-      // If we're pasting multiple values from a single column,
-      // only paste as many values as we have, while also stopping at the bottom of the current selection if we reach it.
+    // If we have multiple rows of data to use for pasting, we should stop pasting when we run out of them.
+    var stopAtRow = upperLeftY + pasteValues.length;
+    // If we are pasting to a selection that's more than one row, we should stop pasting when we hit the bottom of the selection,
+    // regardless of how many rows are on the clipboard.
+    if (lowerRightY > upperLeftY) {
+      stopAtRow = lowerRightY + 1;
+      // And if we're also pasting multiple rows of data, we should stop at the end of them,
+      // or the end of the selection, whichever is smaller.
+      // (If we're just pasting one row, we can duplicate the values for the whole selection.)
       if (pasteValues.length > 1) {
-        stopAtRow = Math.min(upperLeftY + pasteValues.length, sortedSampleIds.length);
+        stopAtRow = Math.min(stopAtRow, upperLeftY + pasteValues.length);
       }
+    }
+    // We should always stop pasting if we reach the bottom of the table.
+    stopAtRow = Math.min(stopAtRow, sortedSampleIds.length);
 
-      var y = 0;
-      while (upperLeftY+y < stopAtRow) {
+    // Typically we should paste as many columns as we had selected in the clipboard copy.
+    var stopAtColumn = upperLeftX + clipboardColumnCount;
+    // But if we are pasting to a selection that's more than one column, we should stop at the end of the selection,
+    // regardless of how many columns are available.
+    if (lowerRightX > upperLeftX) {
+      stopAtColumn = lowerRightX + 1;
+      // And if we're also pasting multiple columns of data, we should stop at the end of them,
+      // or the end of the selection, whichever is smaller.
+      // (If we're just pasting one column, we can duplicate the values for the whole selection.)
+      if (clipboardColumnCount > 1) {
+        stopAtColumn = Math.min(stopAtColumn, upperLeftX + clipboardColumnCount);
+      }
+    }
+    // We should always stop pasting if we reach the right side of the table.
+    stopAtColumn = Math.min(stopAtColumn, FIXED_COLUMN_COUNT + displayedParameters.length);
 
-        var editedConfig = thisSet!.configurationsById.get(sortedSampleIds[upperLeftY+y])!.clone();
-        var pasteValue = pasteValues.length == 1 ? pasteValues[0] : pasteValues[y];
+    var y = 0;
+    while (upperLeftY+y < stopAtRow) {
+
+      var editedConfig = thisSet!.configurationsById.get(sortedSampleIds[upperLeftY+y])!.clone();
+      const thisScanType = metadataContext.scanTypes.typesByName.get(editedConfig.scanType)!;
+      const allowedParameters = new Set(thisScanType.parameters.map((p) => p.typeId));
+      // Build a temporary map, from parameter Ids to their ScanParameterSettings in this row's (config's) scan type.
+      // This may be an incomplete mapping, because some parameters we paste into may not be in the scan type.
+      const scanParameterSettingsMap: Map<ParamUid, ScanParameterSettings> =
+              new Map(thisScanType.parameters.map((sp) => [sp.typeId, sp]));
+
+      const currentClipboardRow = pasteValues.length == 1 ? pasteValues[0] : pasteValues[y];
+
+      var x = 0;
+      while (upperLeftX+x < stopAtColumn) {
+        var pasteValue = currentClipboardRow.length == 1 ? currentClipboardRow[0] : currentClipboardRow[x];
         if (pasteValue === null) { pasteValue = ""; }
 
         // Name
-        if ((upperLeftX === 0) && (pasteValue !== "")) {  // Don't allow blank names
+        if ((upperLeftX+x === 0) && (pasteValue !== "")) {  // Don't allow blank names
           editedConfig.name = pasteValue.replace(/[^A-Za-z0-9\-_]/g, "_");
 
         // Description
-        } else if (upperLeftX === 1) {
+        } else if (upperLeftX+x === 1) {
           editedConfig.description = pasteValue;
 
         // Scan Type
-        } else if (upperLeftX === 2) {
+        } else if (upperLeftX+x === 2) {
           const asScanTypeName = pasteValue as ScanTypeName;
           const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
           // If the text doesn't resolve to a known Scan Type name, skip all this.
@@ -381,20 +523,28 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
               }
             });
           }
-        // Validate scan parameters
-        } else if ((upperLeftX >= FIXED_COLUMN_COUNT) && ((upperLeftX-FIXED_COLUMN_COUNT) < displayedParameters.length)) {
-          const paramType = displayedParameters[upperLeftX - FIXED_COLUMN_COUNT];
-          editedConfig.parameters.set(paramType.id, pasteValue);
-        }
+        // Scan parameters
+        } else if ((upperLeftX+x >= FIXED_COLUMN_COUNT) && (((upperLeftX+x)-FIXED_COLUMN_COUNT) < displayedParameters.length)) {
+          const paramType = displayedParameters[(upperLeftX+x)-FIXED_COLUMN_COUNT];
+          const scanParameterSettings:ScanParameterSettings | undefined = scanParameterSettingsMap.get(paramType.id)
 
-        editedConfigs.push(editedConfig);
-        y++;
+          const unused = !allowedParameters.has(paramType.id);
+          // readOnly may not be defined, so we'll cast it for the sake of clarity.
+          const readOnly = scanParameterSettings?.readOnly ? true : false;
+          if (!readOnly && !unused) {
+            editedConfig.parameters.set(paramType.id, pasteValue);
+          }
+        }
+        x++;
       }
 
-      thisSet!.addOrReplaceWithHistory(editedConfigs);
-      metadataContext.changed();
-      contentChanged();
+      editedConfigs.push(editedConfig);
+      y++;
     }
+
+    thisSet!.addOrReplaceWithHistory(editedConfigs);
+    metadataContext.changed();
+    contentChanged();
   }
 
   // Add the vector to the given currentPosition until it points to a table cell that is
@@ -515,6 +665,22 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   }
 
 
+  // A callback function passed to every SampleTableCell (non-header table cell in samples table)
+  // that should be called if the cell is in editing mode and wishes to close.
+  function cellClose(x: number, y: number): void {
+    // We only act on a "close" call coming from the cell that's currently
+    // selected for editing.  If some other cell is selected, the caller is effectively already closed.
+    if ((cellFocusX == x) && (cellFocusY == y)) {
+      setCellFocusX(null);
+      setCellFocusY(null);
+      setCellMouseDownX(cellFocusX);
+      setCellMouseDownY(cellFocusY);
+      setCellMouseMoveX(cellFocusX);
+      setCellMouseMoveY(cellFocusY);
+    }
+  }
+
+
   // A function passed to every SampleTableCell (non-header table cell in samples table)
   // that saves the given input value to the SampleConfiguration indicated by the
   // table cell at the given x,y location.
@@ -588,6 +754,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
   const cellFunctions: CellFunctions = {
     validate: cellValidator,
     save: cellSave,
+    close: cellClose,
     move: moveBetweenCells
   }
 
@@ -636,17 +803,34 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     });
   }
 
+  // Construct table headers
 
+  const sortDirectionStyle = tableSortReverse ? "sortedup" : "sorteddown";
   var tableHeaders = [
-      (<th key="name" scope="col">Name</th>),
-      (<th key="description" scope="col">Description</th>),
-      (<th key="scantype" scope="col">Scan Type</th>)
+      (<th key="name"
+            className={truthyJoin("sortable", (tableSortColumn.field == SampleConfigurationField.Name) && sortDirectionStyle)}
+            onClick={ () => clickedTableSortHeader({ field: SampleConfigurationField.Name, parameter: null }) }
+            scope="col">Name</th>),
+      (<th key="description"
+            className={truthyJoin("sortable", (tableSortColumn.field == SampleConfigurationField.Description) && sortDirectionStyle)}
+            onClick={ () => clickedTableSortHeader({ field: SampleConfigurationField.Description, parameter: null }) }
+            scope="col">Description</th>),
+      (<th key="scantype"
+            className={truthyJoin("sortable", (tableSortColumn.field == SampleConfigurationField.ScanType) && sortDirectionStyle)}
+            onClick={ () => clickedTableSortHeader({ field: SampleConfigurationField.ScanType, parameter: null }) }
+            scope="col">Scan Type</th>)
   ];
 
   displayedParameters.forEach((p) => {
-    tableHeaders.push((<th key={p.id} scope="col">{ p.name }</th>));
+    tableHeaders.push((
+      <th key={p.id}
+          className={truthyJoin("sortable", ((tableSortColumn.field == SampleConfigurationField.Parameter) && (tableSortColumn.parameter == p.id)) && sortDirectionStyle)}
+          onClick={ () => clickedTableSortHeader({ field: SampleConfigurationField.Parameter, parameter: p.id }) }
+          scope="col">{ p.name }</th>
+    ));
   });
 
+  // Construct a message reporting the sync status between this page and the server
 
   var syncStatusMessage: JSX.Element | null = null;
   if (syncState == SyncState.Requested) {
@@ -657,7 +841,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     syncStatusMessage = (<div><FontAwesomeIcon icon={faExclamationTriangle} color="darkred" /> Error Saving! Are you logged in?</div>);
   }
 
-  const allowSampleImport = false;
+  const allowSampleImport = false;  // Bulk sample import form is disabled for now
 
   return (
     <>
@@ -702,17 +886,48 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
       <div className="block">
         { sortedSampleIds.length == 0 ? (
-          <p>( Use the "Add Samples" button to get started. )</p>
+          !tableHelpDisclosed ? (
+              <nav className="level">
+                <div className="level-left">
+                  <div className="level-item">
+                    <p>(You might want to check out this brief</p>
+                  </div>
+                  <div className="level-item">
+                    <button className="button" onClick={ onTableHelpShow }>Tutorial</button>
+                  </div>
+                  <div className="level-item">
+                    <p>on sample editing.)</p>
+                  </div>
+                </div>
+              </nav>
+            ) : (        
+              <div className="modal is-active">
+                <div className="modal-background"></div>
+                <div className="modal-card">
+                  <header className="modal-card-head">
+                    <p className="modal-card-title">How To Edit Samples</p>
+                    <button className="delete" aria-label="close" onClick={ onTableHelpHide }></button>
+                  </header>
+                  <section className="modal-card-body">
+                    <video src={`${import.meta.env.BASE_URL}/sample_table_video_tutorial.mp4`} controls={true} autoPlay={true} loop={true} muted={true} playsInline={true}></video>                    
+                  </section>
+                </div>
+              </div>
+              
+            )
         ) : (
           <table className="sampletable"
                   tabIndex={0}
+                  ref={ tableRef }
                   onFocus={ tableOnFocus }
                   onBlur={ tableOnBlur }
                   onCopy={ tableOnCopy }
                   onPaste={ tableOnPaste }
+                  onDoubleClick={ tableOnDoubleClick }
                   onPointerOver={ tableOnPointerOver }
                   onPointerDown={ tableOnPointerDown }
                   onPointerUp={ tableOnPointerUp }
+                  onKeyDown={ tableOnKeyDown }
               >
             <thead>
               <tr key="headers">

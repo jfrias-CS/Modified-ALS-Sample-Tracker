@@ -54,9 +54,9 @@ function findCellSize(node: HTMLElement): { h: number, w: number } | null {
 
 function SampleTableCell(settings: EditableCellParameters) {
 
-  const [justActivated, setJustActivated] = useState<CellActivationStatus>(settings.activationStatus);
-  const [lastMinimumHeight, setLastMinimumHeight] = useState<string>("unset");
-  const [lastMinimumWidth, setLastMinimumWidth] = useState<string>("unset");
+  const [justActivated, setJustActivated] = useState<CellActivationStatus>(CellActivationStatus.Inactive);
+  const [lastKnownHeight, setLastKnownHeight] = useState<string>("unset");
+  const [lastKnownWidth, setLastKnownWidth] = useState<string>("unset");
   const [helpMessages, setHelpMessages] = useState<JSX.Element[]>([]);
 
   const valueRef = useRef<HTMLDivElement>(null);
@@ -76,6 +76,11 @@ function SampleTableCell(settings: EditableCellParameters) {
     // If the save is successful we expect settings.value to change
     // which will update the control.
     return settings.cellFunctions.save(settings.x, settings.y, value);
+  }
+
+
+  function close(): void {
+    return settings.cellFunctions.close(settings.x, settings.y);
   }
 
 
@@ -123,7 +128,11 @@ function SampleTableCell(settings: EditableCellParameters) {
           didMove = settings.cellFunctions.move(settings.x, settings.y, CellNavigationDirection.Right);
         }
         break;
-    }
+      case "Escape":
+        settings.cellFunctions.close(settings.x, settings.y);
+        didMove = CellValidationStatus.Success;
+        break;
+      }
     if (didMove == CellValidationStatus.Success) {
       event.preventDefault();
       return true;
@@ -151,8 +160,8 @@ function SampleTableCell(settings: EditableCellParameters) {
           w = `${width}px`;
         }
       }
-      setLastMinimumHeight(h);
-      setLastMinimumWidth(w);
+      setLastKnownHeight(h);
+      setLastKnownWidth(w);
     }
     // This state value is used to create a delayed reaction, where the
     // input element is revealed _after_ the size of the table cell is measured.
@@ -168,6 +177,7 @@ function SampleTableCell(settings: EditableCellParameters) {
   const cellSubcomponentFunctions: CellSubcomponentFunctions = {
     validate: validate,
     save: save,
+    close: close,
     setHelp: setHelp,
     testKeyForMovement: testKeyForMovement
   }
@@ -178,30 +188,30 @@ function SampleTableCell(settings: EditableCellParameters) {
   return (
       <div className={ divClass }>
         <div className="value" ref={ valueRef }>{ settings.isUnused ? (<span>&nbsp;</span>) : settings.value }</div>
-        <div className="cellTableInput">{
-            settings.choices ?
-            (<CellAutocomplete
-              activationStatus={ justActivated }
-              value={ settings.value }
-              choices={ settings.choices }
-              description={ settings.description }
-              isReadOnly={ settings.isReadOnly }
-              lastMinimumWidth={ lastMinimumWidth }
-              cellFunctions={ cellSubcomponentFunctions } />)
-            : (<CellTextfield
-              activationStatus={ justActivated }
-              value={ settings.value }
-              description={ settings.description }
-              isReadOnly={ settings.isReadOnly }
-              lastMinimumHeight={ lastMinimumHeight }
-              lastMinimumWidth={ lastMinimumWidth }
-              cellFunctions={ cellSubcomponentFunctions } />)
-          }<div className={ helpClass }> 
-            <div className="notify-content">
-              { helpMessages }
+          <div className="cellTableInput">{
+              settings.choices ?
+              (<CellAutocomplete
+                activationStatus={ justActivated }
+                value={ settings.value }
+                choices={ settings.choices }
+                description={ settings.description }
+                isReadOnly={ settings.isReadOnly }
+                lastKnownWidth={ lastKnownWidth }
+                cellFunctions={ cellSubcomponentFunctions } />)
+              : (<CellTextfield
+                activationStatus={ justActivated }
+                value={ settings.value }
+                description={ settings.description }
+                isReadOnly={ settings.isReadOnly }
+                lastKnownHeight={ lastKnownHeight }
+                lastKnownWidth={ lastKnownWidth }
+                cellFunctions={ cellSubcomponentFunctions } />)
+            }<div className={ helpClass }> 
+              <div className="notify-content">
+                { helpMessages }
+              </div>
             </div>
           </div>
-        </div>
       </div>
   );
 }

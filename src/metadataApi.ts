@@ -92,6 +92,7 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
     return new SampleConfigurationSet(
                     r.id as Guid,
                     r.description || '',
+                    r.sampleCharacteristics!.als_sample_tracking!.valid || false,
                     r.sampleCharacteristics!.als_sample_tracking!.description || "" );
   });
 
@@ -111,7 +112,7 @@ async function readConfigsForProposalId(proposalId: string): Promise<ResponseWra
         id: r.id as Guid,
         setId: setId,
         name: r.description || '',
-        isValid: true,
+        isValid: sc.valid,
         description: sc.description,
         scanType: sc.scan_type,
         parameters: sc.parameters
@@ -152,6 +153,7 @@ async function createNewSet(proposalId: string, name: string, description: strin
     const newSet = new SampleConfigurationSet(
       result.response!.id as Guid,
       name,
+      true,
       description
     );
     return { success: true, response: newSet };
@@ -233,7 +235,7 @@ async function updateSet(set: SampleConfigurationSet): Promise<ResponseWrapper<S
       "als_sample_tracking": {
         "type": AlsSampeTrackingObjectType.Set,
         "description": set.description,
-        "valid": true
+        "valid": set.isValid
       }
     }
   };

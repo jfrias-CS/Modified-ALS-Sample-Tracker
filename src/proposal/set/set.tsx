@@ -73,7 +73,7 @@ const Set: React.FC = () => {
    const trimmed = value.toString().trim();
     if (trimmed.length < 1) {
       return { status: ValidationStatus.Failure, message: "Name cannot be blank." };
-    } else if (metadataContext.sets.all().some((c) => c.name == trimmed)) {
+    } else if (metadataContext.sets.allValid().some((c) => c.name == trimmed)) {
       return { status: ValidationStatus.Failure, message: "Name must be unique for proposal." };
     }
     return { status: ValidationStatus.Success };
