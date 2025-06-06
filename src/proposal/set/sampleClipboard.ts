@@ -90,12 +90,14 @@ export class SampleTableClipboardContent {
         if (event.clipboardData === null) { return; }
 
 		const rawPaste = event.clipboardData.getData("text/json");
-		// If there's any parsing error, this content didn't come from us.
 		var c;
+		// If there's any parsing error, this content didn't come from us.
 		try {
 			c = JSON.parse(rawPaste);
 		} catch (e) {
 			this.alternateTextData = event.clipboardData.getData("text") || null;
+			// We're going to arbitrarily say that raw text is equivalent to a sample name.
+	        this.selectedFields = [SampleConfigurationField.Name];
 			return;
 		}
 
@@ -108,7 +110,8 @@ export class SampleTableClipboardContent {
 	}
 
 	isEmpty() {
-		if (this.content.length == 0) { return true; }
+		if (this.selectedFields.length + this.selectedParameters.length == 0) { return true; }
+		if ((this.content.length == 0) && (this.alternateTextData === null)) { return true; }
 		return false;
 	}
 

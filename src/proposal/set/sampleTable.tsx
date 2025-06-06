@@ -430,13 +430,11 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     c.fromClipboardPasteEvent(event);
     // If we didn't get any content, give up
-    const validRawText = c.alternateTextData !== null ? true : false;
-    if ((c.content.length == 0) && !validRawText) { return; }
+    if (c.isEmpty()) { return; }
 
     // Were there no columns selected, as we would get from a copy of raw text?
     // This will influence pasting behavior.
     const clipboardColumnCount = c.selectedFields.length + c.selectedParameters.length; 
-    const zeroColumns = clipboardColumnCount == 0 ? true : false;
 
     // The rect of the current selection.  We may re-form this in the process of pasting.
     var upperLeftX = Math.min(cellMouseDownX, cellMouseMoveX);
@@ -444,114 +442,109 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     var lowerRightX = Math.max(cellMouseDownX, cellMouseMoveX);
     var lowerRightY = Math.max(cellMouseDownY, cellMouseMoveY);
 
-    // If we had no columns selected in the copy, but we do have valid raw text...
-    // Or if we have at least 1 column in the copy, and at least one sample to draw from:
-    if ((validRawText && zeroColumns) || (!zeroColumns && (c.content.length > 0))) {
+    const pasteValues = c.asGridOfValues();
 
-      const pasteValues = c.asGridOfValues();
+    var editedConfigs = [];
 
-      var editedConfigs = [];
-
-      // If we have multiple rows of data to use for pasting, we should stop pasting when we run out of them.
-      var stopAtRow = upperLeftY + pasteValues.length;
-      // If we are pasting to a selection that's more than one row, we should stop pasting when we hit the bottom of the selection,
-      // regardless of how many rows are on the clipboard.
-      if (lowerRightY > upperLeftY) {
-        stopAtRow = lowerRightY + 1;
-        // And if we're also pasting multiple rows of data, we should stop at the end of them,
-        // or the end of the selection, whichever is smaller.
-        // (If we're just pasting one row, we can duplicate the values for the whole selection.)
-        if (pasteValues.length > 1) {
-          stopAtRow = Math.min(stopAtRow, upperLeftY + pasteValues.length);
-        }
+    // If we have multiple rows of data to use for pasting, we should stop pasting when we run out of them.
+    var stopAtRow = upperLeftY + pasteValues.length;
+    // If we are pasting to a selection that's more than one row, we should stop pasting when we hit the bottom of the selection,
+    // regardless of how many rows are on the clipboard.
+    if (lowerRightY > upperLeftY) {
+      stopAtRow = lowerRightY + 1;
+      // And if we're also pasting multiple rows of data, we should stop at the end of them,
+      // or the end of the selection, whichever is smaller.
+      // (If we're just pasting one row, we can duplicate the values for the whole selection.)
+      if (pasteValues.length > 1) {
+        stopAtRow = Math.min(stopAtRow, upperLeftY + pasteValues.length);
       }
-      // We should always stop pasting if we reach the bottom of the table.
-      stopAtRow = Math.min(stopAtRow, sortedSampleIds.length);
-
-      // Typically we should paste as many columns as we had selected in the clipboard copy.
-      var stopAtColumn = upperLeftX + clipboardColumnCount;
-      // But if we are pasting to a selection that's more than one column, we should stop at the end of the selection,
-      // regardless of how many columns are available.
-      if (lowerRightX > upperLeftX) {
-        stopAtColumn = lowerRightX + 1;
-        // And if we're also pasting multiple columns of data, we should stop at the end of them,
-        // or the end of the selection, whichever is smaller.
-        // (If we're just pasting one column, we can duplicate the values for the whole selection.)
-        if (clipboardColumnCount > 1) {
-          stopAtColumn = Math.min(stopAtColumn, upperLeftX + clipboardColumnCount);
-        }
-      }
-      // We should always stop pasting if we reach the right side of the table.
-      stopAtColumn = Math.min(stopAtColumn, FIXED_COLUMN_COUNT + displayedParameters.length);
-
-      var y = 0;
-      while (upperLeftY+y < stopAtRow) {
-
-        var editedConfig = thisSet!.configurationsById.get(sortedSampleIds[upperLeftY+y])!.clone();
-        const thisScanType = metadataContext.scanTypes.typesByName.get(editedConfig.scanType)!;
-        const allowedParameters = new Set(thisScanType.parameters.map((p) => p.typeId));
-        // Build a temporary map, from parameter Ids to their ScanParameterSettings in this row's (config's) scan type.
-        // This may be an incomplete mapping, because some parameters we paste into may not be in the scan type.
-        const scanParameterSettingsMap: Map<ParamUid, ScanParameterSettings> =
-                new Map(thisScanType.parameters.map((sp) => [sp.typeId, sp]));
-
-        const currentClipboardRow = pasteValues.length == 1 ? pasteValues[0] : pasteValues[y];
-
-        var x = 0;
-        while (upperLeftX+x < stopAtColumn) {
-          var pasteValue = currentClipboardRow.length == 1 ? currentClipboardRow[0] : currentClipboardRow[x];
-          if (pasteValue === null) { pasteValue = ""; }
-
-          // Name
-          if ((upperLeftX+x === 0) && (pasteValue !== "")) {  // Don't allow blank names
-            editedConfig.name = pasteValue.replace(/[^A-Za-z0-9\-_]/g, "_");
-
-          // Description
-          } else if (upperLeftX+x === 1) {
-            editedConfig.description = pasteValue;
-
-          // Scan Type
-          } else if (upperLeftX+x === 2) {
-            const asScanTypeName = pasteValue as ScanTypeName;
-            const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
-            // If the text doesn't resolve to a known Scan Type name, skip all this.
-            // We accept invalid values in most columns but accepting one in ScanType would make very ambiguous behavior,
-            // since it affects which columns are displayed in the table.
-            if (newScanType) {
-              editedConfig.scanType = asScanTypeName;
-              newScanType!.parameters.forEach((p) => {
-                const parameterType = metadataContext.scanTypes.parametersById.get(p.typeId);
-                if (parameterType) {
-                  // Set any missing parameters to defaults.
-                  if (!editedConfig.parameters.has(parameterType!.id)) {
-                    editedConfig.parameters.set(parameterType.id, parameterType.default ?? "");
-                  }
-                }
-              });
-            }
-          // Scan parameters
-          } else if ((upperLeftX+x >= FIXED_COLUMN_COUNT) && (((upperLeftX+x)-FIXED_COLUMN_COUNT) < displayedParameters.length)) {
-            const paramType = displayedParameters[(upperLeftX+x)-FIXED_COLUMN_COUNT];
-            const scanParameterSettings:ScanParameterSettings | undefined = scanParameterSettingsMap.get(paramType.id)
-
-            const unused = !allowedParameters.has(paramType.id);
-            // readOnly may not be defined, so we'll cast it for the sake of clarity.
-            const readOnly = scanParameterSettings?.readOnly ? true : false;
-            if (!readOnly && !unused) {
-              editedConfig.parameters.set(paramType.id, pasteValue);
-            }
-          }
-          x++;
-        }
-
-        editedConfigs.push(editedConfig);
-        y++;
-      }
-
-      thisSet!.addOrReplaceWithHistory(editedConfigs);
-      metadataContext.changed();
-      contentChanged();
     }
+    // We should always stop pasting if we reach the bottom of the table.
+    stopAtRow = Math.min(stopAtRow, sortedSampleIds.length);
+
+    // Typically we should paste as many columns as we had selected in the clipboard copy.
+    var stopAtColumn = upperLeftX + clipboardColumnCount;
+    // But if we are pasting to a selection that's more than one column, we should stop at the end of the selection,
+    // regardless of how many columns are available.
+    if (lowerRightX > upperLeftX) {
+      stopAtColumn = lowerRightX + 1;
+      // And if we're also pasting multiple columns of data, we should stop at the end of them,
+      // or the end of the selection, whichever is smaller.
+      // (If we're just pasting one column, we can duplicate the values for the whole selection.)
+      if (clipboardColumnCount > 1) {
+        stopAtColumn = Math.min(stopAtColumn, upperLeftX + clipboardColumnCount);
+      }
+    }
+    // We should always stop pasting if we reach the right side of the table.
+    stopAtColumn = Math.min(stopAtColumn, FIXED_COLUMN_COUNT + displayedParameters.length);
+
+    var y = 0;
+    while (upperLeftY+y < stopAtRow) {
+
+      var editedConfig = thisSet!.configurationsById.get(sortedSampleIds[upperLeftY+y])!.clone();
+      const thisScanType = metadataContext.scanTypes.typesByName.get(editedConfig.scanType)!;
+      const allowedParameters = new Set(thisScanType.parameters.map((p) => p.typeId));
+      // Build a temporary map, from parameter Ids to their ScanParameterSettings in this row's (config's) scan type.
+      // This may be an incomplete mapping, because some parameters we paste into may not be in the scan type.
+      const scanParameterSettingsMap: Map<ParamUid, ScanParameterSettings> =
+              new Map(thisScanType.parameters.map((sp) => [sp.typeId, sp]));
+
+      const currentClipboardRow = pasteValues.length == 1 ? pasteValues[0] : pasteValues[y];
+
+      var x = 0;
+      while (upperLeftX+x < stopAtColumn) {
+        var pasteValue = currentClipboardRow.length == 1 ? currentClipboardRow[0] : currentClipboardRow[x];
+        if (pasteValue === null) { pasteValue = ""; }
+
+        // Name
+        if ((upperLeftX+x === 0) && (pasteValue !== "")) {  // Don't allow blank names
+          editedConfig.name = pasteValue.replace(/[^A-Za-z0-9\-_]/g, "_");
+
+        // Description
+        } else if (upperLeftX+x === 1) {
+          editedConfig.description = pasteValue;
+
+        // Scan Type
+        } else if (upperLeftX+x === 2) {
+          const asScanTypeName = pasteValue as ScanTypeName;
+          const newScanType = metadataContext.scanTypes.typesByName.get(asScanTypeName);
+          // If the text doesn't resolve to a known Scan Type name, skip all this.
+          // We accept invalid values in most columns but accepting one in ScanType would make very ambiguous behavior,
+          // since it affects which columns are displayed in the table.
+          if (newScanType) {
+            editedConfig.scanType = asScanTypeName;
+            newScanType!.parameters.forEach((p) => {
+              const parameterType = metadataContext.scanTypes.parametersById.get(p.typeId);
+              if (parameterType) {
+                // Set any missing parameters to defaults.
+                if (!editedConfig.parameters.has(parameterType!.id)) {
+                  editedConfig.parameters.set(parameterType.id, parameterType.default ?? "");
+                }
+              }
+            });
+          }
+        // Scan parameters
+        } else if ((upperLeftX+x >= FIXED_COLUMN_COUNT) && (((upperLeftX+x)-FIXED_COLUMN_COUNT) < displayedParameters.length)) {
+          const paramType = displayedParameters[(upperLeftX+x)-FIXED_COLUMN_COUNT];
+          const scanParameterSettings:ScanParameterSettings | undefined = scanParameterSettingsMap.get(paramType.id)
+
+          const unused = !allowedParameters.has(paramType.id);
+          // readOnly may not be defined, so we'll cast it for the sake of clarity.
+          const readOnly = scanParameterSettings?.readOnly ? true : false;
+          if (!readOnly && !unused) {
+            editedConfig.parameters.set(paramType.id, pasteValue);
+          }
+        }
+        x++;
+      }
+
+      editedConfigs.push(editedConfig);
+      y++;
+    }
+
+    thisSet!.addOrReplaceWithHistory(editedConfigs);
+    metadataContext.changed();
+    contentChanged();
   }
 
   // Add the vector to the given currentPosition until it points to a table cell that is
