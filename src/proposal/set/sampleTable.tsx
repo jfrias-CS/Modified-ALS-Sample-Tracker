@@ -909,7 +909,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                     <button className="delete" aria-label="close" onClick={ onTableHelpHide }></button>
                   </header>
                   <section className="modal-card-body">
-                    How To Edit Samples
+                    <video src={`${import.meta.env.BASE_URL}/sample_table_video_tutorial.mp4`} controls={true} autoPlay={true} loop={true} muted={true} playsInline={true}></video>                    
                   </section>
                 </div>
               </div>
