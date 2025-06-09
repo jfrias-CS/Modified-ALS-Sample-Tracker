@@ -1,5 +1,5 @@
 import { SampleConfigurationDto, SampleConfiguration, SampleConfigurationField } from '../../sampleConfiguration.ts';
-import { ParamUid } from '../../scanTypes.ts';
+import { ParamUid } from '../../scanTypeDto.ts';
 
 export class SampleTableClipboardContent {
 

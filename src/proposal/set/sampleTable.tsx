@@ -4,7 +4,7 @@ import { faExclamationTriangle, faAngleDown, faAngleRight, faSpinner, faCheck, f
 import 'bulma/css/bulma.min.css';
 
 import { Guid, truthyJoin, sortWithNumberParsing } from '../../components/utils.tsx';
-import { ScanTypeName, ParamUid, ScanParameterSettings, ParameterChoice } from '../../scanTypes.ts';
+import { ScanTypeName, ParamUid, ScanParameterSettings, ParameterChoice } from '../../scanTypeDto.ts';
 import { SampleConfiguration, SampleConfigurationSet, SampleConfigurationField, SampleConfigurationFieldSelection } from '../../sampleConfiguration.ts';
 import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
 import { updateConfig } from '../../metadataApi.ts';

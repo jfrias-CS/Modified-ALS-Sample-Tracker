@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import 'bulma/css/bulma.min.css';
 import './cellAutocomplete.css';
 
-import { ParameterChoice } from '../../../scanTypes.ts';
+import { ParameterChoice } from '../../../scanTypeDto.ts';
 import { CellActivationStatus, CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellSubcomponentParameters } from './cellDto.ts';
 import { highlightSearchTermsInString } from "../../../components/utils.tsx";
 

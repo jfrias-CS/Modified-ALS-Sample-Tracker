@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import 'bulma/css/bulma.min.css';
 
 import { truthyJoin } from '../../../components/utils.tsx';
-import { ParameterChoice } from '../../../scanTypes.ts';
+import { ParameterChoice } from '../../../scanTypeDto.ts';
 import { CellFunctions, CellActivationStatus, CellValidationStatus, CellHelpStatus, CellHelpMessage, CellValidationResult, CellNavigationDirection, CellSubcomponentFunctions } from './cellDto.ts';
 import { CellTextfield } from './cellTextfield.tsx';
 import { CellAutocomplete } from './cellAutocomplete.tsx';

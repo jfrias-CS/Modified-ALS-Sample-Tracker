@@ -1,4 +1,5 @@
-import { ScanTypes, ParamUid, ScanTypeName } from './scanTypes.ts';
+import { ParamUid, ScanTypeName } from './scanTypeDto.ts';
+import { ScanTypes } from './scanTypes.ts';
 import { Guid, sortWithNumberParsing, generateUniqueNames } from "./components/utils.tsx";
 import { ObjectWithGuid, ChangeSet, EditQueueEntry, UndoHistory, UndoHistoryEntry } from "./undoHistory.ts";
 
