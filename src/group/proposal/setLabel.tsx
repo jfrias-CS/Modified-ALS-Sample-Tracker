@@ -1,10 +1,10 @@
 import React from 'react';
 import 'bulma/css/bulma.min.css';
 
-import { appConfiguration } from './../appConfiguration.ts';
-import { Guid } from "./../components/utils.tsx";
-import { QrCodeImage } from './../components/qrcode/qrCodeImage.tsx';
-import { QrEncoding, QrErrorCorrectionLevel } from './../components/qrcode/qrCodeTypes.ts';
+import { appConfiguration } from '../../appConfiguration.ts';
+import { Guid } from "../../components/utils.tsx";
+import { QrCodeImage } from '../../components/qrcode/qrCodeImage.tsx';
+import { QrEncoding, QrErrorCorrectionLevel } from '../../components/qrcode/qrCodeTypes.ts';
 import './setLabel.css';
 
 

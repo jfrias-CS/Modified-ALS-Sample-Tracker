@@ -3,8 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { MetadataContext } from '../metadataProvider.tsx';
-import { createNewSet } from '../metadataApi.ts';
+import { MetadataContext } from '../../metadataProvider.tsx';
+import { createNewSet } from '../../metadataApi.ts';
 
 
 const AddSets: React.FC = () => {

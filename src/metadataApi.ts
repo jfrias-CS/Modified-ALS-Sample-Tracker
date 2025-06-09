@@ -1,7 +1,7 @@
 import { Guid } from "./components/utils.tsx";
-import { ResponseWrapper, sciCatGet, sciCatPost, sciCatDelete, sciCatPatch } from "./sciCatBasicApi.ts";
+import { ResponseWrapper, sciCatPatch } from "./sciCatBasicApi.ts";
 import { SciCatSample, createSample, getSamplesForGroupId, deleteSample } from "./sciCatApi.ts";
-import { ScanTypeName, ParamUid } from './scanTypes.ts';
+import { ScanTypeName, ParamUid } from './scanTypeDto.ts';
 import { SampleConfiguration, SampleConfigurationSet } from './sampleConfiguration.ts';
 
 

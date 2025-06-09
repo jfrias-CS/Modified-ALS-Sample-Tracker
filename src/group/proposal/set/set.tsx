@@ -4,14 +4,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGear, faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { Guid } from '../../components/utils.tsx';
-import { AppConfigurationContext } from '../../appConfigurationProvider.tsx';
-import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
-import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
+import { Guid } from '../../../components/utils.tsx';
+import { AppConfigurationContext } from '../../../appConfigurationProvider.tsx';
+import { MetadataContext, MetaDataLoadingState } from '../../../metadataProvider.tsx';
+import { LoadingBanner, LoadingState } from '../../../components/loadingBanner.tsx';
 import DeleteSet from './deleteSet.tsx';
 import SampleTable from './sampleTable.tsx';
-import { InputEditable, ValidationStatus } from '../../components/inputEditable.tsx';
-import { updateSet } from '../../metadataApi.ts';
+import { InputEditable, ValidationStatus } from '../../../components/inputEditable.tsx';
+import { updateSet } from '../../../metadataApi.ts';
 
 
 const Set: React.FC = () => {

@@ -2,18 +2,18 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useParams } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
-import { sortWithNumberParsing } from '../components/utils.tsx';
-import { SampleConfigurationSet } from '../sampleConfiguration.ts';
-import { MetadataContext, MetaDataLoadingState } from '../metadataProvider.tsx';
-import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
+import { sortWithNumberParsing } from '../../components/utils.tsx';
+import { SampleConfigurationSet } from '../../sampleConfiguration.ts';
+import { GroupContext } from '../groupProvider.tsx';
+import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
+import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
 import SetLabel from './setLabel.tsx';
 import './setLabels.css';
 
 
 const SetLabels: React.FC = () => {
 
-  const { proposalId } = useParams();
-
+  const groupContext = useContext(GroupContext);
   const metadataContext = useContext(MetadataContext);
   const [sets, setSets] = useState<SampleConfigurationSet[]>([]);
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
@@ -21,7 +21,7 @@ const SetLabels: React.FC = () => {
 
   const [marginAfterHorizontal, setMarginAfterHorizontal] = useState<string>("3.475");
   const [marginAfterVertical, setMarginAfterVertical] = useState<string>("3.375");
-
+  
   useEffect(() => {
     if (metadataContext.setsLoadingState == MetaDataLoadingState.Failed) {
       setLoading(LoadingState.Failure);
@@ -43,7 +43,7 @@ const SetLabels: React.FC = () => {
     setMarginAfterVertical(v);
   }
 
-    // If we're in any loading state other than success,
+  // If we're in any loading state other than success,
   // display a loading banner instead of the content.
   if (loading != LoadingState.Success) {
     return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
@@ -54,9 +54,9 @@ const SetLabels: React.FC = () => {
 
       <nav className="breadcrumb is-medium do-not-print" aria-label="breadcrumbs">
         <ul>
-          <li><Link to={ "/" }>Proposals</Link></li>
-          <li><Link to={ "/proposal/" + proposalId }>{ metadataContext.sets.name }</Link></li>
-          <li className="is-active"><Link to={ "/proposal/" + proposalId + "/labels" }>Printable Labels</Link></li>
+          <li><Link to={ "/group/" + groupContext.group!.id }>{ groupContext.group!.name }</Link></li>
+          <li><Link to={ "/group/" + groupContext.group!.id + "/proposal/" + metadataContext.proposalId }>{ metadataContext.sets.name }</Link></li>
+          <li className="is-active"><Link to={ "/group/" + groupContext.group!.id + "/proposal/" + metadataContext.proposalId + "/labels" }>Printable Labels</Link></li>
         </ul>
       </nav>
 

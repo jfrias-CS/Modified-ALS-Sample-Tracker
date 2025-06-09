@@ -255,23 +255,39 @@ export class SampleConfigurationSet {
     return all.filter((c) => c.isValid);
   }
 
-  // Add or replace the given SampleConfiguration objects,
+
+  // Add the given SampleConfiguration objects,
   // making an undo history entry along the way.
-  addOrReplaceWithHistory(input: SampleConfiguration[]) {
+  addWithHistory(input: SampleConfiguration[]) {
     const h = new UndoHistoryEntry();
     const currentSet = this.configurationsById;
 
     // Every given SampleConfiguration is a new change in forward history
     input.forEach((i) => h.forwardAdd(i));
-    // Every given SampleConfiguration with a novel id (not seen in the current set)
-    // should be removed if we go backward in history (undo)
-    const newConfigs = input.filter((i) => !currentSet.has(i.id));
-    newConfigs.forEach((i) => h.backwardDelete(i));
-    // Every SampleConfiguration in the existing set that's replaced by a new one
-    // should be preserved and restored if we go backward in history (undo)
-    const conflictingConfigs = input.filter((i) => currentSet.has(i.id));
-    conflictingConfigs.forEach((i) => h.backwardAdd(currentSet.get(i.id)!));
+    // Every given SampleConfiguration considered new
+    // should be given a delete action if we go backward in history (undo)
+    input.forEach((i) => h.backwardDelete(i));
+    // Event construction is complete.
+    this.history.do(h);
 
+    // Now that we've updated undo/redo history, write the changes.
+    input.forEach((i) => currentSet.set(i.id, i));
+    // The set of relevant parameters may have changed.
+    this.findRelevantParameters();
+  }
+
+  // Replace the given SampleConfiguration objects,
+  // making an undo history entry along the way.
+  replaceWithHistory(input: SampleConfiguration[]) {
+    const h = new UndoHistoryEntry();
+    const currentSet = this.configurationsById;
+
+    // Every given SampleConfiguration is a new change in forward history
+    input.forEach((i) => h.forwardAdd(i));
+    // Every SampleConfiguration in the existing set that's replaced
+    // should be preserved and restored if we go backward in history (undo)
+    const verifiedExisting = input.filter((i) => currentSet.has(i.id));
+    verifiedExisting.forEach((i) => h.backwardAdd(currentSet.get(i.id)!));
     // Event construction is complete.
     this.history.do(h);
 
@@ -297,7 +313,6 @@ export class SampleConfigurationSet {
     // Every SampleConfiguration that's deleted
     // should be preserved and restored if we go backward in history (undo)
     existingIds.forEach((id) => h.backwardAdd(currentSet.get(id)!));
-
     // Event construction is complete.
     this.history.do(h);
 
@@ -367,8 +382,8 @@ export class SampleConfigurationSet {
     return this.history.canUndo();
   }
 
-  getPendingEdits(): EditQueueEntry | null {
-    return this.history.getPendingEdits();
+  getPendingChanges(): EditQueueEntry | null {
+    return this.history.getPendingChanges();
   }
 
   // Pulls items off the beginning of the edit queue

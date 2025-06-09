@@ -2,7 +2,6 @@
     "scicatAppUrl": "http://backend.localhost/",
     "scicatApiPath": "api/v3/",
     "externalAuthUrl": "http://localhost:3000/",
-    "documentationUrl": "https://docs.google.com/document/d/1KUNBCg-yX-vUxbg_bFPRF_6JUcnKk0S0i3Cp-zqVUAU/edit?tab=t.0",
     "loginEnabled": true,
     "debugLoggingingEnabled": true,
     "extremeDebugLoggingingEnabled": false,

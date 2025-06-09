@@ -2,10 +2,10 @@ import React, { useState, useContext } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
-import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
-import { Guid } from "../../components/utils.tsx";
-import { MetadataContext } from '../../metadataProvider.tsx';
-import { updateConfig, updateSet } from '../../metadataApi.ts';
+import { SampleConfiguration, SampleConfigurationSet } from '../../../sampleConfiguration.ts';
+import { Guid } from "../../../components/utils.tsx";
+import { MetadataContext } from '../../../metadataProvider.tsx';
+import { updateConfig, updateSet } from '../../../metadataApi.ts';
 
 
 const DeleteSet: React.FC = () => {
@@ -51,10 +51,10 @@ const DeleteSet: React.FC = () => {
     } else {
 
       thisSet.deleteWithHistory(configIds);
-      const edits = thisSet.getPendingEdits();
-      if (edits) {
-        const saveCalls = edits.edit.additions.map((e) => updateConfig(e as SampleConfiguration));
-        const deleteCalls = edits.edit.deletions.map((e) => {
+      const changes = thisSet.getPendingChanges();
+      if (changes) {
+        const saveCalls = changes.changes.additions.map((e) => updateConfig(e as SampleConfiguration));
+        const deleteCalls = changes.changes.deletions.map((e) => {
           const c = e as SampleConfiguration;
           c.isValid = false;
           return updateConfig(c as SampleConfiguration)
@@ -62,7 +62,7 @@ const DeleteSet: React.FC = () => {
 
         Promise.all(saveCalls.concat(deleteCalls)).then((responses) => {
           if (responses.every((r) => r.success)) {
-            thisSet.catchUpToEdit(edits.index);
+            thisSet.catchUpToEdit(changes.index);
             configDeleteSuccess = true;
           } else {
             responses.forEach((r) => {

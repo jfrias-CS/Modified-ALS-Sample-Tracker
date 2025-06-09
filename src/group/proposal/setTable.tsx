@@ -2,10 +2,10 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useParams } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
-import { sortWithNumberParsing } from '../components/utils.tsx';
-import { SampleConfigurationSet } from '../sampleConfiguration.ts';
-import { MetadataContext, MetaDataLoadingState } from '../metadataProvider.tsx';
-import { LoadingBanner, LoadingState } from '../components/loadingBanner.tsx';
+import { sortWithNumberParsing } from '../../components/utils.tsx';
+import { SampleConfigurationSet } from '../../sampleConfiguration.ts';
+import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
+import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
 import AddSets from './addSets.tsx';
 import './setTable.css';
 

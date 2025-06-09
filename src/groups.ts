@@ -8,17 +8,32 @@ export interface Group {
   name: string;
   description: string;
 
-  // The URL for linking to an overview of how to prepare samples for this particular group.
-  overviewUrl: string;
   // The name to show as a primary contact for this group.
   contactName: string;
   // The email address to show as a primary contact for this group.
   contactEmail: string;
+  // The URL for linking to an overview of how to prepare samples for this particular group.
+  overviewUrl: string;
 
   // The noun to use to refer to sets of samples, e.g. "bar".
   setName: string;
+  setNameCapitalized: string;
+
   // The allowed Scan Types for this group.
   scanTypeNamesInDisplayOrder: ScanTypeName[];
+}
+
+// These should never be accessed.  They're usable as placeholders.
+export const groupDefaults:Group = {
+  id: "",
+  name: "",
+  description: "",
+  contactName: "",
+  contactEmail: "",
+  overviewUrl: "",
+  setName: "set",
+  setNameCapitalized: "Set",
+  scanTypeNamesInDisplayOrder: []
 }
 
 export interface Groups {
@@ -34,10 +49,11 @@ export function getGroups(): Groups {
     { id: "733",
       name: "Beamline 733",
       description: "",
-      overviewUrl: "18",
       contactEmail: "chenhuizhu@lbl.gov",
       contactName: "Chenhui Zhu",
+      overviewUrl: "https://docs.google.com/document/d/1KUNBCg-yX-vUxbg_bFPRF_6JUcnKk0S0i3Cp-zqVUAU/edit?tab=t.0",
       setName: "bar",
+      setNameCapitalized: "Bar",
       scanTypeNamesInDisplayOrder: [
         "GIWAXS" as ScanTypeName
       ]

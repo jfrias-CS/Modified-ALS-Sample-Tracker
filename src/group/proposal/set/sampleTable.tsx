@@ -3,18 +3,18 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationTriangle, faAngleDown, faAngleRight, faSpinner, faCheck, faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { Guid, truthyJoin, sortWithNumberParsing } from '../../components/utils.tsx';
-import { ScanTypeName, ParamUid, ScanParameterSettings, ParameterChoice } from '../../scanTypeDto.ts';
-import { SampleConfiguration, SampleConfigurationSet, SampleConfigurationField, SampleConfigurationFieldSelection } from '../../sampleConfiguration.ts';
-import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
-import { updateConfig } from '../../metadataApi.ts';
+import { Guid, truthyJoin, sortWithNumberParsing } from '../../../components/utils.tsx';
+import { ScanTypeName, ParamUid, ScanParameterSettings, ParameterChoice } from '../../../scanTypeDto.ts';
+import { SampleConfiguration, SampleConfigurationSet, SampleConfigurationField, SampleConfigurationFieldSelection } from '../../../sampleConfiguration.ts';
+import { MetadataContext, MetaDataLoadingState } from '../../../metadataProvider.tsx';
+import { updateConfig } from '../../../metadataApi.ts';
 import AddSamples from './addSamples.tsx';
 import ImportSamples from './importSamples.tsx';
 import { SampleTableCell } from './sampleTableCell/cell.tsx';
 import { CellFunctions, CellActivationStatus, CellValidationStatus, CellValidationResult, CellNavigationDirection } from './sampleTableCell/cellDto.ts';
 import { SampleTableClipboardContent } from './sampleClipboard.ts';
 import './sampleTable.css';
-import '../../components/tableSortable.css';
+import '../../../components/tableSortable.css';
 
 
 interface SampleTableProps {
@@ -543,7 +543,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       y++;
     }
 
-    thisSet!.addOrReplaceWithHistory(editedConfigs);
+    thisSet!.replaceWithHistory(editedConfigs);
     metadataContext.changed();
     contentChanged();
   }
@@ -630,10 +630,17 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     if (x === 0) {
       if (value == "") {
         return { status: CellValidationStatus.Failure, message: "Name cannot be blank." };
-      } else if (sortedSampleIds.filter((sId) => thisSet!.configurationsById.get(sId)!.name == value).length > 1) {
-        return { status: CellValidationStatus.Failure, message: "Name must be unique on bar." };
-      } else if (value.search(/[^A-Za-z0-9\-_]/g) >= 0) {
-        return { status: CellValidationStatus.Failure, message: "Name must consist only of letters, numbers, underscore, or dash." };
+      } else {
+        const configsMatchingName = sortedSampleIds.filter((sId) => {
+                const c = thisSet!.configurationsById.get(sId);
+                if (!c) { return false; }
+                return c.name == value;
+              });
+        if (configsMatchingName.length > 1) {
+          return { status: CellValidationStatus.Failure, message: "Name must be unique on bar." };
+        } else if (value.search(/[^A-Za-z0-9\-_]/g) >= 0) {
+          return { status: CellValidationStatus.Failure, message: "Name must consist only of letters, numbers, underscore, or dash." };
+        }
       }
       return { status: CellValidationStatus.Success, message: null };
 
@@ -728,7 +735,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
       editedConfig.parameters.set(paramType.id, newValue);
     }
 
-    thisSet!.addOrReplaceWithHistory([editedConfig]);
+    thisSet!.replaceWithHistory([editedConfig]);
     metadataContext.changed();
     contentChanged();
 
@@ -779,16 +786,16 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     }
 
     setSyncTimer(null);
-    const edits = thisSet!.getPendingEdits();
-    if (!edits) {
+    const changes = thisSet!.getPendingChanges();
+    if (!changes) {
       setSyncState(SyncState.Idle);
       return;
     }
 
     setSyncState(SyncState.Requested);
 
-    const saveCalls = edits.edit.additions.map((e) => updateConfig(e as SampleConfiguration));
-    const deleteCalls = edits.edit.deletions.map((e) => {
+    const saveCalls = changes.changes.additions.map((e) => updateConfig(e as SampleConfiguration));
+    const deleteCalls = changes.changes.deletions.map((e) => {
       const c = e as SampleConfiguration;
       c.isValid = false;
       return updateConfig(c as SampleConfiguration)
@@ -797,7 +804,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     Promise.all(saveCalls.concat(deleteCalls)).then((responses) => {
       if (responses.every((r) => r.success)) {
         setSyncState(SyncState.Completed);
-        thisSet!.catchUpToEdit(edits.index);
+        thisSet!.catchUpToEdit(changes.index);
       } else {
         setSyncState(SyncState.Failed);
       }
@@ -894,7 +901,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                     <p>(You might want to check out this brief</p>
                   </div>
                   <div className="level-item">
-                    <button className="button" onClick={ onTableHelpShow }>Tutorial</button>
+                    <button className="button is-success" onClick={ onTableHelpShow }>Tutorial</button>
                   </div>
                   <div className="level-item">
                     <p>on sample editing.)</p>
@@ -937,7 +944,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
             </thead>
             <tbody>
               {
-                sortedSampleIds.map((sampleId, sampleIndex) => {
+                sortedSampleIds.filter((sId) => thisSet!.configurationsById.get(sId)).map((sampleId, sampleIndex) => {
                   const sample = thisSet!.configurationsById.get(sampleId)!;
                   var cells: JSX.Element[] = [];
                   const thisScanType = metadataContext.scanTypes.typesByName.get(sample.scanType)!;
