@@ -49,28 +49,6 @@ table.sampletable td.samplecell > div {
   align-items: stretch;
 }
 
-/* Sortable headers */
-
-table.sampletable th.sortable {
-	cursor: pointer;
-  padding-right: 1em;
-	text-decoration: none;
-	background-repeat: no-repeat;
-	background-position: center right;
-}
-
-table.sampletable th.sortable:hover {
-	text-decoration: underline;
-}
-
-table.sampletable th.sortable.sortedup {
-	background-image: url("/table_sort_up.png");
-}
-
-table.sampletable th.sortable.sorteddown {
-	background-image: url("/table_sort_down.png");
-}
-
 /* Table cells with unused parameters */
 
 table.sampletable td.samplecell.unused {

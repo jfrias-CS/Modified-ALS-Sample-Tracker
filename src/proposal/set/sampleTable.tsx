@@ -14,6 +14,7 @@ import { SampleTableCell } from './sampleTableCell/cell.tsx';
 import { CellFunctions, CellActivationStatus, CellValidationStatus, CellValidationResult, CellNavigationDirection } from './sampleTableCell/cellDto.ts';
 import { SampleTableClipboardContent } from './sampleClipboard.ts';
 import './sampleTable.css';
+import '../../components/tableSortable.css';
 
 
 interface SampleTableProps {
