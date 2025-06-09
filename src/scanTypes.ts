@@ -57,16 +57,22 @@ export interface ScanTypes {
 
 // Handy functions used to assist validation of parameter values.
 
-function isAuto(v:string):boolean { return v.trim().toLowerCase() == "auto"; };
-function isInt(v:string):boolean { return !isNaN(parseInt(v, 10)); };
-function isNumber(v:string):boolean { return !isNaN(v as any); };
-function above(a:number, v:string):boolean { const n = parseFloat(v); return !isNaN(n) && (n > a); };
-function atOrAbove(a:number, v:string):boolean { const n = parseFloat(v); return !isNaN(n) && (n >= a); };
-function atOrBelow(a:number, v:string):boolean { const n = parseFloat(v); return !isNaN(n) && (n <= a); };
-function atOrBetween(a:number, b:number, v:string):boolean { return atOrAbove(a, v) && atOrBelow(b, v); };
-function commaList(test:(v:string) => boolean, c:string):boolean { return c.split(",").every(test) };
-function listSumsTo(a:number, v:string):boolean { return v.split(",").map(parseFloat).reduce((acc, cur) => acc+cur, 0) == a };
-function isStrictAlphaNumeric(v:string):boolean { return v.search(/[^A-Za-z0-9\-_]/g) < 0 };
+const validate = {
+
+  isInt: function(v:string):boolean { return !isNaN(parseInt(v, 10)); },
+  isNumber: function(v:string):boolean { return !isNaN(v as any); },
+  isAuto: function(v:string):boolean { return v.trim().toLowerCase() == "auto"; },
+
+  above: function(a:number, v:string):boolean { const n = parseFloat(v); return !isNaN(n) && (n > a); },
+  atOrAbove: function(a:number, v:string):boolean { const n = parseFloat(v); return !isNaN(n) && (n >= a); },
+  atOrBelow: function(a:number, v:string):boolean { const n = parseFloat(v); return !isNaN(n) && (n <= a); },
+  atOrBetween: function(a:number, b:number, v:string):boolean { const n = parseFloat(v); return ( !isNaN(n) && (n >= a) && (n <= b) ) },
+
+  commaList: function(test:(v:string) => boolean, c:string):boolean { return c.split(",").every(test) },
+  listSumsTo: function(a:number, v:string):boolean { return v.split(",").map(parseFloat).reduce((acc, cur) => acc+cur, 0) == a },
+
+  isStrictAlphaNumeric: function(v:string):boolean { return v.search(/[^A-Za-z0-9\-_]/g) < 0 }
+}
 
 
 // This may eventually have to be an asynchronous function
@@ -81,7 +87,7 @@ export function getScanTypes(): ScanTypes {
       uniqueInSet: true,
       autoGenerateInterval: 12.7,
       validator: (v) => {
-        if (atOrBetween(1, 200, v)) { return null; }
+        if (validate.atOrBetween(1, 200, v)) { return null; }
         return "Must be a number between 1 and 200.";
       },
     },
@@ -91,7 +97,7 @@ export function getScanTypes(): ScanTypes {
       default: "0.14",
       required: true,
       validator: (v) => {
-        if (commaList((n) => atOrBetween(0.1, 0.4, n), v)) { return null; }
+        if (validate.commaList((n) => validate.atOrBetween(0.1, 0.4, n), v)) { return null; }
         return "Must be a comma-separated list of numbers, each between 0.1 and 0.4.";
       },
     },
@@ -101,7 +107,7 @@ export function getScanTypes(): ScanTypes {
       default: "auto",
       required: true,
       validator: (v) => {
-        if (isAuto(v) || commaList((n) => atOrBetween(0.1, 0.4, n), v)) { return null; }
+        if (validate.isAuto(v) || validate.commaList((n) => validate.atOrBetween(0.1, 0.4, n), v)) { return null; }
         return "Must be \"auto\", or a comma-separated list of numbers, each between 0.1 and 0.4.";
       },
     },
@@ -111,7 +117,7 @@ export function getScanTypes(): ScanTypes {
       default: "auto",
       required: true,
       validator: (v) => {
-        if (isAuto(v) || above(0, v)) { return null; }
+        if (validate.isAuto(v) || validate.above(0, v)) { return null; }
         return "Must be either a number, or \"auto\".";
       },
     },
@@ -120,7 +126,7 @@ export function getScanTypes(): ScanTypes {
       description: "The number of measurement spots, 2mm apart, relative to the center of the sample. (For example, 2 would measure at positions -1 and +1 relative to the center, and 3 would measure at -2, 0, 2.)",
       default: "1",
       validator: (v) => {
-        if (isInt(v) && atOrAbove(1, v)) { return null; }
+        if (validate.isInt(v) && validate.atOrAbove(1, v)) { return null; }
         return "Must be an integer, 1 or greater.";
       },
     },
@@ -129,7 +135,7 @@ export function getScanTypes(): ScanTypes {
       description: "The upper limit for exposure time in seconds. Can be up to 30.",
       default: "30",
       validator: (v) => {
-        if (atOrBetween(1, 30, v)) { return null; }
+        if (validate.atOrBetween(1, 30, v)) { return null; }
         return "Must be a number from 1 to 30.";
       },
     },
@@ -160,7 +166,7 @@ export function getScanTypes(): ScanTypes {
       required: true,
       default: "50, 50",
       validator: (v) => {
-        if (commaList(isNumber, v) && listSumsTo(100, v)) { return null; }
+        if (validate.commaList(validate.isNumber, v) && validate.listSumsTo(100, v)) { return null; }
         return "Must be a comma-separated list of numbers that add up to 100.";
       }
     },
