@@ -47,39 +47,41 @@ flowchart TB
 subgraph Config["`Configuration Provider`"]
   subgraph Login["`Login Status Provider`"]
     subgraph User["`User Details Provider`"]
+      subgraph Group["`Group Selection Provider`"]
 
-      Home("`Home (Proposal List)`")
+        Home("`Home (Proposal List)`")
 
-      Home --- Sets
-      Home ~~~ ImpSamples
+        Home --- Sets
+        Home ~~~ ImpSamples
 
-      subgraph Meta["`Metadata Provider<br />(Selected a Proposal)`"]
+        subgraph Meta["`Metadata Provider<br />(Selected a Proposal)`"]
 
-        QR("`Printable QR Codes`")
-        Sets("`Sets Table`")
-        AddSets@{ shape: subprocess, label: "Add Sets"}
+          QR("`Printable QR Codes`")
+          Sets("`Sets Table`")
+          AddSets@{ shape: subprocess, label: "Add Sets"}
 
-        Sets --- QR
-        Sets --- AddSets
-        Sets --- Samples
-        QR ~~~ Samples
+          Sets --- QR
+          Sets --- AddSets
+          Sets --- Samples
+          QR ~~~ Samples
 
-        subgraph SubS[Selected A Set]
+          subgraph SubS[Selected A Set]
 
-          Samples("`Samples Table`")
-          ImpSamples@{ shape: subprocess, label: "Import Samples"}
-          AddSamples@{ shape: subprocess, label: "Add Samples"}
-          DeleteSet@{ shape: subprocess, label: "Delete Set"}
-          CloneSet@{ shape: subprocess, label: "Clone Set"}
+            Samples("`Samples Table`")
+            ImpSamples@{ shape: subprocess, label: "Import Samples"}
+            AddSamples@{ shape: subprocess, label: "Add Samples"}
+            DeleteSet@{ shape: subprocess, label: "Delete Set"}
+            CloneSet@{ shape: subprocess, label: "Clone Set"}
 
-          Samples --- ImpSamples
-          Samples --- AddSamples
-          Samples --- DeleteSet
-          Samples --- CloneSet
+            Samples --- ImpSamples
+            Samples --- AddSamples
+            Samples --- DeleteSet
+            Samples --- CloneSet
 
+          end
         end
-      end
 
+      end
     end
   end
 end
@@ -103,6 +105,8 @@ Note the presence of *Configuration Provider* and *Metadata Provider*, etc.  The
 * **Login Status Provider** (`sciCatLoginProvider.tsx`) checks the browser for the presence of a login token, and redirects to the login service if one is missing.  If a token is present, it provides a user id to its enclosed pages.
 
 * **User Details Provider** (`sciCatUserDetailsProvider.tsx`) fetches details from SciCat about the currently logged in user, using the id from the Login Status Provider. It makes the results available to enclosed pages.
+
+* **Group Selection Provider** (`group/groupProvider.tsx`) tracks what group the user has selected, and provides customized configuration data based on it.  It's generally used to select the name of a beamline.  Among other things, it provides a specific list of Scan Types that may be mandated for sample configuration on a beamline.
 
 * **Metadata Provider** (`metadataProvider.tsx`) becomes active when a proposal is selected, and fetches all the sample configuration data for that proposal from SciCat, and makes it available to every enclosed page. It also handles the synchronization of changes to the data with SciCat.
 
