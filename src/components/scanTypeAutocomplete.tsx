@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import 'bulma/css/bulma.min.css';
 
-import { ScanType } from '../scanTypes.ts'
+import { ScanType } from '../scanTypeDto.ts'
 import { MetadataContext } from '../metadataProvider.tsx'
 import { InputAutocomplete, SearchFunctions, SearchResult, SelectingStatus } from './inputAutocomplete.tsx'
 import { highlightSearchTermsInString } from "./utils.tsx";
