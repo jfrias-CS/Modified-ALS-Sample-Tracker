@@ -6,6 +6,7 @@ import 'bulma/css/bulma.min.css';
 
 import { Guid } from '../../../components/utils.tsx';
 import { AppConfigurationContext } from '../../../appConfigurationProvider.tsx';
+import { GroupContext } from '../../groupProvider.tsx';
 import { MetadataContext, MetaDataLoadingState } from '../../../metadataProvider.tsx';
 import { LoadingBanner, LoadingState } from '../../../components/loadingBanner.tsx';
 import DeleteSet from './deleteSet.tsx';
@@ -20,6 +21,7 @@ const Set: React.FC = () => {
   proposalId = proposalId || "";
   setId = setId ? setId.toLowerCase() : "";
 
+  const groupContext = useContext(GroupContext);
   const appConfig = useContext(AppConfigurationContext);
   const metadataContext = useContext(MetadataContext);
 
@@ -119,9 +121,9 @@ const Set: React.FC = () => {
 
             <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
               <ul>
-                <li><Link to={ "/" }>Proposals</Link></li>
-                <li><Link to={ "/proposal/" + proposalId }>{ metadataContext.sets.name }</Link></li>
-                <li className="is-active"><Link to={ "/proposal/" + proposalId + "/set/" + setId }>{ set.name }</Link></li>
+                <li><Link to={ "/group/" + groupContext.group!.id }>{ groupContext.group!.name }</Link></li>
+                <li><Link to={ "/group/" + groupContext.group!.id + "/proposal/" + metadataContext.proposalId }>{ metadataContext.sets.name }</Link></li>
+                <li className="is-active"><Link to={ "/group/" + groupContext.group!.id + "/proposal/" + metadataContext.proposalId + "/set/" + setId }>{ set.name }</Link></li>
               </ul>
             </nav>
 

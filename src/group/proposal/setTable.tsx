@@ -4,6 +4,7 @@ import 'bulma/css/bulma.min.css';
 
 import { sortWithNumberParsing } from '../../components/utils.tsx';
 import { SampleConfigurationSet } from '../../sampleConfiguration.ts';
+import { GroupContext } from '../groupProvider.tsx';
 import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
 import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
 import AddSets from './addSets.tsx';
@@ -15,6 +16,7 @@ const SetTable: React.FC = () => {
   var { proposalId } = useParams();
   proposalId = proposalId || "";
 
+  const groupContext = useContext(GroupContext);
   const metadataContext = useContext(MetadataContext);
   const [sets, setSets] = useState<SampleConfigurationSet[]>([]);
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
@@ -42,8 +44,8 @@ const SetTable: React.FC = () => {
 
       <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
         <ul>
-          <li><Link to={ "/" }>Proposals</Link></li>
-          <li className="is-active"><Link to={ "/proposal/" + proposalId }>{ metadataContext.sets.name }</Link></li>
+          <li><Link to={ "/group/" + groupContext.group!.id }>{ groupContext.group!.name }</Link></li>
+          <li className="is-active"><Link to={ "/group/" + groupContext.group!.id + "/proposal/" + metadataContext.proposalId }>{ metadataContext.sets.name }</Link></li>
         </ul>
       </nav>
 
