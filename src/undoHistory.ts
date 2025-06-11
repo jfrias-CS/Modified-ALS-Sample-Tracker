@@ -96,7 +96,7 @@ export class UndoHistoryEntry {
 
 
 export interface EditQueueEntry {
-  edit: ChangeSet;
+  changes: ChangeSet;
   index: number;
 };
 
@@ -121,7 +121,7 @@ export class UndoHistory {
 	do(entry: UndoHistoryEntry) {
 		this.undoHistory.push(entry);
 		// Adding a new event (as opposed to Redo-ing one) always clears the Redo stack.
-	  this.newEdit(entry.newChanges);
+	  this.newChange(entry.newChanges);
 	  this.redoHistory = [];
 	}
 
@@ -129,7 +129,7 @@ export class UndoHistory {
 		if (this.undoHistory.length < 1) { return null; }    
     const u = this.undoHistory.pop()!;
 		this.redoHistory.push(u);
-    this.newEdit(u.oldChanges);
+    this.newChange(u.oldChanges);
 		return u.oldChanges;
 	}
 
@@ -137,7 +137,7 @@ export class UndoHistory {
     if (this.redoHistory.length < 1) { return null; }
     const r = this.redoHistory.pop()!;
 		this.undoHistory.push(r);
-    this.newEdit(r.newChanges);
+    this.newChange(r.newChanges);
 		return r.newChanges;
 	}
 
@@ -152,16 +152,16 @@ export class UndoHistory {
   }
 
   // Internal function for adding an edit to the edit queue.
-  newEdit(e: ChangeSet) {
+  newChange(e: ChangeSet) {
     this.lastEditIndex++;
-    const newEdit:EditQueueEntry = {
-      edit: e,
+    const newChange:EditQueueEntry = {
+      changes: e,
       index: this.lastEditIndex
     }
-    this.editQueue.push(newEdit);
+    this.editQueue.push(newChange);
   }
 
-  getPendingEdits(): EditQueueEntry | null {
+  getPendingChanges(): EditQueueEntry | null {
     let changes = new ChangeSet(true);
 
     // Nothing in the queue?  Can't get any edits.
@@ -172,12 +172,12 @@ export class UndoHistory {
     // large edit.
 
     this.editQueue.forEach((edit) => {
-      edit.edit.deletions.forEach((d) => { changes.newDeletion(d); });
-      edit.edit.additions.forEach((a) => { changes.newAddition(a); });
+      edit.changes.deletions.forEach((d) => { changes.newDeletion(d); });
+      edit.changes.additions.forEach((a) => { changes.newAddition(a); });
     });
     const lastEdit = this.editQueue[this.editQueue.length-1];
     return {
-      edit: changes,
+      changes: changes,
       index: lastEdit.index
     }
   }

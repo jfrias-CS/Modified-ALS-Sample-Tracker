@@ -4,14 +4,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { Guid } from "../../components/utils.tsx";
-import { ScanType } from '../../scanTypes.ts';
-import { ParamUid } from './../../scanTypes.ts';
-import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
-import { MetadataContext } from '../../metadataProvider.tsx';
-import { SelectingStatus } from '../../components/inputAutocomplete.tsx'
-import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
-import { createNewConfiguration } from '../../metadataApi.ts';
+import { Guid } from "../../../components/utils.tsx";
+import { ScanType } from '../../../scanTypes.ts';
+import { ParamUid } from '../../../scanTypes.ts';
+import { SampleConfiguration, SampleConfigurationSet } from '../../../sampleConfiguration.ts';
+import { MetadataContext } from '../../../metadataProvider.tsx';
+import { SelectingStatus } from '../../../components/inputAutocomplete.tsx'
+import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../../components/scanTypeAutocomplete.tsx';
+import { createNewConfiguration } from '../../../metadataApi.ts';
 
 
 const AddSamples: React.FC = () => {
@@ -135,7 +135,7 @@ const AddSamples: React.FC = () => {
       count++;
     }
 
-    thisSet.addOrReplaceWithHistory(newConfigs);
+    thisSet.addWithHistory(newConfigs);
     metadataContext.changed();
     setInProgress(false);
     if (error !== null) {

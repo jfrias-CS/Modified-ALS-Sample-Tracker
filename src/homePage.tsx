@@ -2,66 +2,34 @@ import React, { useContext } from 'react';
 import { Link } from "react-router-dom";
 import 'bulma/css/bulma.min.css';
 
-import { Guid } from "./components/utils.tsx";
-import { AppConfigurationContext } from './appConfigurationProvider.tsx';
-import { SciCatUserDetailsContext } from './sciCatUserDetailsProvider.tsx';
+import { Groups, getGroups } from "./groups.ts";
 import './homePage.css';
 
 
 const HomePage: React.FC = () => {
 
-  const appConfig = useContext(AppConfigurationContext);
-  const detailsContext = useContext(SciCatUserDetailsContext);
-
-  const groups = detailsContext.userDetails?.profile?.accessGroups || [];
-
-  const proposals = groups.map((g) => {
-          return {
-            id: g as Guid,
-            name: g,
-            description: "",
-            sets: 0
-          }
-        }
-      );
-
-//      const proposals = [ // For testing purposes
-//        {
-//          id: "group1" as Guid,
-//          name: "Test Proposal (group1)",
-//          description: "This is a test proposal.",
-//          sets: 7
-//        },
-//        {
-//          id: "group2" as Guid,
-//          name: "Test Proposal 2 (group2)",
-//          description: "This is a second test proposal.",
-//          sets: 0
-//        }
-//      ];
+  const groups:Groups = getGroups();
 
   return (
 
       <div style={{padding: ".375rem 1rem"}}>
-        <h1 className="title">Beamline Sample Bar Tracker</h1>
+        <h1 className="title">ALS Sample Tracker</h1>
 
         <p style={{marginBottom: "1em"}}>
-          This application is for configuring and tracking samples scanned at Beamline 733.  To get started, select a Proposal below.
-          For more information about the process and scan parameters,
-          read <a href={appConfig.config.documentationUrl}>this overview</a>.
+          This application is for configuring and tracking samples at the ALS.  To get started, select a Group below.
         </p>
 
-        { proposals.length == 0 ? (
-          <p>( You do not appear to have access to any Proposals. )</p>
+        { groups.groupsIdsInDisplayOrder.length == 0 ? (
+          <p>( There are no Groups in the system yet. )</p>
         ) : (
           <>
             <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
               <ul>
-                <li className="is-active"><Link to={ "/" }>Proposals</Link></li>
+                <li className="is-active"><Link to={ "/" }>Groups</Link></li>
               </ul>
             </nav>
 
-            <table className="proposals">
+            <table className="groups">
               <thead>
                 <tr key="headers">
                   <th key="name" scope="col">Name</th>
@@ -70,11 +38,12 @@ const HomePage: React.FC = () => {
               </thead>
               <tbody>
                 {
-                  proposals.map((proposal) => {
+                  groups.groupsIdsInDisplayOrder.map((groupId) => {
+                    const group = groups.groupsById.get( groupId )!;
                     return (
-                      <tr key={proposal["id"]}>
-                          <th scope="row"><Link to={ "/proposal/" + proposal.id }>{ proposal.name }</Link></th>
-                          <td>{ proposal.description }</td>
+                      <tr key={group["id"]}>
+                          <th scope="row"><Link to={ "/group/" + group.id }>{ group.name }</Link></th>
+                          <td>{ group.description }</td>
                       </tr>);
                   })
                 }

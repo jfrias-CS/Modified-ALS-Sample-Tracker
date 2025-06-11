@@ -4,13 +4,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAngleDown, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import 'bulma/css/bulma.min.css';
 
-import { ScanTypeName, ScanType } from '../../scanTypes.ts';
-import { Guid } from '../../components/utils.tsx';
-import { ParamUid } from './../../scanTypes.ts';
-import { SampleConfiguration, SampleConfigurationSet } from '../../sampleConfiguration.ts';
-import { MetadataContext } from '../../metadataProvider.tsx';
-import { SelectingStatus } from '../../components/inputAutocomplete.tsx'
-import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../components/scanTypeAutocomplete.tsx';
+import { ScanTypeName, ScanType } from '../../../scanTypes.ts';
+import { Guid } from '../../../components/utils.tsx';
+import { ParamUid } from '../../../scanTypes.ts';
+import { SampleConfiguration, SampleConfigurationSet } from '../../../sampleConfiguration.ts';
+import { MetadataContext } from '../../../metadataProvider.tsx';
+import { SelectingStatus } from '../../../components/inputAutocomplete.tsx'
+import { ScanTypeAutocomplete, ScanTypeSearchFunctions } from '../../../components/scanTypeAutocomplete.tsx';
 
 
 const ImportSamples: React.FC = () => {
@@ -91,7 +91,7 @@ const ImportSamples: React.FC = () => {
       scanType: "two_parameter_generic" as ScanTypeName,
       parameters: {}
     });
-    thisSet.addOrReplaceWithHistory([newConfig]);
+    thisSet.addWithHistory([newConfig]);
     metadataContext.changed();
   };
 

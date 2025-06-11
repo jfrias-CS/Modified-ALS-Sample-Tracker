@@ -6,10 +6,12 @@ import { AppConfigurationProvider } from './appConfigurationProvider.tsx';
 import { SciCatLoginProvider } from './sciCatLoginProvider.tsx';
 import { SciCatUserDetailsProvider } from './sciCatUserDetailsProvider.tsx';
 import HomePage from './homePage.tsx';
-import ProposalLayout from "./proposal/proposalLayout.tsx";
-import SetTable from "./proposal/setTable.tsx";
-import SetLabels from "./proposal/setLabels.tsx";
-import Set from './proposal/set/set.tsx';
+import GroupLayout from "./group/groupLayout.tsx";
+import ProposalLayout from "./group/proposal/proposalLayout.tsx";
+import ProposalTable from "./group/proposalTable.tsx";
+import SetTable from "./group/proposal/setTable.tsx";
+import SetLabels from "./group/proposal/setLabels.tsx";
+import Set from './group/proposal/set/set.tsx';
 import './App.css';
 
 
@@ -35,10 +37,13 @@ const App: React.FC = () => {
           <BrowserRouter basename={import.meta.env.BASE_URL}>
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/proposal/:proposalId/" element={<ProposalLayout />}>
-                <Route index element={<SetTable />} /> 
-                <Route path="labels" element={<SetLabels />} />
-                <Route path="set/:setId" element={<Set />} />
+              <Route path="/group/:groupId/" element={<GroupLayout />}>
+                <Route index element={<ProposalTable />} />
+                <Route path="proposal/:proposalId/" element={<ProposalLayout />}>
+                  <Route index element={<SetTable />} />
+                  <Route path="labels" element={<SetLabels />} />
+                  <Route path="set/:setId" element={<Set />} />
+                </Route>
               </Route>
             </Routes>
           </BrowserRouter>
