@@ -44,7 +44,7 @@ const SetTable: React.FC = () => {
 
       <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
         <ul>
-          <li><Link to={ "/group/" + groupContext.group!.id }>{ groupContext.group!.name }</Link></li>
+          <li><Link to={ "/group/" + groupContext.group!.id }>Proposals</Link></li>
           <li className="is-active"><Link to={ "/group/" + groupContext.group!.id + "/proposal/" + metadataContext.proposalId }>{ metadataContext.sets.name }</Link></li>
         </ul>
       </nav>

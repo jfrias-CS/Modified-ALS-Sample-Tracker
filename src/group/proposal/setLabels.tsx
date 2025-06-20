@@ -54,7 +54,7 @@ const SetLabels: React.FC = () => {
 
       <nav className="breadcrumb is-medium do-not-print" aria-label="breadcrumbs">
         <ul>
-          <li><Link to={ "/group/" + groupContext.group!.id }>{ groupContext.group!.name }</Link></li>
+          <li><Link to={ "/group/" + groupContext.group!.id }>Proposals</Link></li>
           <li><Link to={ "/group/" + groupContext.group!.id + "/proposal/" + metadataContext.proposalId }>{ metadataContext.sets.name }</Link></li>
           <li className="is-active"><Link to={ "/group/" + groupContext.group!.id + "/proposal/" + metadataContext.proposalId + "/labels" }>Printable Labels</Link></li>
         </ul>
