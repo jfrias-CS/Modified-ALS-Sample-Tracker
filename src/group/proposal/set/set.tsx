@@ -119,9 +119,10 @@ const Set: React.FC = () => {
         <div className="level-left">
           <div className="level-item">
 
+            { /* Nav Bar */ }
             <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
               <ul>
-                <li><Link to={ "/group/" + groupContext.group!.id }>{ groupContext.group!.name }</Link></li>
+                <li><Link to={ "/group/" + groupContext.group!.id }>Proposals</Link></li>
                 <li><Link to={ "/group/" + groupContext.group!.id + "/proposal/" + metadataContext.proposalId }>{ metadataContext.sets.name }</Link></li>
                 <li className="is-active"><Link to={ "/group/" + groupContext.group!.id + "/proposal/" + metadataContext.proposalId + "/set/" + setId }>{ set.name }</Link></li>
               </ul>
@@ -132,6 +133,7 @@ const Set: React.FC = () => {
         <div className="level-right">
           <div className="level-item">
 
+            { /* Gear Icon */ }
             <div className="dropdown is-right is-hoverable">
               <div className="dropdown-trigger">
                 <button className="button" aria-haspopup="true" aria-controls="dropdown-menu-howto">

@@ -1,17 +1,30 @@
-table.settable tr td {
-  padding: .375rem 1rem;
+table.settable {
+  border: 1px solid #444;
+  border-radius: 6px;
+  border-collapse: separate;
+  overflow: hidden;
+  width: 100%;
 }
-
-table.settable tr th {
-  padding: .375rem 1rem;
+table.settable td,
+table.settable th {
+  padding: 0.375rem 1rem;
+  border-right: 1px solid #444;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 table.settable th.barname {
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 table.settable tbody tr:nth-child(odd) {
-  background-color: rgba(130, 143, 167, 0.07);
+  background-color: rgba(130, 143, 167, 0.2);
+}
+
+table.settable tbody tr:nth-child(even) {
+  background-color: rgba(130, 143, 167, 0.075);
 }
 
 table.settable tbody tr:hover {
@@ -22,5 +35,6 @@ table.settable tbody tr:hover {
 @media (prefers-color-scheme: dark) {
   table.settable tbody tr:hover {
     color: rgba(156, 165, 241, 1);
+    background-color: rgba(156, 165, 241, 0.1);
   }
 }

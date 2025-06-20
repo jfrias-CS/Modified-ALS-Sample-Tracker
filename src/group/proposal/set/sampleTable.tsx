@@ -858,11 +858,12 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
         <div className="level-left">
           <div className="level-item">
+            {/* # of samples to the left of the Add Bars Button */}
             <p className="subtitle is-5"><strong>{ sortedSampleIds.length }</strong> samples</p>
           </div>
           { allowSampleImport && (
             <div className="level-item">
-              <ImportSamples />
+              <ImportSamples /> 
             </div>)
           }
           <div className="level-item">

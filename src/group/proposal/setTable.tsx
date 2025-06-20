@@ -8,6 +8,7 @@ import { GroupContext } from '../groupProvider.tsx';
 import { MetadataContext, MetaDataLoadingState } from '../../metadataProvider.tsx';
 import { LoadingBanner, LoadingState } from '../../components/loadingBanner.tsx';
 import AddSets from './addSets.tsx';
+import DeleteSet from './set/deleteSet.tsx'
 import './setTable.css';
 
 
@@ -21,6 +22,9 @@ const SetTable: React.FC = () => {
   const [sets, setSets] = useState<SampleConfigurationSet[]>([]);
   const [loading, setLoading] = useState<LoadingState>(LoadingState.Loading);
   const [loadingMessage, setLoadingMessage] = useState("");
+
+  const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
+  const [showDelete, setShowDelete] = useState<boolean>(false);
 
   useEffect(() => {
     if (metadataContext.setsLoadingState == MetaDataLoadingState.Failed) {
@@ -39,12 +43,17 @@ const SetTable: React.FC = () => {
     return (<LoadingBanner state={loading} message={loadingMessage}></LoadingBanner>)
   }
 
+  function refreshSets() {
+    const sortedSets = metadataContext.sets.allValid().sort((a,b) => sortWithNumberParsing(a.name, b.name));
+    setSets(sortedSets);
+  }
+
   return (
     <>
 
       <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
         <ul>
-          <li><Link to={ "/group/" + groupContext.group!.id }>{ groupContext.group!.name }</Link></li>
+          <li><Link to={ "/group/" + groupContext.group!.id }>Proposals</Link></li>
           <li className="is-active"><Link to={ "/group/" + groupContext.group!.id + "/proposal/" + metadataContext.proposalId }>{ metadataContext.sets.name }</Link></li>
         </ul>
       </nav>
@@ -77,19 +86,31 @@ const SetTable: React.FC = () => {
                   <th key="name" scope="col">Name</th>
                   <th key="description" scope="col">Description</th>
                   <th key="samplecount" scope="col">Samples</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {
-                  sets.map((set) => {
-                    return (
+                  sets.map((set) => (
                       <tr key={set["id"]}>
-                          <th className="barname" scope="row"><Link to={ "set/" + set.id }>{ set.name }</Link></th>
+                          <th className="barname" scope="row">
+                              <Link to={ "set/" + set.id }>{ set.name }</Link>
+                          </th>
                           <td>{ set.description }</td>
                           <td>{ set.configurationsById.size }</td>
-                      </tr>);
-                  })
-                }
+                          <td>
+              <DeleteSet 
+                setId={set.id}
+                trigger={<button className="button is-danger">Delete</button>}
+                onSuccess={() => {
+                  setShowDelete(false);
+                  setSelectedSetId(null);
+                  refreshSets();
+                }}
+                />
+                          </td>
+                      </tr>
+                ))}
               </tbody>
             </table>
           </>

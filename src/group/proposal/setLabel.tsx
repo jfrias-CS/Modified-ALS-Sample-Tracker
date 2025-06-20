@@ -33,6 +33,7 @@ const SetLabel: React.FC<SetLabelProps> = (props) => {
             errorCorrectionLevel={QrErrorCorrectionLevel.L}
             content={qrContent} />
         </div>
+        {/* for the QR Code Images in Printable Labels */}
         <div className="textArea">
           <div>{ props.proposalName }</div>
           <div>{ props.setName }</div>
