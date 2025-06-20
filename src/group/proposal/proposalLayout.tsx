@@ -15,14 +15,14 @@ const ProposalLayout: React.FC<PropsWithChildren> = () => {
     <>
       <div className="block do-not-print">
         <nav className="level">
-          <p className="level-item has-text-centered">
+          <div className="level-item has-text-centered">
             <img
               src={`${import.meta.env.BASE_URL}/alt_spectrum_logo-dark.png`}
               alt="The ALS Logo"
               style={{height: "2.3em", marginRight: "1em"}}
             />
             <h1 className="title">{groupContext.group.name} Sample {groupContext.group.setNameCapitalized} Tracker</h1>
-          </p>
+          </div>
         </nav>
 
       </div>
