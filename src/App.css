@@ -1,5 +1,7 @@
-#root { 
+:root { 
     padding: var(--bulma-size-normal);
+    --bulma-link-text: hsl(208, 54%, 50%);
+    --bulma-link-text-active: hsl(208, 54%, 40%);
 }
 
 .modal.has-overflow {
@@ -12,7 +14,7 @@
 }
 
 table.striped tbody tr:nth-child(odd) {
-  background-color: rgba(130, 143, 167, 0.07);
+  background-color: hsla(206, 90%, 50%, 0.07);
 }
 
 table.striped:not(.cellhover) tbody tr:hover {
@@ -26,6 +28,11 @@ table.striped.cellhover tbody td:not(.unused):hover {
 }
 
 @media (prefers-color-scheme: dark) {
+  :root { 
+    --bulma-link-text: hsl(208, 54%, 40%);
+    --bulma-link-text-active: hsl(208, 54%, 50%);
+  }
+
   table.striped:not(.cellhover) tbody tr:hover {
     color: rgba(156, 165, 241, 1);
   }
