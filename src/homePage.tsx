@@ -13,7 +13,16 @@ const HomePage: React.FC = () => {
   return (
 
       <div style={{padding: ".375rem 1rem"}}>
-        <h1 className="title">ALS Sample Tracker</h1>
+        <nav className="level">
+          <p className="level-item has-text-centered">
+            <img
+              src={`${import.meta.env.BASE_URL}/alt_spectrum_logo-dark.png`}
+              alt="The ALS Logo"
+              style={{height: "2.3em", marginRight: "1em"}}
+            />
+            <h1 className="title">ALS Sample Tracker</h1>
+          </p>
+        </nav>
 
         <p style={{marginBottom: "1em"}}>
           This application is for configuring and tracking samples at the ALS.  To get started, select a Group below.
