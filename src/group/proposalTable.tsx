@@ -59,7 +59,7 @@ const ProposalTable: React.FC = () => {
               </ul>
             </nav>
 
-            <table className="proposals">
+            <table className="proposals striped">
               <thead>
                 <tr key="headers">
                   <th key="name" scope="col">Name</th>

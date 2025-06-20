@@ -11,13 +11,7 @@ table.sampletable tr th {
   padding: 0.3em 0.6em;
 }
 
-table.sampletable tbody tr:nth-child(odd) {
-  background-color: rgba(130, 143, 167, 0.07);
-}
-
 table.sampletable tbody td.samplecell:not(.unused):hover {
-  color: rgba(7, 73, 251, 1);
-  background-color: rgba(90, 105, 255, 0.2);
   cursor: pointer;
 }
 
@@ -141,10 +135,6 @@ table.sampletable td.samplecell > div > div.cellTableInput div.notify > div.noti
 }
 
 @media (prefers-color-scheme: dark) {
-  table.sampletable tbody td.samplecell:not(.unused):hover {
-    color: rgba(156, 165, 241, 1);
-  }
-
   table.sampletable td.samplecell > div > div.cellTableInput div.notify > div.notify-content {
     background-color: #080808;
     box-shadow: 0 2px 3px rgba(120, 120, 120, 0.2), 0 0 0 1px rgba(120, 120, 120, 0.2);

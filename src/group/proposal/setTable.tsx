@@ -71,7 +71,7 @@ const SetTable: React.FC = () => {
           <p>( Use the Add button on the right to add Bars. )</p>
         ) : (
           <>
-            <table className="settable">
+            <table className="settable striped">
               <thead>
                 <tr key="headers">
                   <th key="name" scope="col">Name</th>

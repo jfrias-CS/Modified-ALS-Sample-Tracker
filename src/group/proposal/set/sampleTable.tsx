@@ -924,7 +924,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
               
             )
         ) : (
-          <table className="sampletable"
+          <table className="sampletable striped cellhover"
                   tabIndex={0}
                   ref={ tableRef }
                   onFocus={ tableOnFocus }
