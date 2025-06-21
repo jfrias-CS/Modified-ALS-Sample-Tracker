@@ -7,8 +7,9 @@ table.sampletable {
   outline: unset; /* Override focus decoration */
 }
 
-table.sampletable tr th {
-  padding: 0.3em 0.6em;
+table.sampletable th {
+  padding-bottom: 0.3em;
+  padding-left: 0.6em;
 }
 
 table.sampletable tbody td.samplecell:not(.unused):hover {
