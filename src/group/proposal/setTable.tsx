@@ -44,7 +44,7 @@ const SetTable: React.FC = () => {
 
       <nav className="breadcrumb is-medium" aria-label="breadcrumbs">
         <ul>
-          <li><Link to={ "/group/" + groupContext.group!.id }>{ groupContext.group!.name }</Link></li>
+          <li><Link to={ "/group/" + groupContext.group!.id }>Proposals</Link></li>
           <li className="is-active"><Link to={ "/group/" + groupContext.group!.id + "/proposal/" + metadataContext.proposalId }>{ metadataContext.sets.name }</Link></li>
         </ul>
       </nav>
@@ -71,7 +71,7 @@ const SetTable: React.FC = () => {
           <p>( Use the Add button on the right to add Bars. )</p>
         ) : (
           <>
-            <table className="settable">
+            <table className="settable striped">
               <thead>
                 <tr key="headers">
                   <th key="name" scope="col">Name</th>
