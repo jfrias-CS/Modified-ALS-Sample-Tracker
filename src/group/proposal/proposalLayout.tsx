@@ -13,12 +13,15 @@ const ProposalLayout: React.FC<PropsWithChildren> = () => {
 
   return (
     <>
+    <div style={{padding: ".375rem 1rem"}}>
+
       <div className="block do-not-print">
         <h1 className="title">{groupContext.group.name} Sample {groupContext.group.setNameCapitalized} Tracker</h1>
       </div>
       <MetadataProvider proposalId={proposalId}>
         <Outlet />
       </MetadataProvider>
+    </div>
     </>
   )
 }

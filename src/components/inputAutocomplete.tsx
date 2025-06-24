@@ -96,6 +96,16 @@ function InputAutocomplete<Item>(settings:InputAutocompleteParameters<Item>) {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
+useEffect(() => {
+  // Only update if the selectedItem prop changes from the parent (not user selection)
+  setSelectedItem(settings.selectedItem);
+  if (settings.selectedItem) {
+    setInputValue(settings.searchFunctions.itemToString(settings.selectedItem));
+  } else {
+    setInputValue("");
+  }
+  // eslint-disable-next-line
+}, [settings.selectedItem]);
 
   function isDropdownActive(): boolean {
     return  (selectedItem == null) &&

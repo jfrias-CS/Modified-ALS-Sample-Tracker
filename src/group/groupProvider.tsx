@@ -39,12 +39,14 @@ const GroupProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => {
   if (!group) { return failureResponse; }
 
   return (
+
     <GroupContext.Provider value={{
-        groupId: props.groupId.trim(),
-        group: group
+      groupId: props.groupId.trim(),
+      group: group
     }}>
     {props.children}
     </GroupContext.Provider>
+
   )
 }
 

@@ -25,6 +25,7 @@ interface ScanTypeAutocompleteParameters {
   greenWhenValid?: boolean;
   triggerFocus?: boolean;
   resetOnDefocus?: boolean;
+  groupId?: string;
 }
 
 

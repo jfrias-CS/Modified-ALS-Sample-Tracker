@@ -123,6 +123,21 @@ export function getScanTypes(): ScanTypes {
         { typeId: "exposure_max" as ParamUid },
         { typeId: "image_type" as ParamUid }
       ]
+    },
+
+
+    // Scan Types for BL 4.0.2 & 6.3.1
+    {
+      name: "XAS" as ScanTypeName,
+      description: "Standard XAS. All samples will be measured.",
+       parameters: [
+        { typeId: "sample_center_position" as ParamUid },
+        { typeId: "incident_angles" as ParamUid },
+        { typeId: "" as ParamUid, readOnly: true },
+        { typeId: "exposure_time" as ParamUid, readOnly: true, default: "auto" },
+        { typeId: "exposure_max" as ParamUid },
+        { typeId: "Temperature" as ParamUid }
+      ]
     }
 //    {
 //      name: "GIWAXS with gpCAM" as ScanTypeName,

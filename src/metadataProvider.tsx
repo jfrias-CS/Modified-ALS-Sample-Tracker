@@ -28,6 +28,7 @@ import { readConfigsForProposalId } from './metadataApi.ts';
 // If the component is given a null proposalId it will skip loading,
 // then try again as soon as the value is changed.
 interface ProviderProps {
+  groupId: string | undefined;
   proposalId: string | undefined;
 }
 
@@ -35,6 +36,8 @@ enum MetaDataLoadingState { NotTriggered, Pending, Succeeded, Failed };
 
 // The structure we are providing to components in the hierarchy below the provider
 interface SampleConfigurationInterface {
+  // Group ID
+  groupId: string | undefined;
   // The proposalId that was provided to this provider
   proposalId: string | undefined;
   // Access to the current instance of SampleConfigurationSets
@@ -59,6 +62,7 @@ interface SampleConfigurationInterface {
 }
 
 const MetadataContext = createContext<SampleConfigurationInterface>({
+                    groupId: undefined,
                     proposalId: undefined,
                     sets: new SampleConfigurationSets("empty", "0" as Guid), // Should never be reached
                     scanTypes: {typesByName:new Map(),typeNamesInDisplayOrder:[],parametersById:new Map()},
@@ -70,6 +74,7 @@ const MetadataContext = createContext<SampleConfigurationInterface>({
                   });
 
 const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => {
+  const [groupId, setGroupId] = useState<string | undefined>(props.groupId);
   const [proposalId, setProposalId] = useState<string | undefined>(props.proposalId);
 
   const appConfig = useContext(AppConfigurationContext);
@@ -150,6 +155,11 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
       appConfig.log('MetadataProvider given undefined proposalId');
       return;
     }
+    if (groupId === undefined) {
+      appConfig.log('MetadataProvider given undefined groupId');
+    } else {
+      appConfig.log('MetadataProvider given groupId: ' + groupId);
+    }
     appConfig.log('MetadataProvider given proposalId: ' + proposalId);
     setSetsLoadingState(MetaDataLoadingState.Pending);
   }, [proposalId]);
@@ -176,6 +186,7 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
 
   return (
     <MetadataContext.Provider value={{
+        groupId: groupId,
         proposalId: proposalId,
         sets: sampleConfigurationsObject,
         scanTypes: scanTypes,
