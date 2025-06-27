@@ -40,7 +40,8 @@ const DeleteSet: React.FC<DeleteSetProps> = ({
         if (!setId) {
             return undefined;
         }
-        return metadataContext.sets.getById(setId as Guid);
+        console.log("HERE", metadataContext.sets.getById(setId as Guid));
+        return metadataContext.sets.getById(setId as Guid); // returns a set (Bar of Samples) by the given Id
     }
 
     function clickedOpen() {
@@ -51,13 +52,16 @@ const DeleteSet: React.FC<DeleteSetProps> = ({
     }
 
     async function pressedSubmit() {
-        const thisSet = getSet();
+        const thisSet = getSet(); // thisSet is a bar of samples (set object of sampleConfigurations)
         if (!thisSet) {
             return;
         }
 
         var errors: string[] = [];
-        const configs = thisSet.allValid();
+        //const configs = thisSet.allValid(); potential crash if no set found & no strict typed
+        // Returns a set of samples that are valid
+        const configs = thisSet.allValid() || []; // Fallback to empty array
+        // Maps them by ID 
         const configIds = configs.map((c) => c.id);
 
         setSubmitErrorMessage(null);

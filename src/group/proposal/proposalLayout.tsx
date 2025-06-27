@@ -18,7 +18,7 @@ const ProposalLayout: React.FC<PropsWithChildren> = () => {
       <div className="block do-not-print">
         <h1 className="title">{groupContext.group.name} Sample {groupContext.group.setNameCapitalized} Tracker</h1>
       </div>
-      <MetadataProvider proposalId={proposalId}>
+      <MetadataProvider proposalId={proposalId} groupId={groupContext.group.id}>
         <Outlet />
       </MetadataProvider>
     </div>

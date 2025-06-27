@@ -61,6 +61,6 @@ export const validate = {
 
   commaList: function(test:(v:string) => boolean, c:string):boolean { return c.split(",").every(test) },
   listSumsTo: function(a:number, v:string):boolean { return v.split(",").map(parseFloat).reduce((acc, cur) => acc+cur, 0) == a },
-
+  divisibleByFour: function(v: string):boolean { if ( parseFloat(v) % 4 !== 0) return false; return true; },
   isStrictAlphaNumeric: function(v:string):boolean { return v.search(/[^A-Za-z0-9\-_]/g) < 0 }
 }

@@ -41,6 +41,8 @@ const AddSamples: React.FC = () => {
 
     
     React.useEffect(() => {
+
+        // Set up default ScanType based on beamline
     if (metadataContext.scanTypes.typeNamesInDisplayOrder.length > 0) {
         const preferredScanType = groupId
             ? preferredScanTypeByGroup[groupId]
@@ -76,7 +78,6 @@ const AddSamples: React.FC = () => {
         if (!inProgress && !isOpen && thisSet) {
             setIsOpen(true);
             setScanTypeValue(initialScanTypeRef.current);
-            console.log("HERE: ", initialScanTypeRef.current);
             const goodNames = thisSet.generateUniqueNames(newName, 1);
             setNewName(goodNames[0]);
             validate(quantity, goodNames[0], initialScanTypeRef.current);
@@ -190,8 +191,6 @@ const AddSamples: React.FC = () => {
         setSubmitErrorMessage(null);
         setScanTypeValue(initialScanTypeRef.current);
         setIsOpen(false);
-        console.log("ScanType reset to: ", initialScanTypeRef.current);
-        console.log("ScanTypeValue", scanTypeValue);
     }
     function clickedClose() {
         if (!inProgress && isOpen) {

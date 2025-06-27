@@ -15,6 +15,7 @@ import { CellFunctions, CellActivationStatus, CellValidationStatus, CellValidati
 import { SampleTableClipboardContent } from './sampleClipboard.ts';
 import './sampleTable.css';
 import '../../../components/tableSortable.css';
+import DeleteSample from './deleteSample.tsx';
 
 
 interface SampleTableProps {
@@ -941,6 +942,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
             <thead>
               <tr key="headers">
                 { tableHeaders }
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -1048,6 +1050,18 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                             choices={ scanTypesAsChoices } />
                       </td>
                       { cells }
+                      <td className="is-flex is-justify-content-center is-align-items-center" style={{ height: "100%" }}>
+
+                      <DeleteSample
+                        setId={setId}
+                        sampleId={sampleId}
+                        trigger={<button className="button is-danger is-small">Delete Sample</button>}
+                        onSuccess={() => {
+                          const sortedSampleIds = sortSampleIds(thisSet, tableSortColumn, tableSortReverse);
+                          setSortedSampleIds(sortedSampleIds); 
+                        }}
+                        />
+                        </td>
                     </tr>);
                 })
               }

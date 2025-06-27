@@ -300,12 +300,20 @@ export class SampleConfigurationSet {
 
   // Mark the SampleConfiguration objects with the given Guids as deleted,
   // making an undo history entry along the way.
+  // Requires an array of GUIDs (smaple IDs) to function, searches for Sample object via Sample ID internally
   deleteWithHistory(input: Guid[]) {
+
     const h = new UndoHistoryEntry();
     const currentSet = this.configurationsById;
 
     // Make sure what we're deleting exists
-    const existingIds = input.filter((id) => !currentSet.has(id));
+    // const existingIds = input.filter((id) => !currentSet.has(id)); AI help claims this is wrong as delete set uses filtered ids already
+    const existingIds = input.filter((id) => currentSet.has(id));
+    console.log("Attempting to delete:", {
+  inputIds: input,
+  existingIds: existingIds,
+  currentSamples: Array.from(currentSet.keys())
+});
     if (existingIds.length < 1) { return; }
 
     // Every given Guid to delete is a new change in forward history

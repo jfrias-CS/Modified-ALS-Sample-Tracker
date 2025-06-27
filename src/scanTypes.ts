@@ -105,9 +105,90 @@ export function getScanTypes(): ScanTypes {
         return "Must be a comma-separated list of numbers that add up to 100.";
       }
     },
+
+    // NEW PARAMETERS
+    // Added list of parameters for BeamLines 402 & 631
+    {
+      id: "element_template" as ParamUid,
+      name: "Element" as ScanParameterName,
+      description: "Choose element Template",
+      required: true,
+      default: "FeL3-2",
+      validator: (v) => {
+        if (validate.isStrictAlphaNumeric(v)) {return null;}
+        return "Value must follow this structure: FeL3-2";
+      }
+    },
+
+    {
+      id: "repititions" as ParamUid,
+      name: "Repetitions" as ScanParameterName,
+      description: "Number of scan repititions.", 
+      required: true,
+      default: "8",
+      validator:(v) => {
+        if (validate.divisibleByFour(v)) { return null; }
+        return "Must be either 4, 8, or 16";
+      }
+    },
+
+    {
+      id: "temperature" as ParamUid,
+      name: "Temperature" as ScanParameterName,
+      description: "Temperature in Kelvin", // needs to be finished
+      required: true, // yes or no? 
+      default: "0", // what should the default be?
+      validator: (v) => {
+        if (validate.atOrBetween(18, 450, v)) { return null; }
+        return "Must be a value between 18 and 450.";
+      }
+    },
+
+    {
+      id: "Theta" as ParamUid,
+      name: "Theta" as ScanParameterName,
+      description: "Rotational Degree",
+      required: true,
+      default: "0",
+      validator: (v) => {
+        if (validate.atOrBetween(-270, 270, v)) { return null; }
+        return "Value should range within -270 - 270"; // How to describe which direction postive or negative is? Unit circle? 
+      }
+    }, 
+    {
+      id: "Y-Position" as ParamUid,
+      name: "Y-Position" as ScanParameterName,
+      description: "Y-Axis Translation",
+      required: true,
+      default: "0",
+      validator: (v) => {
+        if (validate.atOrBetween(-13, 2, v)) { return null; }
+        return "Value should range within [-13mm, 2mm]"; // How to describe which direction postive or negative is? Unit circle? 
+      }
+    }, 
+
+    {
+      id: "magnetic_field" as ParamUid,
+      name: "Magnetic Field" as ScanParameterName,
+      description: "Strength of Magnetic Field",
+      required: true,
+      default: "0",
+      validator: (v) => {
+        if (validate.atOrBetween(-1.8, 1.8, v)) { return null; }
+        return "Value must range from -1.8 to 1.8 Tesla";
+      }
+    },
+
+    {
+      id: "order_parameter" as ParamUid,
+      name: "Order of paramters" as ScanParameterName,
+      description: "Select how to order parameters.",
+      required: false,
+      default: "Sample Center Position",
+    }
   ];
 
-  var parameterMap = new Map<ParamUid, ScanParameterType>();
+  const parameterMap = new Map<ParamUid, ScanParameterType>();
   parameters.forEach((p) => parameterMap.set(p.id, p));
 
   // Specified in the order they will be displayed and searched in the UI.
@@ -129,17 +210,54 @@ export function getScanTypes(): ScanTypes {
     // Scan Types for BL 4.0.2 & 6.3.1
     {
       name: "XAS" as ScanTypeName,
-      description: "Standard XAS. All samples will be measured.",
+      description: "Standard X-ray Absorption Spectroscopy. All samples will be measured.",
        parameters: [
         { typeId: "sample_center_position" as ParamUid },
         { typeId: "incident_angles" as ParamUid },
-        { typeId: "" as ParamUid, readOnly: true },
-        { typeId: "exposure_time" as ParamUid, readOnly: true, default: "auto" },
-        { typeId: "exposure_max" as ParamUid },
-        { typeId: "Temperature" as ParamUid }
+        { typeId: "element_template" as ParamUid},
+        { typeId: "repititions" as ParamUid },
+        { typeId: "temperature" as ParamUid },
+        { typeId: "Theta" as ParamUid },
+        { typeId: "Y-Position" as ParamUid },
+        { typeId: "order_parameter" as ParamUid }
+      ]
+    },
+
+    {
+      name: "XMCD" as ScanTypeName,
+      description: "X-Ray Magnetic Circular Dichroism",
+      parameters: [
+        { typeId: "sample_center_position" as ParamUid },
+        { typeId: "incident_angles" as ParamUid },
+        { typeId: "repititions" as ParamUid },
+        { typeId: "temperature" as ParamUid },
+        { typeId: "magnetic_field" as ParamUid }
+      ]
+    },
+
+    // Only at 402
+    {
+      name: "XMLD" as ScanTypeName,
+      description: "X-Ray Magnetic Linear Dichroism",
+      parameters: [
+        { typeId: "sample_center_position" as ParamUid },
+        { typeId: "incident_angles" as ParamUid },
+        { typeId: "repititions" as ParamUid },
+        { typeId: "temperature" as ParamUid }
+      ]
+    },
+
+    {
+      name: "XLD" as ScanTypeName,
+      description: "X-Ray Linear Dichroism",
+      parameters: [
+        { typeId: "sample_center_position" as ParamUid },
+        { typeId: "incident_angles" as ParamUid },
+        { typeId: "repititions" as ParamUid },
+        { typeId: "temperature" as ParamUid }
       ]
     }
-//    {
+    //    {
 //      name: "GIWAXS with gpCAM" as ScanTypeName,
 //      description: "Search for the best sample based on a percentage mixture of components.  Some samples may be skipped during the search.",
 //      parameters: [
