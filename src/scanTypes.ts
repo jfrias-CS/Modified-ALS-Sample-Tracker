@@ -134,10 +134,10 @@ export function getScanTypes(): ScanTypes {
 
     {
       id: "temperature" as ParamUid,
-      name: "Temperature" as ScanParameterName,
+      name: "Temperature (K)" as ScanParameterName,
       description: "Temperature in Kelvin", // needs to be finished
       required: true, // yes or no? 
-      default: "0", // what should the default be?
+      default: "300", // what should the default be?
       validator: (v) => {
         if (validate.atOrBetween(18, 450, v)) { return null; }
         return "Must be a value between 18 and 450.";
@@ -145,8 +145,8 @@ export function getScanTypes(): ScanTypes {
     },
 
     {
-      id: "Theta" as ParamUid,
-      name: "Theta" as ScanParameterName,
+      id: "incident_angle/theta" as ParamUid,
+      name: "Incident Angle (Theta)" as ScanParameterName,
       description: "Rotational Degree",
       required: true,
       default: "0",
@@ -156,7 +156,7 @@ export function getScanTypes(): ScanTypes {
       }
     }, 
     {
-      id: "Y-Position" as ParamUid,
+      id: "y_position" as ParamUid,
       name: "Y-Position" as ScanParameterName,
       description: "Y-Axis Translation",
       required: true,
@@ -169,13 +169,13 @@ export function getScanTypes(): ScanTypes {
 
     {
       id: "magnetic_field" as ParamUid,
-      name: "Magnetic Field" as ScanParameterName,
+      name: "Magnetic Field (T)" as ScanParameterName,
       description: "Strength of Magnetic Field",
       required: true,
       default: "0",
       validator: (v) => {
         if (validate.atOrBetween(-1.8, 1.8, v)) { return null; }
-        return "Value must range from -1.8 to 1.8 Tesla";
+        return "Value must range within [-1.8T, 1.8T]";
       }
     },
 
@@ -207,18 +207,31 @@ export function getScanTypes(): ScanTypes {
     },
 
 
-    // Scan Types for BL 4.0.2 & 6.3.1
+    // Scan Types for BL 4.0.2
     {
-      name: "XAS" as ScanTypeName,
-      description: "Standard X-ray Absorption Spectroscopy. All samples will be measured.",
+      name: "XAS-4.0.2" as ScanTypeName,
+      description: "Standard X-Ray Absorption Spectroscopy for BL 4.0.2 All samples will be measured.",
        parameters: [
         { typeId: "sample_center_position" as ParamUid },
         { typeId: "incident_angles" as ParamUid },
         { typeId: "element_template" as ParamUid},
         { typeId: "repititions" as ParamUid },
         { typeId: "temperature" as ParamUid },
-        { typeId: "Theta" as ParamUid },
-        { typeId: "Y-Position" as ParamUid },
+        { typeId: "y_position" as ParamUid },
+        { typeId: "order_parameter" as ParamUid }
+      ]
+    },
+
+    // Scan Types for BL 6.3.1
+    {
+      name: "XAS-6.3.1" as ScanTypeName,
+      description: "Standard X-Ray Absorption Spectroscopy for BL 6.3.1. All samples will be measured",
+      parameters: [
+        { typeId: "sample_center_position" as ParamUid }, 
+        { typeId: "incident_angle/theta" as ParamUid },
+        { typeId: "element_template" as ParamUid },
+        { typeId: "repitions" as ParamUid },
+        { typeId: "temperature" as ParamUid },
         { typeId: "order_parameter" as ParamUid }
       ]
     },
@@ -237,7 +250,7 @@ export function getScanTypes(): ScanTypes {
 
     // Only at 402
     {
-      name: "XMLD" as ScanTypeName,
+      name: "XMLD-4.0.2" as ScanTypeName,
       description: "X-Ray Magnetic Linear Dichroism",
       parameters: [
         { typeId: "sample_center_position" as ParamUid },
@@ -246,6 +259,7 @@ export function getScanTypes(): ScanTypes {
         { typeId: "temperature" as ParamUid }
       ]
     },
+
 
     {
       name: "XLD" as ScanTypeName,

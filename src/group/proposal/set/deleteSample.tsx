@@ -79,18 +79,18 @@ export const DeleteSample: React.FC<DeleteSampleProps> = ({
 
         let configDeleteSuccess = true;
 
-        thisSet.deleteWithHistory([thisSample.id]); // pass a 1 element array of the sample's id to func
+        thisSet.deleteWithHistory([thisSample.id]); // pass a 1 element array of the Sample's ID to deleteWithHistory
         console.log("After deleteWithHistory:", {
             setSamples: Array.from(thisSet.configurationsById.values()),
-            deletedSampleId: thisSample.id
+            deletedSampleId: thisSample.id,
         });
 
         const changes = thisSet.getPendingChanges(); // recover queue for changes in set
         console.log("Pending changes:", {
-            deletions: changes?.changes.deletions.map(d => d.id),
-            additions: changes?.changes.additions.map(a => a.id)
+            deletions: changes?.changes.deletions.map((d) => d.id),
+            additions: changes?.changes.additions.map((a) => a.id),
         });
-        
+
         if (changes) {
             const saveCalls = changes.changes.additions.map((e) =>
                 updateConfig(e as SampleConfiguration)
@@ -136,67 +136,6 @@ export const DeleteSample: React.FC<DeleteSampleProps> = ({
         metadataContext.changed();
     }
 
-    // AI Help with Code:
-    // async function pressedSubmit() {
-    //     if (!thisSet) {
-    //         setSubmitErrorMessage("Set not found.");
-    //         return;
-    //     }
-
-    //     const thisSample = getSample(); // Selected Sample Object
-    //     if (!thisSample) {
-    //         setSubmitErrorMessage("Sample not found.");
-    //         return;
-    //     }
-
-    //     // To track errors?
-    //     const errors: string[] = [];
-
-    //     setSubmitErrorMessage(null);
-    //     setInProgress(true);
-
-    //     let sampleDeleteSuccess = false; // track success of deletion
-    //     // thisSet.remove([thisSample.id]);
-    //     thisSet.deleteWithHistory([thisSample.id]); // better delete option
-    //     thisSample.isValid = false; // make invalid for server call
-    //     const deleteCalls = [updateConfig(thisSample)]; //
-
-    //     const responses = await Promise.all(deleteCalls); // can be used for multiple bar deletion later on
-
-    //     if (responses.every((r) => r.success)) {
-    //         sampleDeleteSuccess = true;
-    //     } else {
-    //         responses.forEach((r) => {
-    //             if (!r.success && r.message) {
-    //                 errors.push(r.message);
-    //             }
-    //         });
-    //     }
-    //     const changes = thisSet.getPendingChanges(); // collect queue of changes made to set for this set
-    //     if (sampleDeleteSuccess && changes) {
-    //         thisSet.catchUpToEdit(changes.index);
-    //     }
-
-    //     if (changes) {
-    //         console.log("Pending deletions:", changes.changes.deletions);
-    //         console.log("Pending changes", {
-    //             deletions: changes?.changes.deletions.map(d => d.id),
-    //             additions: changes?.changes.additions.map(a => a.id)
-    //         });
-    //     }
-
-    //     setInProgress(false); // Deletion complete
-
-    //     // Failed to delete a configuration? Don't try deleteing the Sample
-    //     if (errors.length > 0 || !sampleDeleteSuccess) {
-    //         setSubmitErrorMessage(errors.join(", ") || "Failed to delete sample.");
-    //         return;
-    //     }
-
-    //     metadataContext.changed(); // refreshes the table
-    //     setIsOpen(false);
-    //     onSuccess?.();
-
     return (
         <>
             <span onClick={clickedOpen}>
@@ -218,7 +157,7 @@ export const DeleteSample: React.FC<DeleteSampleProps> = ({
                     <section className="modal-card-body">
                         <div className="block">
                             <p>Are you sure you want to delete this bar?</p>
-                            <p>This operation cannot be undone.</p>
+                            {/* <p>This operation cannot be undone.</p> */}
                         </div>
 
                         <div className="buttons">

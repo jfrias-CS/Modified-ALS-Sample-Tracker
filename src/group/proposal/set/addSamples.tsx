@@ -32,31 +32,24 @@ const AddSamples: React.FC = () => {
     // const initialScanTypeValue = firstTypeName ? metadataContext.scanTypes.typesByName.get(firstTypeName)! : null;
     // const [scanTypeValue, setScanTypeValue] = useState<ScanType | null>(initialScanTypeValue)
 
-
-    const preferredScanTypeByGroup: Record<string, string> = {
-        "402": "XAS",
-        "631": "XAS",
-        "733": "GIWAXS",
-    };
-
-    
     React.useEffect(() => {
 
+        const preferredScanTypeByGroup: Record<string, string> = {
+            "402": "XAS-4.0.2",
+            "631": "XAS-6.3.1",
+            "733": "GIWAXS",
+        };
+    
         // Set up default ScanType based on beamline
-    if (metadataContext.scanTypes.typeNamesInDisplayOrder.length > 0) {
-        const preferredScanType = groupId
-            ? preferredScanTypeByGroup[groupId]
-            : null;
-        const initialScanTypeValue = preferredScanType
-            ? metadataContext.scanTypes.typesByName.get(preferredScanType as ScanTypeName)
-            : metadataContext.scanTypes.typesByName.get(
-                metadataContext.scanTypes.typeNamesInDisplayOrder[0] as ScanTypeName
-            );
-        initialScanTypeRef.current = initialScanTypeValue ?? null;
-        setScanTypeValue(initialScanTypeValue ?? null);
-    }
-    // Only run when scan types or groupId changes
-}, [metadataContext.scanTypes, groupId]);
+        if (metadataContext.scanTypes.typeNamesInDisplayOrder.length > 0) {
+            const preferredScanType = groupId ? preferredScanTypeByGroup[groupId] : null;
+            const initialScanTypeValue = preferredScanType ? metadataContext.scanTypes.typesByName.get(preferredScanType as ScanTypeName) : 
+                metadataContext.scanTypes.typesByName.get(metadataContext.scanTypes.typeNamesInDisplayOrder[0] as ScanTypeName);
+            initialScanTypeRef.current = initialScanTypeValue ?? null;
+            setScanTypeValue(initialScanTypeValue ?? null);
+        }
+        // Only run when scan types or groupId changes
+    }, [metadataContext.scanTypes, groupId]);
 
 
     const [validQuantity, setValidQuantity] = useState<boolean>(true);
@@ -106,9 +99,9 @@ const AddSamples: React.FC = () => {
         name: string,
         scanType: ScanType | null
     ) {
-        var validQuantity: boolean = true;
-        var validName: boolean = true;
-        var uniqueName: boolean = true;
+        let validQuantity: boolean = true;
+        let validName: boolean = true;
+        let uniqueName: boolean = true;
 
         if (parseInt(quantity, 10) < 1) {
             validQuantity = false;
@@ -142,7 +135,7 @@ const AddSamples: React.FC = () => {
         setSubmitErrorMessage(null);
         setInProgress(true);
 
-        var count = Math.max(parseInt(quantity, 10), 1);
+        let count = Math.max(parseInt(quantity, 10), 1);
         // These are new config objects but they don't have real Guid values.
         // Those will be added when they're round-tripped to the server below.
         const filteredNewName = newName.replace(/[^A-Za-z0-9\-_]/g, "_");
@@ -155,8 +148,8 @@ const AddSamples: React.FC = () => {
             );
 
         count = 0;
-        var newConfigs = [];
-        var error: string | null = null;
+        const newConfigs = [];
+        let error: string | null = null;
 
         while (count < newConfigTemplates.length && error === null) {
             const c = newConfigTemplates[count];

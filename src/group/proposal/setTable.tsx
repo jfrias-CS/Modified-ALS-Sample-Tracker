@@ -67,10 +67,10 @@ const SetTable: React.FC = () => {
 
         <div className="level-right">
           <div className="level-item">
-              <p className="subtitle is-5"><Link to={ "labels" }>Printable Labels</Link></p>
+            <AddSets />
           </div>
           <div className="level-item">
-            <AddSets />
+              <p className="subtitle is-5"><Link to={ "labels" }>Printable Labels</Link></p>
           </div>
         </div>
       </nav>

@@ -22,25 +22,21 @@ const DeleteSet: React.FC<DeleteSetProps> = ({
     onSuccess,
 }) => {
     //var { setId } = useParams();
-    const routeParams = useParams();
-    const setId = (setIdProp || routeParams.setId || "").toLowerCase();
+    const routeParams = useParams(); // used to find parameters in the URL
+    const setId = (setIdProp || routeParams.setId || "").toLowerCase(); // Get the setId from props or URL parameters, ensuring it's a string
     //setId = setId ? setId.toLowerCase() : "";
 
-    const metadataContext = useContext(MetadataContext);
-    const navigate = useNavigate();
-
-    const [isOpen, setIsOpen] = useState<boolean>(false);
-
-    const [inProgress, setInProgress] = useState<boolean>(false);
-    const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(
-        null
-    );
+    const metadataContext = useContext(MetadataContext); // Access the MetadataContext to get sets and configurations
+    const navigate = useNavigate(); // Used to navigate to a different route after deletion
+    const [isOpen, setIsOpen] = useState<boolean>(false); // Modal open state
+    const [inProgress, setInProgress] = useState<boolean>(false); // Indicates if the deletion is in progress
+    const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null); // Error message for submission
 
     function getSet(): SampleConfigurationSet | undefined {
         if (!setId) {
             return undefined;
         }
-        console.log("HERE", metadataContext.sets.getById(setId as Guid));
+        // console.log(metadataContext.sets.getById(setId as Guid));
         return metadataContext.sets.getById(setId as Guid); // returns a set (Bar of Samples) by the given Id
     }
 
@@ -59,8 +55,8 @@ const DeleteSet: React.FC<DeleteSetProps> = ({
 
         var errors: string[] = [];
         //const configs = thisSet.allValid(); potential crash if no set found & no strict typed
-        // Returns a set of samples that are valid
-        const configs = thisSet.allValid() || []; // Fallback to empty array
+        // Returns a set of samples that are valid || Fallback to empty array
+        const configs = thisSet.allValid() || []; 
         // Maps them by ID 
         const configIds = configs.map((c) => c.id);
 
@@ -75,12 +71,15 @@ const DeleteSet: React.FC<DeleteSetProps> = ({
             thisSet.deleteWithHistory(configIds);
             const changes = thisSet.getPendingChanges();
             if (changes) {
+                // Lists samples added or modified during the operations
+                // Syncs the changes with the API
                 const saveCalls = changes.changes.additions.map((e) =>
-                    updateConfig(e as SampleConfiguration)
+                    updateConfig(e as SampleConfiguration) // sends a PATCH request to update the sample configuration
                 );
+                // Prepares API calls to mark samples as "deleted".
                 const deleteCalls = changes.changes.deletions.map((e) => {
                     const c = e as SampleConfiguration;
-                    c.isValid = false;
+                    c.isValid = false; // soft delete
                     return updateConfig(c as SampleConfiguration);
                 });
 
@@ -90,8 +89,8 @@ const DeleteSet: React.FC<DeleteSetProps> = ({
                         configDeleteSuccess = true;
                     } else {
                         responses.forEach((r) => {
-                            if (!r.success && result.message) { 
-                                errors.push(result.message);
+                            if (!r.success && r.message) { // Uncaught error when using result.message
+                                errors.push(r.message);
                             }
                         });
                     }
