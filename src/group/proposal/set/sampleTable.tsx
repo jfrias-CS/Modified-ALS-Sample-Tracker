@@ -21,6 +21,7 @@ import {
     ParamUid,
     ScanParameterSettings,
     ParameterChoice,
+    GROUP_SCAN_TYPE_RULES,
 } from "../../../scanTypeDto.ts";
 import {
     SampleConfiguration,
@@ -50,6 +51,7 @@ import DeleteSample from "./deleteSample.tsx";
 import { CloneSample } from "./cloneSample.tsx";
 
 interface SampleTableProps {
+   // groupId?: string;
     setid: Guid;
 }
 
@@ -104,8 +106,10 @@ function findEnclosingTable(node: HTMLElement): HTMLElement | null {
 }
 
 const SampleTable: React.FC<SampleTableProps> = (props) => {
-    const setId = props.setid;
-
+    const setId = props.setid 
+    //const groupId = props.groupId;
+    // const validScanTypes = GROUP_SCAN_TYPE_RULES[groupId || ""] || [];
+    // console.log(`SampleTable: groupId=${groupId}, validScanTypes=${validScanTypes}`);
     const metadataContext = useContext(MetadataContext);
     const [sortedSampleIds, setSortedSampleIds] = useState<Guid[]>([]);
 
@@ -481,6 +485,10 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         metadataContext.scanTypes.typeNamesInDisplayOrder.map((name) => {
             return { name: name, description: "" };
         });
+
+    // const scanTypesAsChoices: ParameterChoice[] = validScanTypes.typeInDisplayOrder.map((name) => {
+    //     return { name: name, description: "" };
+    // });
 
     const displayedParameterIds = thisSet.relevantParameters.filter((p) =>
         metadataContext.scanTypes.parametersById.has(p)

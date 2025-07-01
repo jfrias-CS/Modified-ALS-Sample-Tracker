@@ -5,7 +5,7 @@ import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import "bulma/css/bulma.min.css";
 
 import { Guid } from "../../../components/utils.tsx";
-import { ScanType, ScanTypeName } from "../../../scanTypeDto.ts";
+import { GROUP_SCAN_TYPE_RULES, ScanType, ScanTypeName } from "../../../scanTypeDto.ts";
 import { SampleConfigurationSet } from "../../../sampleConfiguration.ts";
 import { MetadataContext } from "../../../metadataProvider.tsx";
 import { SelectingStatus } from "../../../components/inputAutocomplete.tsx";
@@ -42,6 +42,9 @@ const AddSamples: React.FC = () => {
     
         // Set up default ScanType based on beamline
         if (metadataContext.scanTypes.typeNamesInDisplayOrder.length > 0) {
+            // Get allowed scan types for the group
+            //const allowedScanTypes = groupId ? GROUP_SCAN_TYPE_RULES[groupId] || [] : metadataContext.scanTypes.typeNamesInDisplayOrder;
+            //console.log("Allowed scan types for group", groupId, ":", allowedScanTypes);
             const preferredScanType = groupId ? preferredScanTypeByGroup[groupId] : null;
             const initialScanTypeValue = preferredScanType ? metadataContext.scanTypes.typesByName.get(preferredScanType as ScanTypeName) : 
                 metadataContext.scanTypes.typesByName.get(metadataContext.scanTypes.typeNamesInDisplayOrder[0] as ScanTypeName);
@@ -312,6 +315,14 @@ const AddSamples: React.FC = () => {
                             <ScanTypeAutocomplete
                                 selectedItem={scanTypeValue}
                                 searchFunctions={scanTypeSearchFunctions}
+                                filterScanTypes={ (scanTypes) => {
+                                    if (!groupId) {
+                                        return scanTypes;
+                                    }
+                                    const allowedScanTypes = GROUP_SCAN_TYPE_RULES[groupId] || [];
+                                    console.log("Allowed scan types for group", groupId, ":", allowedScanTypes);
+                                    return scanTypes.filter(type => allowedScanTypes.includes(type.name));
+                                }}
                             />
                         </div>
 

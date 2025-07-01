@@ -93,7 +93,7 @@ const MetadataProvider: React.FC<PropsWithChildren<ProviderProps>> = (props) => 
     appConfig.log('MetadataProvider mounted');
 
     // Will eventually be an asynchronous call.
-    setScanTypes(getScanTypes());
+    setScanTypes(getScanTypes(groupId)); // added the parameter groupId to filter scan types based on the group.
     setScanTypesLoadingState(MetaDataLoadingState.Succeeded);
     return () => {
       appConfig.log('MetadataProvider unmounted');

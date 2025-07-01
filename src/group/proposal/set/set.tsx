@@ -179,7 +179,8 @@ const Set: React.FC = () => {
             }} />
       </div>
 
-      <SampleTable setid={setId! as Guid} />
+      <SampleTable setid={setId! as Guid}
+       groupId={groupContext.group!.id} />
 
     </>
   )

@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import 'bulma/css/bulma.min.css';
 
-import { ScanType } from '../scanTypeDto.ts'
+import { GROUP_SCAN_TYPE_RULES, ScanType } from '../scanTypeDto.ts'
 import { MetadataContext } from '../metadataProvider.tsx'
 import { InputAutocomplete, SearchFunctions, SearchResult, SelectingStatus } from './inputAutocomplete.tsx'
 import { highlightSearchTermsInString } from "./utils.tsx";
@@ -26,6 +26,7 @@ interface ScanTypeAutocompleteParameters {
   triggerFocus?: boolean;
   resetOnDefocus?: boolean;
   groupId?: string;
+  filterScanTypes?: (items: ScanType[]) => ScanType[];
 }
 
 
@@ -35,7 +36,14 @@ function ScanTypeAutocomplete(settings:ScanTypeAutocompleteParameters) {
 
   async function searchScanTypes(searchString: string): Promise<SearchResult<ScanType>> {
     const searchStringLower = searchString.toLowerCase();
-    const toTest = metadataContext.scanTypes.typeNamesInDisplayOrder.map((t) => metadataContext.scanTypes.typesByName.get(t)!);
+    let toTest = metadataContext.scanTypes.typeNamesInDisplayOrder.map((t) => metadataContext.scanTypes.typesByName.get(t)!);
+    if (settings.filterScanTypes) {
+      toTest = settings.filterScanTypes(toTest);
+    } else if (settings.groupId) {
+      const allowedtypes = GROUP_SCAN_TYPE_RULES[settings.groupId] || [];
+      toTest = toTest.filter(type => allowedtypes.includes(type.name));
+    }
+    
     const matches = toTest.filter((s) =>
                       s.name.toLowerCase().includes(searchStringLower) ||
                       s.description.toLowerCase().includes(searchStringLower));

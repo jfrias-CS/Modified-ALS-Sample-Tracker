@@ -45,6 +45,29 @@ export interface ScanType {
   parameters: Array<ScanParameterSettings>;
 }
 
+ export const GROUP_SCAN_TYPE_RULES: Record<string, ScanTypeName[]> = {
+  "402": [
+    "XAS-4.0.2" as ScanTypeName,
+    "XLD" as ScanTypeName,
+    "XMCD" as ScanTypeName,
+    "XMLD-4.0.2" as ScanTypeName,
+  ],
+  "631": [
+    "XAS-6.3.1" as ScanTypeName,
+    "XLD" as ScanTypeName,
+    "XMCD" as ScanTypeName,
+  ],
+  "733": [
+    "GIWAXS" as ScanTypeName
+  ]
+}
+
+// to be used if we want to filter parameters based on groupId
+// export const GROUP_PARAMETER_RULES: Record<string, ParamUid[]> = {
+//   "402": [],
+//   "631": [],
+//   "733": []
+// };
 
 // Handy functions used to assist validation of parameter values.
 
