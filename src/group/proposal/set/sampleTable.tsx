@@ -51,7 +51,7 @@ import DeleteSample from "./deleteSample.tsx";
 import { CloneSample } from "./cloneSample.tsx";
 
 interface SampleTableProps {
-   // groupId?: string;
+    // groupId?: string;
     setid: Guid;
 }
 
@@ -106,7 +106,7 @@ function findEnclosingTable(node: HTMLElement): HTMLElement | null {
 }
 
 const SampleTable: React.FC<SampleTableProps> = (props) => {
-    const setId = props.setid 
+    const setId = props.setid;
     const metadataContext = useContext(MetadataContext);
     const [sortedSampleIds, setSortedSampleIds] = useState<Guid[]>([]);
 
@@ -117,24 +117,33 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         useState<CellActivationStatus>(CellActivationStatus.Inactive);
     const tableRef = useRef<HTMLTableElement>(null);
 
-    const [tableSortColumn, setTableSortColumn] = useState<SampleConfigurationFieldSelection>(
-        { field: SampleConfigurationField.Name, parameter: null, }
-    );
+    const [tableSortColumn, setTableSortColumn] =
+        useState<SampleConfigurationFieldSelection>({
+            field: SampleConfigurationField.Name,
+            parameter: null,
+        });
     const [tableSortReverse, setTableSortReverse] = useState<boolean>(false);
 
-    const [cellMouseDown, setCellMouseDown] = useState<boolean>(false);         // A cell has been clicked
-    const [cellMouseDownX, setCellMouseDownX] = useState<number | null>(null);  // X coordinate of the clicked cell
-    const [cellMouseDownY, setCellMouseDownY] = useState<number | null>(null);  // Y coordinate of the clicked cell
-    const [cellMouseMoveX, setCellMouseMoveX] = useState<number | null>(null);  // X coordinate of last cell mouse selected 
-    const [cellMouseMoveY, setCellMouseMoveY] = useState<number | null>(null);  // Y coordinate of last cell mouse selected
+    const [cellMouseDown, setCellMouseDown] = useState<boolean>(false); // A cell has been clicked
+    const [cellMouseDownX, setCellMouseDownX] = useState<number | null>(null); // X coordinate of the clicked cell
+    const [cellMouseDownY, setCellMouseDownY] = useState<number | null>(null); // Y coordinate of the clicked cell
+    const [cellMouseMoveX, setCellMouseMoveX] = useState<number | null>(null); // X coordinate of last cell mouse selected
+    const [cellMouseMoveY, setCellMouseMoveY] = useState<number | null>(null); // Y coordinate of last cell mouse selected
 
     // For Click & Drag selection
-    const [selectedSampleIds, setSelectedSampleIds] = useState<Set<Guid>>(new Set());
+    const [selectedSampleIds, setSelectedSampleIds] = useState<Set<Guid>>(
+        new Set()
+    );
     const [isShiftPressed, setIsShiftPressed] = useState<boolean>(false);
+    const showSelectionButtons = selectedSampleIds.size > 0;
 
-    const [syncTimer, setSyncTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+    const [syncTimer, setSyncTimer] = useState<ReturnType<
+        typeof setTimeout
+    > | null>(null);
     const [syncState, setSyncState] = useState<SyncState>(SyncState.Idle);
-    const [tableHelpDisclosed, setTableHelpDisclosed] = useState<boolean>(false);
+    const [tableHelpDisclosed, setTableHelpDisclosed] =
+        useState<boolean>(false);
 
     useEffect(() => {
         if (setId === undefined || !setId.trim()) {
@@ -156,7 +165,14 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
             tableSortReverse
         );
         setSortedSampleIds(sortedSampleIds);
-    }, [setId, metadataContext.changeCounter, metadataContext.loadingState, metadataContext.sets, tableSortColumn, tableSortReverse]);
+    }, [
+        setId,
+        metadataContext.changeCounter,
+        metadataContext.loadingState,
+        metadataContext.sets,
+        tableSortColumn,
+        tableSortReverse,
+    ]);
 
     useEffect(() => {
         console.log("Selected IDs:", Array.from(selectedSampleIds));
@@ -164,17 +180,17 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Shift') setIsShiftPressed(true);
+            if (e.key === "Shift") setIsShiftPressed(true);
         };
         const handleKeyUp = (e: KeyboardEvent) => {
-            if (e.key === 'Shift') setIsShiftPressed(false);
+            if (e.key === "Shift") setIsShiftPressed(false);
         };
 
-        window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keyup", handleKeyUp);
         return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-            window.removeEventListener('keyup', handleKeyUp);
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keyup", handleKeyUp);
         };
     }, []);
 
@@ -292,7 +308,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         setCellMouseDownY(null);
         setCellMouseMoveX(null);
         setCellMouseMoveY(null);
-    }
+    };
     function tableOnPointerDown(event: React.PointerEvent<HTMLElement>) {
         // Attempt to find Cell Coordinates
         const foundCell = findAnEditableCell(event.target as HTMLElement);
@@ -301,52 +317,55 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
             return;
         }
         // if (foundCell) {
-            setCellMouseDown(true);
-            setCellMouseDownX(foundCell.x);
-            setCellMouseDownY(foundCell.y);
-            setCellMouseMoveX(foundCell.x);
-            setCellMouseMoveY(foundCell.y);
+        setCellMouseDown(true);
+        setCellMouseDownX(foundCell.x);
+        setCellMouseDownY(foundCell.y);
+        setCellMouseMoveX(foundCell.x);
+        setCellMouseMoveY(foundCell.y);
 
-            // console.log("tableOnPointerDown called with foundCell:", foundCell);
-            console.log("tableOnPointerDown first selected SampleID:", sortedSampleIds[foundCell.y]);
-            // // NEW: If shift key is pressed, we toggle the selection of the clicked row
-            if (event.shiftKey) {
-                console.log("Shift key pressed:", isShiftPressed);
-                const clickedSampleId = sortedSampleIds[foundCell.y];
-                // setSelectedSampleIds(new Set());
-                setSelectedSampleIds(prevSelectedSampleIds => {
-                    const newSet = new Set(prevSelectedSampleIds);
-                    newSet.add(clickedSampleId); // add to selection
-                    return newSet;
-                })
-                console.log("Selected Sample IDs:", clickedSampleId);
-            }
-            // If the shift key is not pressed, clear selection 
-            else {
-                setIsShiftPressed(false);
-                console.log("Shift key pressed:", isShiftPressed);
-                console.log("Cleared selection:", selectedSampleIds);
-                setSelectedSampleIds(new Set()); // Clear selection
-            }
-            // We can't do this because it creates a reference to the function in a previous
-            // instance of the SampleTable react object, which contains the old useState values,
-            // sowing chaos and confusion.
-            // document.addEventListener("mouseup", tableOnMouseUp, {once: true});
+        // console.log("tableOnPointerDown called with foundCell:", foundCell);
+        console.log(
+            "tableOnPointerDown first selected SampleID:",
+            sortedSampleIds[foundCell.y]
+        );
+        // // NEW: If shift key is pressed, we toggle the selection of the clicked row
+        if (event.shiftKey) {
+            console.log("Shift key pressed:", isShiftPressed);
+            const clickedSampleId = sortedSampleIds[foundCell.y];
+            // setSelectedSampleIds(new Set());
+            setSelectedSampleIds((prevSelectedSampleIds) => {
+                const newSet = new Set(prevSelectedSampleIds);
+                newSet.add(clickedSampleId); // add to selection
+                return newSet;
+            });
+            console.log("Selected Sample IDs:", clickedSampleId);
+        }
+        // If the shift key is not pressed, clear selection
+        else {
+            setIsShiftPressed(false);
+            console.log("Shift key pressed:", isShiftPressed);
+            console.log("Cleared selection:", selectedSampleIds);
+            setSelectedSampleIds(new Set()); // Clear selection
+        }
+        // We can't do this because it creates a reference to the function in a previous
+        // instance of the SampleTable react object, which contains the old useState values,
+        // sowing chaos and confusion.
+        // document.addEventListener("mouseup", tableOnMouseUp, {once: true});
 
-            // We can't do this either because it redirects all subsequent events so their
-            // target is the table itself, obscuring the element that the pointer was originally over,
-            // making the event useless to us.
-            //const foundTable = findEnclosingTable(event.target as HTMLElement);
-            //if (foundTable) {
-            //  foundTable.setPointerCapture(event.pointerId);
-            //}
+        // We can't do this either because it redirects all subsequent events so their
+        // target is the table itself, obscuring the element that the pointer was originally over,
+        // making the event useless to us.
+        //const foundTable = findEnclosingTable(event.target as HTMLElement);
+        //if (foundTable) {
+        //  foundTable.setPointerCapture(event.pointerId);
+        //}
         // } else {
-            // For any other click, we clear the selection.
-            // setCellMouseDown(false);
-            // setCellMouseDownX(null);
-            // setCellMouseDownY(null);
-            // setCellMouseMoveX(null);
-            // setCellMouseMoveY(null);
+        // For any other click, we clear the selection.
+        // setCellMouseDown(false);
+        // setCellMouseDownX(null);
+        // setCellMouseDownY(null);
+        // setCellMouseMoveX(null);
+        // setCellMouseMoveY(null);
         // }
     }
 
@@ -360,7 +379,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     // //     const foundCell = findAnEditableCell(event.target as HTMLElement);
     // //     if (!foundCell) return;
 
-    // //     // Shift+Click: Full row highlight 
+    // //     // Shift+Click: Full row highlight
     // //     if (event.shiftKey || isShiftPressed) {
     // //         const newSelected = new Set(selectedSampleIds);
     // //         if (newSelected.has(sampleId)) {
@@ -376,7 +395,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     // //         setCellFocusY(foundCell.y);
     // //     }
     // */
-    // }; 
+    // };
 
     // Reacts from event Listener onPointerOver (event listener such as onClick)
     function tableOnPointerOver(event: React.PointerEvent<HTMLElement>) {
@@ -388,23 +407,22 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         if (!foundCell) {
             return;
         }
-        /*
-        // Update the selection when dragging 
-        // if (cellMouseDownY !== null && foundCell.y !== cellMouseMoveY) {
-        //     const startY = cellMouseDownY;
-        //     const endY = foundCell.y;
 
-        //     const newSelectedIds = new Set(selectedSampleIds);
-        //     const minY = Math.min(startY, endY);
-        //     const maxY = Math.max(startY, endY);
+        // If the hovered section is NOT the starting cell
+        if (event.shiftKey && cellMouseDownY !== null && foundCell.y !== cellMouseMoveY) {
+            const startY = cellMouseDownY;
+            const endY = foundCell.y;
 
-        //     for (let y = minY; y <= maxY; y++) {
-        //         const sampleId = sortedSampleIds[y];
-        //         newSelectedIds.add(sampleId);
-        //     }
-        //     setSelectedSampleIds(newSelectedIds);
-        // }
-        */
+            const newSelectedIds = new Set(selectedSampleIds);
+            const minY = Math.min(startY, endY);
+            const maxY = Math.max(startY, endY);
+
+            for (let y = minY; y <= maxY; y++) {
+                const sampleId = sortedSampleIds[y];
+                newSelectedIds.add(sampleId);
+            }
+            setSelectedSampleIds(newSelectedIds);
+        }
 
         if (foundCell.x != cellMouseMoveX || foundCell.y != cellMouseMoveY) {
             setCellMouseMoveX(foundCell.x);
@@ -430,7 +448,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         setCellMouseDown(false);
         setCellFocusX(null);
         setCellFocusY(null);
-        // console.log("Selected Sample IDs:", Array.from(selectedSampleIds));
+        console.log("Selected Sample IDs:", Array.from(selectedSampleIds));
     }
 
     function tableOnKeyDown(event: React.KeyboardEvent<HTMLElement>) {
@@ -1307,7 +1325,15 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                         <AddSamples />
                     </div>
                 </div>
-
+                {showSelectionButtons && (
+                    <div className="level-item">
+                        {/* Clone Selected Samples */}
+                        <button
+                            className="button is-medium is-dark is-outlined is-inverted">Clone 
+                            <strong>{sortedSampleIds.length}</strong> Samples
+                            </button>
+                    </div>
+                )}
                 <div className="level-right">
                     <div className="level-item">{syncStatusMessage}</div>
                     <div className="level-item">
@@ -1564,7 +1590,11 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                                     return (
                                         <tr
                                             key={`${sampleId}-${metadataContext.changeCounter}`}
-                                            className={selectedSampleIds.has(sampleId) ? "is-shift-selected" : ""}
+                                            className={
+                                                selectedSampleIds.has(sampleId)
+                                                    ? "is-shift-selected"
+                                                    : ""
+                                            }
                                             // onClick={(e) => handleClick(sampleId, e)}
                                         >
                                             <td
@@ -1670,48 +1700,48 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                                                 style={{ height: "100%" }}
                                             >
                                                 <div className="is-flex is-justify-content-center is-align-items-center">
-                                                <CloneSample
-                                                    setId={setId}
-                                                    sampleId={sampleId}
-                                                    trigger={
-                                                        <button className="button is-small">
-                                                            Clone Sample
-                                                        </button>
-                                                    }
-                                                    onSuccess={() => {
-                                                        const sortedSampleIds =
-                                                        sortSampleIds(
-                                                            thisSet,
-                                                            tableSortColumn,
-                                                            tableSortReverse
-                                                        );
-                                                        setSortedSampleIds(
-                                                            sortedSampleIds
-                                                        );
-                                                    }}
+                                                    <CloneSample
+                                                        setId={setId}
+                                                        sampleId={sampleId}
+                                                        trigger={
+                                                            <button className="button is-small">
+                                                                Clone Sample
+                                                            </button>
+                                                        }
+                                                        onSuccess={() => {
+                                                            const sortedSampleIds =
+                                                                sortSampleIds(
+                                                                    thisSet,
+                                                                    tableSortColumn,
+                                                                    tableSortReverse
+                                                                );
+                                                            setSortedSampleIds(
+                                                                sortedSampleIds
+                                                            );
+                                                        }}
                                                     />
                                                     <div className="spacer"></div>
-                                                <DeleteSample
-                                                    setId={setId}
-                                                    sampleId={sampleId}
-                                                    trigger={
-                                                        <button className="button is-small is-danger is-outlined is-inverted">
-                                                            Delete Sample
-                                                        </button>
-                                                    }
-                                                    onSuccess={() => {
-                                                        const sortedSampleIds =
-                                                        sortSampleIds(
-                                                            thisSet,
-                                                            tableSortColumn,
-                                                            tableSortReverse
-                                                        );
-                                                        setSortedSampleIds(
-                                                            sortedSampleIds
-                                                        );
-                                                    }}
+                                                    <DeleteSample
+                                                        setId={setId}
+                                                        sampleId={sampleId}
+                                                        trigger={
+                                                            <button className="button is-small is-danger is-outlined is-inverted">
+                                                                Delete Sample
+                                                            </button>
+                                                        }
+                                                        onSuccess={() => {
+                                                            const sortedSampleIds =
+                                                                sortSampleIds(
+                                                                    thisSet,
+                                                                    tableSortColumn,
+                                                                    tableSortReverse
+                                                                );
+                                                            setSortedSampleIds(
+                                                                sortedSampleIds
+                                                            );
+                                                        }}
                                                     />
-                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                     );

@@ -156,7 +156,7 @@ export const DeleteSample: React.FC<DeleteSampleProps> = ({
                     </header>
                     <section className="modal-card-body">
                         <div className="block">
-                            <p>Are you sure you want to delete this bar?</p>
+                            <p>Are you sure you want to delete this sample?</p>
                             {/* <p>This operation cannot be undone.</p> */}
                         </div>
 
