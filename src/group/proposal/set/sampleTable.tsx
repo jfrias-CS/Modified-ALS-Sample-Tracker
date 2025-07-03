@@ -1669,12 +1669,12 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                                                 key={`${sampleId}-${metadataContext.changeCounter}-actions`}
                                                 style={{ height: "100%" }}
                                             >
-                                                <div className="is-flex is-justify-content-center is-align-items-center h-100">
+                                                <div className="is-flex is-justify-content-center is-align-items-center">
                                                 <CloneSample
                                                     setId={setId}
                                                     sampleId={sampleId}
                                                     trigger={
-                                                        <button className="button">
+                                                        <button className="button is-small">
                                                             Clone Sample
                                                         </button>
                                                     }
@@ -1690,11 +1690,12 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                                                         );
                                                     }}
                                                     />
+                                                    <div className="spacer"></div>
                                                 <DeleteSample
                                                     setId={setId}
                                                     sampleId={sampleId}
                                                     trigger={
-                                                        <button className="button is-danger is-small">
+                                                        <button className="button is-small is-danger is-outlined is-inverted">
                                                             Delete Sample
                                                         </button>
                                                     }
