@@ -86,9 +86,9 @@ export class SampleConfiguration {
         }
     }
 
-    clone(): SampleConfiguration {
-        const clonedSample = new SampleConfiguration(this.asDto());
-        return clonedSample;
+    duplicate(): SampleConfiguration {
+        const duplicatedSample = new SampleConfiguration(this.asDto());
+        return duplicatedSample;
     }
 
     asDto(): SampleConfigurationDto {
@@ -457,15 +457,15 @@ export class SampleConfigurationSet {
         return this.history.catchUpToEdit(index);
     }
 
-    cloneSample(sampleId: Guid): SampleConfiguration | undefined {
+    duplicateSample(sampleId: Guid): SampleConfiguration | undefined {
         // 1. Get the original sample
         const thisSet = this.configurationsById.get(sampleId);
         // 2. Deep copy
-        const clone = thisSet?.clone();
-        if (!clone) {
+        const duplicate = thisSet?.duplicate();
+        if (!duplicate) {
             return;
         }
-        return clone;
+        return duplicate;
     }
 }
 

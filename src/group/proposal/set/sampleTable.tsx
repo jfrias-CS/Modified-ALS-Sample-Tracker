@@ -48,7 +48,7 @@ import { SampleTableClipboardContent } from "./sampleClipboard.ts";
 import "./sampleTable.css";
 import "../../../components/tableSortable.css";
 import DeleteSample from "./deleteSample.tsx";
-import { CloneSample } from "./cloneSample.tsx";
+import { DuplicateSample } from "./duplicateSample.tsx";
 
 interface SampleTableProps {
     // groupId?: string;
@@ -292,13 +292,23 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     // If user clicks outside of table
     function tableOnBlur(event: React.FocusEvent<HTMLElement>) {
+        console.log("tableOnBlur fired. Selected IDs (before clear/reset):", Array.from(selectedSampleIds));
+        // Check if the blur is happening on the table itself
         if (
             event.target.nodeName.toLowerCase() == "table" &&
             event.target.classList.contains("sampletable")
         ) {
-            setTableHasFocus(false);
-            resetMouseState(); // reset mouse to null state
-            setSelectedSampleIds(new Set()); // reset selection to null when clicking outside of table
+            // Check if focus is moving to an element that is *not* a table-action-popup-button
+            // This is crucial: event.relatedtarge is the element that is receiving focus.
+            const relatedTarget = event.relatedTarget as HTMLElement | null;
+
+            // If relatedTarget is null(e.d., clicking outside browser window) OR 
+            // if relatedTarget exists AND does NOT have the 'table-action-popup-button' class
+            if (!relatedTarget || !relatedTarget.classList.contains('table-action-popup-button')) {   
+                setTableHasFocus(false);
+                resetMouseState(); // reset mouse to null state
+                setSelectedSampleIds(new Set()); // reset selection to null when clicking outside of table
+            }
         }
     }
 
@@ -311,6 +321,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     };
     function tableOnPointerDown(event: React.PointerEvent<HTMLElement>) {
         // Attempt to find Cell Coordinates
+        console.log("tableOnPointerDown fired. Shift key:", event.shiftKey);
         const foundCell = findAnEditableCell(event.target as HTMLElement);
         if (!foundCell) {
             resetMouseState();
@@ -445,10 +456,11 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     }
 
     function tableOnPointerUp(event: React.PointerEvent<HTMLElement>) {
+        console.log("tableOnPointerUp fired. Selected IDs (before clear/reset):", Array.from(selectedSampleIds));
         setCellMouseDown(false);
         setCellFocusX(null);
         setCellFocusY(null);
-        console.log("Selected Sample IDs:", Array.from(selectedSampleIds));
+        // console.log("Selected Sample IDs:", Array.from(selectedSampleIds));
     }
 
     function tableOnKeyDown(event: React.KeyboardEvent<HTMLElement>) {
@@ -1081,7 +1093,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
             };
         }
 
-        var editedConfig = thisConfig.clone();
+        var editedConfig = thisConfig.duplicate();
 
         // Name
         if (x === 0) {
@@ -1324,16 +1336,32 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                     <div className="level-item">
                         <AddSamples />
                     </div>
-                </div>
                 {showSelectionButtons && (
                     <div className="level-item">
-                        {/* Clone Selected Samples */}
-                        <button
-                            className="button is-medium is-dark is-outlined is-inverted">Clone 
-                            <strong>{sortedSampleIds.length}</strong> Samples
+                        {/* Duplicate Selected Samples */}
+                        <DuplicateSample
+                            setId={setId}
+                            sampleIds={selectedSampleIds}
+                            trigger={
+                                <button
+                                className="button is-medium is-dark is-outlined is-inverted table-action-popup-button">
+                                <span>Duplicate <strong> {selectedSampleIds.size} </strong> 
+                                { selectedSampleIds.size === 1 ? ' Sample' : ' Samples'}
+                                </span>
                             </button>
+                                }
+                                onSuccess={() => {
+                                    console.log("DuplicateSample onSucess callback fired.");
+                                    const sortedSampleIds = sortSampleIds(thisSet, tableSortColumn, tableSortReverse);
+                                    setSortedSampleIds(sortedSampleIds);
+                                    setSelectedSampleIds(new Set());
+                                    resetMouseState();
+                                    setIsShiftPressed(false);
+                                }}
+                        />
                     </div>
                 )}
+                </div>
                 <div className="level-right">
                     <div className="level-item">{syncStatusMessage}</div>
                     <div className="level-item">
@@ -1700,12 +1728,12 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                                                 style={{ height: "100%" }}
                                             >
                                                 <div className="is-flex is-justify-content-center is-align-items-center">
-                                                    <CloneSample
+                                                    <DuplicateSample
                                                         setId={setId}
                                                         sampleId={sampleId}
                                                         trigger={
                                                             <button className="button is-small">
-                                                                Clone Sample
+                                                                Duplicate Sample
                                                             </button>
                                                         }
                                                         onSuccess={() => {
