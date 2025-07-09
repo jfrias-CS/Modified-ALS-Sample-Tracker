@@ -14,20 +14,21 @@ import {
 
 interface DuplicateSampleProps {
     setId: string;
-    sampleId?: string;
-    sampleIds?: Set<Guid>;
-    trigger?: React.ReactNode;
+    //sampleId?: string;
+    sampleIds: Set<Guid>;
+   // trigger?: React.ReactNode;
     onSuccess?: () => void;
 }
 
 // NOTE: This is currently set up to return back if there is any error. Need to implement functionality to avoid this so we don't have to redo the process if there is a failure during any duplicaton
 // For example, if we have a group of 5 samples, and sample 3 fails, we should step over and attempt samples 4 & 5 instead of just returning with the failure. 
+// Create a new array for successful additions, then take that array and use addedwithhistory outside of for loop, and also add checks for failures. 
 
 export const DuplicateSample: React.FC<DuplicateSampleProps> = ({
     setId,
-    sampleId,
+    // sampleId,
     sampleIds,
-    trigger,
+    // trigger,
     onSuccess,
 }) => {
     const metadataContext = useContext(MetadataContext);
@@ -50,7 +51,7 @@ export const DuplicateSample: React.FC<DuplicateSampleProps> = ({
     }
     const handleDuplicate = async () => {
         console.log("DuplicateSample handleDuplicate START. Props.sampleIds:", sampleIds ? Array.from(sampleIds) : 'undefined');
-        if (!((setId && sampleId) || (setId && sampleIds))) {
+        if (!((setId && sampleIds))) {
             console.log("Could not locate setId, sampleId, or sampleIds.");
             setError("Clone could not locate setId, sampleId, or sampleIds.");
             setIsDuplicating(false);
@@ -69,9 +70,10 @@ export const DuplicateSample: React.FC<DuplicateSampleProps> = ({
         let samplesToDuplicate: Guid[] =[];
 
         // Confirm that we have one of the necessary data options to be able to duplicate selection
-        if (sampleId) {
-            samplesToDuplicate.push(sampleId as Guid);
-        } else if (sampleIds) {
+        // if (sampleId) {
+        //     samplesToDuplicate.push(sampleId as Guid);
+        // } else 
+        if (sampleIds) {
             // Convert Set into Array for easy iteration
             samplesToDuplicate = Array.from(sampleIds);
         } else {
@@ -171,18 +173,20 @@ export const DuplicateSample: React.FC<DuplicateSampleProps> = ({
     };
 
     return (
-        <span onClick={handleDuplicate} style={{ cursor: "pointer" }}>
-            {trigger || (
-                <button className="button is-small" disabled={isDuplicating}>
-                    {isDuplicating ? "Duplicating..." : "Duplicate"}
-                </button>
-            )}
-            {error && (
-                <span className="has-text-danger ml-2">
-                    <FontAwesomeIcon icon={faExclamationTriangle} /> {error}
+       <button className="button is-small is-outlined is-inverted delete-popup-button" 
+                    onClick={handleDuplicate}
+                    id="duplicateSampleButton"
+                   
+            >
+                <span>
+                    Clone{" "}
+                    <strong>
+                        {" "}
+                        {sampleIds.size}{" "}
+                    </strong> 
+                    {sampleIds.size === 1 ? " Sample" : " Samples"}
                 </span>
-            )}
-        </span>
+            </button>
     );
 };
 
