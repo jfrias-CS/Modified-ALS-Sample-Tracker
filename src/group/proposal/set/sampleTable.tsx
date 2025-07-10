@@ -130,19 +130,14 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     const [cellMouseMoveX, setCellMouseMoveX] = useState<number | null>(null); // X coordinate of last cell mouse selected
     const [cellMouseMoveY, setCellMouseMoveY] = useState<number | null>(null); // Y coordinate of last cell mouse selected
 
-    // For Click & Drag selection
-    const [selectedSampleIds, setSelectedSampleIds] = useState<Set<Guid>>(
-        new Set()
-    );
-    // const [isShiftPressed, setIsShiftPressed] = useState<boolean>(false);
-    const showSelectionButtons = selectedSampleIds.size > 0;
 
-    const [syncTimer, setSyncTimer] = useState<ReturnType<
-        typeof setTimeout
-    > | null>(null);
+    //--- For Click & Drag selection --- //
+    const [selectedSampleIds, setSelectedSampleIds] = useState<Set<Guid>>(new Set()); // create a new empty selection Set
+    const showSelectionButtons = selectedSampleIds.size > 0; // if we have a selection, we show action buttons
+
+    const [syncTimer, setSyncTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
     const [syncState, setSyncState] = useState<SyncState>(SyncState.Idle);
-    const [tableHelpDisclosed, setTableHelpDisclosed] =
-        useState<boolean>(false);
+    const [tableHelpDisclosed, setTableHelpDisclosed] = useState<boolean>(false);
 
     useEffect(() => {
         if (setId === undefined || !setId.trim()) {
@@ -300,6 +295,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         }
     }
 
+    // reset all mouse states
     const resetMouseState = () => {
         setCellMouseDown(false);
         setCellMouseDownX(null);
@@ -315,16 +311,18 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     function tableOnPointerDown(event: React.PointerEvent<HTMLElement>) {
         // Attempt to find Cell Coordinates
         const foundCell = findAnEditableCell(event.target as HTMLElement);
+        // if no cell is found we reset the mouse states
         if (!foundCell) {
             resetMouseState();
             return;
         }
-        // if (foundCell) {
-        setCellMouseDown(true);
-        setCellMouseDownX(foundCell.x);
-        setCellMouseDownY(foundCell.y);
-        setCellMouseMoveX(foundCell.x);
-        setCellMouseMoveY(foundCell.y);
+        if (foundCell) {
+            setCellMouseDown(true);
+            setCellMouseDownX(foundCell.x);
+            setCellMouseDownY(foundCell.y);
+            setCellMouseMoveX(foundCell.x);
+            setCellMouseMoveY(foundCell.y);
+        }
     }
 
     // Reacts from event Listener onPointerOver (event listener such as onClick)
@@ -339,7 +337,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         }
 
         if (foundCell.x != cellMouseMoveX || foundCell.y != cellMouseMoveY) {
-            // console.log("Mouse moved!");
             setCellMouseMoveX(foundCell.x);
             setCellMouseMoveY(foundCell.y);
         }
@@ -359,103 +356,50 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         }
     }
 
-    /*
-    S1: fddb63cb-1c47-442f-bbdc-07f447a35e3f
-    S2: 5bfbd93a-0b48-4e0d-924b-a2c5e68bd5af
-    S3: 35cd1ba3-6a11-47de-9e26-f7aa51b89876
-    S4: 0c877f09-3662-478f-bb39-96b8e09dacca
-    S5: 3a5ab3d1-ef59-43b6-8517-f4f6d0fd1ea9
-    */
-
-
     function tableOnPointerUp(event: React.PointerEvent<HTMLElement>) {
-        if (cellMouseDown) {
-            sampleSelection();
+        if (cellMouseDown && cellMouseMoveY != null) {
+            // pass the y-value (row) of the latest cell mouse pointed at as mouse clicker is released
+            // we can mass the useState cellMouseMoveY here because this function reacts to an event AFTER 
+            // the variable cellMouseMoveY has already been updated. 
+            sampleSelection(cellMouseMoveY); 
         }
-
-        sampleSelection();
-
         setCellMouseDown(false);
-
         setCellFocusX(null);
-
         setCellFocusY(null);
     }
 
-    function sampleSelection() {
+    // Function for multiple sample selection to duplicate / delete multiple samples
+    // We pass y-value last found cell so that we can use either useState or immediate y-value changes in selection process
+    // Click and drag uses useState cellMouseMoveY while shift + arrow key MUST use immediate foundCell.y to function correctly. 
+    function sampleSelection(newEndY: number) {
+        // Set up our range of rows that are selected
         const startY = cellMouseDownY;
-
-        const endY = cellMouseMoveY;
-
-        // console.log("Coordinates:", {startY, endY});
-
+        const endY = newEndY;
         if (startY === null || endY === null) {
             return;
         }
 
+        // Normalize range so that users can click top down or bottom up with no issues
         const minY = Math.min(startY, endY);
-
         const maxY = Math.max(startY, endY);
 
+        // Create a new Set everytime we make a new selection 
         const newSelectedSampleIds = new Set<Guid>();
 
+        // If the user only clicks w/o moving mouse
         if (minY === maxY) {
             newSelectedSampleIds.add(sortedSampleIds[minY]);
         } else {
+            // If user has multiple rows of cells selected, we collect them here
             for (let i = minY; i <= maxY; ++i) {
+                // Safety check to ensure that user has selected 1 value and does not exceed table size.
                 if (i >= 0 && i < sortedSampleIds.length) {
                     newSelectedSampleIds.add(sortedSampleIds[i]);
                 }
             }
         }
-
+        // Update SelectedSampleIds with new values. 
         setSelectedSampleIds(newSelectedSampleIds);
-
-        //////////////////////////////
-
-
-        //// Old Code, unefficient with all the setState changes. 
-    //    let startY = cellMouseDownY;
-    //     let endY = cellMouseMoveY;
-
-    //     // console.log("Coordinates:", {startY, endY});
-    //     if (startY === null || endY === null) {
-    //         return;
-    //     }
-    //     if (startY != endY) {
-    //         if (startY > endY) {
-    //             console.log("StartY > EndY.");
-    //             const temp = endY;
-    //             endY = startY;
-    //             startY = temp;
-    //         }
-    //         console.log(startY, endY);
-    //         const counter = Math.abs(endY - startY);
-    //         console.log("Add this many new samples:", counter);
-    //         setSelectedSampleIds(new Set());
-    //         for (let i = startY; i <= endY; ++i) {
-    //             console.log("Adding coordinate:", i);
-    //             console.log("Adding Sample:", sortedSampleIds[i]);
-    //             setSelectedSampleIds((prevSelectedSampleIds) => {
-    //                 const newSet = new Set(prevSelectedSampleIds);
-    //                 newSet.add(sortedSampleIds[i]);
-    //                 return newSet;
-    //             });
-    //             console.log(
-    //                 "Current Selection:",
-    //                 Array.from(selectedSampleIds)
-    //             );
-    //         }
-    //     } else {
-    //         setSelectedSampleIds(new Set()); // Create new
-    //         const clickedSampleId = sortedSampleIds[endY];
-    //         // Add single clicked row into new Set
-    //         setSelectedSampleIds((prevSelectedSampleIds) => {
-    //             const newSet = new Set(prevSelectedSampleIds);
-    //             newSet.add(clickedSampleId);
-    //             return newSet;
-    //         });
-    //     } 
     }
 
     function tableOnKeyDown(event: React.KeyboardEvent<HTMLElement>) {
@@ -518,8 +462,13 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                         if (found !== null) {
                             setCellMouseMoveX(found.x);
                             setCellMouseMoveY(found.y);
+                            // We MUST pass the immediately updated Y value through found.y as a parameter because
+                            // if we try to use the setState cellMouseMoveY the async updates lags behind the function call
+                            // and will calculate 1 value behind the actual selection
+                            sampleSelection(found.y);
                         }
                     } else {
+                        setSelectedSampleIds(new Set()); // clear selection if arrow key pressed without shift
                         var found: Coordinates | null = null;
                         if (
                             cellMouseMoveX !== null &&
