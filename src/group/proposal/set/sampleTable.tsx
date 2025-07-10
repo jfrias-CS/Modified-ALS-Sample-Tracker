@@ -130,14 +130,18 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     const [cellMouseMoveX, setCellMouseMoveX] = useState<number | null>(null); // X coordinate of last cell mouse selected
     const [cellMouseMoveY, setCellMouseMoveY] = useState<number | null>(null); // Y coordinate of last cell mouse selected
 
-
     //--- For Click & Drag selection --- //
-    const [selectedSampleIds, setSelectedSampleIds] = useState<Set<Guid>>(new Set()); // create a new empty selection Set
+    const [selectedSampleIds, setSelectedSampleIds] = useState<Set<Guid>>(
+        new Set()
+    ); // create a new empty selection Set
     const showSelectionButtons = selectedSampleIds.size > 0; // if we have a selection, we show action buttons
 
-    const [syncTimer, setSyncTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+    const [syncTimer, setSyncTimer] = useState<ReturnType<
+        typeof setTimeout
+    > | null>(null);
     const [syncState, setSyncState] = useState<SyncState>(SyncState.Idle);
-    const [tableHelpDisclosed, setTableHelpDisclosed] = useState<boolean>(false);
+    const [tableHelpDisclosed, setTableHelpDisclosed] =
+        useState<boolean>(false);
 
     useEffect(() => {
         if (setId === undefined || !setId.trim()) {
@@ -283,10 +287,8 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
             // if relatedTarget exists AND does NOT have the 'table-action-popup-button' class
             if (
                 !relatedTarget ||
-                // !relatedTarget.classList.contains("duplicate-popup-button") // So we don't lose table selection focus based on pop up button clicks
                 (relatedTarget.id != "duplicateSampleButton" &&
                     relatedTarget.id != "deleteSampleButton")
-                // || !relatedTarget.classList.contains("delete-popup-button)")
             ) {
                 setTableHasFocus(false);
                 resetMouseState(); // reset mouse to null state
@@ -359,9 +361,9 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     function tableOnPointerUp(event: React.PointerEvent<HTMLElement>) {
         if (cellMouseDown && cellMouseMoveY != null) {
             // pass the y-value (row) of the latest cell mouse pointed at as mouse clicker is released
-            // we can mass the useState cellMouseMoveY here because this function reacts to an event AFTER 
-            // the variable cellMouseMoveY has already been updated. 
-            sampleSelection(cellMouseMoveY); 
+            // we can mass the useState cellMouseMoveY here because this function reacts to an event AFTER
+            // the variable cellMouseMoveY has already been updated.
+            sampleSelection(cellMouseMoveY);
         }
         setCellMouseDown(false);
         setCellFocusX(null);
@@ -370,7 +372,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     // Function for multiple sample selection to duplicate / delete multiple samples
     // We pass y-value last found cell so that we can use either useState or immediate y-value changes in selection process
-    // Click and drag uses useState cellMouseMoveY while shift + arrow key MUST use immediate foundCell.y to function correctly. 
+    // Click and drag uses useState cellMouseMoveY while shift + arrow key MUST use immediate foundCell.y to function correctly.
     function sampleSelection(newEndY: number) {
         // Set up our range of rows that are selected
         const startY = cellMouseDownY;
@@ -383,7 +385,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         const minY = Math.min(startY, endY);
         const maxY = Math.max(startY, endY);
 
-        // Create a new Set everytime we make a new selection 
+        // Create a new Set everytime we make a new selection
         const newSelectedSampleIds = new Set<Guid>();
 
         // If the user only clicks w/o moving mouse
@@ -398,7 +400,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
                 }
             }
         }
-        // Update SelectedSampleIds with new values. 
+        // Update SelectedSampleIds with new values.
         setSelectedSampleIds(newSelectedSampleIds);
     }
 
@@ -560,10 +562,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         metadataContext.scanTypes.typeNamesInDisplayOrder.map((name) => {
             return { name: name, description: "" };
         });
-
-    // const scanTypesAsChoices: ParameterChoice[] = validScanTypes.typeInDisplayOrder.map((name) => {
-    //     return { name: name, description: "" };
-    // });
 
     const displayedParameterIds = thisSet.relevantParameters.filter((p) =>
         metadataContext.scanTypes.parametersById.has(p)
