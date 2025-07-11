@@ -284,7 +284,7 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
             const relatedTarget = event.relatedTarget as HTMLElement | null;
 
             // If relatedTarget is null(e.d., clicking outside browser window) OR
-            // if relatedTarget exists AND does NOT have the 'table-action-popup-button' class
+            // if relatedTarget exists AND does NOT have the IDs 'duplicateSampleButton' or 'deleteSampleButton'
             if (
                 !relatedTarget ||
                 (relatedTarget.id != "duplicateSampleButton" &&
