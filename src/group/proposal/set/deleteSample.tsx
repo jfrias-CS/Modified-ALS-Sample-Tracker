@@ -2,7 +2,10 @@ import React, { useState, useContext } from "react";
 import "bulma/css/bulma.min.css";
 
 import { Guid } from "../../../components/utils.tsx";
-import { SampleConfiguration } from "../../../sampleConfiguration.ts";
+import {
+    SampleConfiguration,
+    SampleConfigurationSet,
+} from "../../../sampleConfiguration.ts";
 import { MetadataContext } from "../../../metadataProvider.tsx";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import { updateConfig, updateSet } from "../../../metadataApi.ts";
@@ -33,23 +36,27 @@ export const DeleteSample: React.FC<DeleteSampleProps> = ({
     onSuccess,
 }) => {
     const metadataContext = useContext(MetadataContext);
-    const thisSet = metadataContext.sets.getById(setId.trim() as Guid); // metadataprovider -> sets -> set of samples -> get specific set Id
+    // const thisSet = metadataContext.sets.getById(setId.trim() as Guid); // metadataprovider -> sets -> set of samples -> get specific set Id
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [inProgress, setInProgress] = useState<boolean>(false);
     const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(
         null
     );
+    const errors: string[] = [];
 
-    // function getSample(): SampleConfiguration | undefined {
-    //     if (!sampleId) {
-    //         return undefined;
-    //     }
-    //     return thisSet?.configurationsById.get(sampleId as Guid); // returns a sample object by it's ID
-    // }
+    function getSet(): SampleConfigurationSet | undefined {
+        if (!setId) {
+            errors.push("Could not retrieve Set.");
+            setSubmitErrorMessage(errors.join(", "));
+            errors.length = 0;
+            return;
+        }
+        return metadataContext?.sets.getById(setId as Guid);
+    }
 
     function clickedOpen() {
-        //const thisSample = getSample();
-        if (!inProgress && !isOpen) {//&& thisSample) {
+        const thisSet = getSet();
+        if (!inProgress && !isOpen && thisSet) {
             setIsOpen(true);
         }
     }
@@ -62,105 +69,70 @@ export const DeleteSample: React.FC<DeleteSampleProps> = ({
     }
 
     async function pressedSubmit() {
-        console.log("DeleteSample: pressedSubmit().");
-
-        // Get set
+        // Get Set
+        const thisSet = getSet();
         if (!thisSet) {
-            alert("Set non existent.");
+            errors.push("Could not recover SetID.");
+            setSubmitErrorMessage(errors.join(", "));
+            errors.length = 0;
             return;
         }
 
         if (!sampleIds) {
+            errors.push("No SampleIDS were found.");
+            setSubmitErrorMessage(errors.join(", "));
+            errors.length = 0;
             return;
         }
-        // New array for selected samples
-        // let samplesToDelete: Guid[] = [];
-        
-        // Test if we are passing a single prop from the actions column or selection of samples by pop up button
-        // if (sampleId) {
-        //     samplesToDelete.push(sampleId as Guid);
-        // } else 
-        // if (sampleIds) {
-        //     samplesToDelete = Array.from(sampleIds);
-        // } else {
-        //     console.log("No sampleId or sampleIds provided for deletion.");
-        // }
-        
-        const errors: string[] = [];
-        
+
         setSubmitErrorMessage(null);
         setInProgress(true);
         let configDeleteSuccess = true;
-        
 
-        
+        thisSet.deleteWithHistory(Array.from(sampleIds)); // pass selection through to function
 
-            
-            //const thisSample = getSample();
-            // if (!thisSample) {
-            //     alert("Sample non existent.");
-            //     return;
-            // }
-            
-            
-            thisSet.deleteWithHistory(Array.from(sampleIds)); // pass selection through to function
-            console.log("After deleteWithHistory:", {
-                setSamples: Array.from(thisSet.configurationsById.values()),
-                // deletedSampleId: thisSample.id,
+        const changes = thisSet.getPendingChanges(); // recover queue for changes in set
+
+        if (changes) {
+            const saveCalls = changes.changes.additions.map((e) =>
+                updateConfig(e as SampleConfiguration)
+            );
+
+            // Perpares API calls to mark samples as "deleted".
+            const deleteCalls = changes.changes.deletions.map((e) => {
+                const c = e as SampleConfiguration;
+                c.isValid = false;
+                return updateConfig(c as SampleConfiguration);
             });
-            
-            const changes = thisSet.getPendingChanges(); // recover queue for changes in set
-            console.log("Pending changes:", {
-                deletions: changes?.changes.deletions.map((d) => d.id),
-                additions: changes?.changes.additions.map((a) => a.id),
-            });
-    
-            if (changes) {
-                const saveCalls = changes.changes.additions.map((e) =>
-                    updateConfig(e as SampleConfiguration)
-                );
-    
-                // Perpares API calls to mark samples as "deleted".
-                const deleteCalls = changes.changes.deletions.map((e) => {
-                    const c = e as SampleConfiguration;
-                    c.isValid = false;
-                    return updateConfig(c as SampleConfiguration);
-                });
-    
-                // Early exit if no changes to sync
-                if (saveCalls.length === 0 && deleteCalls.length === 0) {
-                    thisSet.catchUpToEdit(changes.index); // Mark changes as synced
-                    setIsOpen(false);
-                    onSuccess?.();
-                    setInProgress(false);
-                    metadataContext.changed();
-                    return;
-                }
-    
-                await Promise.all(saveCalls.concat(deleteCalls)).then(
-                    (responses) => {
-                        if (responses.every((r) => r.success)) {
-                            thisSet.catchUpToEdit(changes.index);
-                            setIsOpen(false);
-                            onSuccess?.();
-                        } else {
-                            responses.forEach((r) => {
-                                if (!r.success && r.message) {
-                                    errors.push(r.message);
-                                }
-                            });
-                            setSubmitErrorMessage(errors.join(", "));
-                        }
-                        configDeleteSuccess = responses.every((r) => r.success);
+
+            // Early exit if no changes to sync
+            if (saveCalls.length === 0 && deleteCalls.length === 0) {
+                thisSet.catchUpToEdit(changes.index); // Mark changes as synced
+                setIsOpen(false);
+                onSuccess?.();
+                setInProgress(false);
+                metadataContext.changed();
+                return;
+            }
+
+            await Promise.all(saveCalls.concat(deleteCalls)).then(
+                (responses) => {
+                    if (responses.every((r) => r.success)) {
+                        thisSet.catchUpToEdit(changes.index);
+                        setIsOpen(false);
+                        onSuccess?.();
+                    } else {
+                        responses.forEach((r) => {
+                            if (!r.success && r.message) {
+                                errors.push(r.message);
+                            }
+                        });
+                        setSubmitErrorMessage(errors.join(", "));
                     }
-                );
-            
-            
-            
+                    configDeleteSuccess = responses.every((r) => r.success);
+                }
+            );
         }
-
-
-
 
         setInProgress(false);
         metadataContext.changed();
@@ -168,22 +140,16 @@ export const DeleteSample: React.FC<DeleteSampleProps> = ({
 
     return (
         <>
-
-            <button className="button is-small is-danger is-outlined is-inverted delete-popup-button" 
-                    onClick={clickedOpen}
-                    id="deleteSampleButton"
-                   
+            <button
+                className="button is-small is-danger is-outlined is-inverted delete-popup-button"
+                onClick={clickedOpen}
+                id="deleteSampleButton"
             >
                 <span>
-                    Delete{" "}
-                    <strong>
-                        {" "}
-                        {sampleIds.size}{" "}
-                    </strong> 
+                    Delete <strong> {sampleIds.size} </strong>
                     {sampleIds.size === 1 ? " Sample" : " Samples"}
                 </span>
             </button>
-                {/* <a className="dropdown-item" onClick={ clickedOpen }>Delete Bar */}
             <div className={isOpen ? "modal is-active" : "modal"}>
                 <div className="modal-background"></div>
 
@@ -199,7 +165,6 @@ export const DeleteSample: React.FC<DeleteSampleProps> = ({
                     <section className="modal-card-body">
                         <div className="block">
                             <p>Are you sure you want to delete this sample?</p>
-                            {/* <p>This operation cannot be undone.</p> */}
                         </div>
 
                         <div className="buttons">
