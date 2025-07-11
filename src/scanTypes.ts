@@ -253,8 +253,14 @@ export function getScanTypes(groupId?: string): ScanTypes {
             id: "order_parameter" as ParamUid,
             name: "Order of paramters" as ScanParameterName,
             description: "Select how to order parameters.",
-            required: false,
-            default: "Sample Center Position",
+            default: "1",
+            required: true,
+            uniqueInSet: true,
+            autoGenerateInterval: 1,
+            validator: (v) => {
+                if (validate.isInt(v)) { return null;}
+                return "Value must be a unique float number."
+            }
         },
     ];
 

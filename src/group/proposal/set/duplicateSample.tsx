@@ -58,8 +58,7 @@ export const DuplicateSample: React.FC<DuplicateSampleProps> = ({
         setDisplayErrors(null);
 
         let count = Math.max(sampleIds.size);
-
-        let newConfigTemplates: SampleConfiguration[] = [];
+        
         const localClonedSamples = [];
 
         for (const currentSample of sampleIds) {
@@ -67,8 +66,7 @@ export const DuplicateSample: React.FC<DuplicateSampleProps> = ({
             const originalSample = thisSet?.configurationsById.get(
                 currentSample as Guid
             );
-
-
+            console.log("Cloning:", originalSample?.name);
             if (!originalSample) {
                 //setNewError("Could not retrieve sample.");
                 //setIsDuplicating(false);
@@ -81,7 +79,6 @@ export const DuplicateSample: React.FC<DuplicateSampleProps> = ({
                 currentSample as Guid
             );
 
-
             if (!duplicatedSample) {
                 individualSampleErrors.push("Could not duplicate sample.");
                 // setDisplayErrors("Could not duplicate sample.");
@@ -90,21 +87,19 @@ export const DuplicateSample: React.FC<DuplicateSampleProps> = ({
             }
 
             duplicatedSample.id = "" as Guid; // reset id to empty string for SciCat's assignment
-
-            // Returns SampleConfigurations[] object (array of SampleConfigurations)
-            // [ SampleConfiguration1, SampleConfiguration2...]
-            newConfigTemplates = thisSet.generateNewConfigurationsWithDefaults(
-                1,
-                originalSample.scanType,
-                duplicatedSample.name,
-                originalSample.description
-            );
-            console.log("newConfigTemplates", {
-                newConfigTemplates: { ...newConfigTemplates },
+            duplicatedSample.name = `${originalSample.name}-copy`;
+            console.log("Current / Duplicate Sample (Snapshot):", {
+                currentSample,
+                originalSample,
+                duplicatedSample: { ...duplicatedSample }, // Creates a shallow copy at log time
             });
 
             // Push SampleConfiguration[0] = 1 SampleCongfiguration object into a SampleConfiguration[] object
-            localClonedSamples.push(newConfigTemplates[0]);
+            //localClonedSamples.push(newConfigTemplates[0]);
+            localClonedSamples.push(duplicatedSample);
+            console.log("localClonedSamples", {
+                localClonedSamples: { ...localClonedSamples },
+            });
         }
         count = 0;
         const serverClonedSamples = [];
@@ -177,9 +172,11 @@ export const DuplicateSample: React.FC<DuplicateSampleProps> = ({
             <section className="modal-card-body">
                 {displayErrors && displayErrors.length > 0 && (
                     <article className="message is-danger">
-                        <div className="message-body">{displayErrors.map((error, index) => (
-                            <p key={index}>{error}</p>
-                        ))}</div>
+                        <div className="message-body">
+                            {displayErrors.map((error, index) => (
+                                <p key={index}>{error}</p>
+                            ))}
+                        </div>
                     </article>
                 )}
             </section>

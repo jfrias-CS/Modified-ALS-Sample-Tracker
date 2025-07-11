@@ -270,10 +270,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
 
     // If user clicks outside of table
     function tableOnBlur(event: React.FocusEvent<HTMLElement>) {
-        console.log(
-            "tableOnBlur fired. Selected IDs (before clear/reset):",
-            Array.from(selectedSampleIds)
-        );
         // Check if the blur is happening on the table itself
         if (
             event.target.nodeName.toLowerCase() == "table" &&
