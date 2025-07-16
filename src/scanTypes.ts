@@ -250,9 +250,9 @@ export function getScanTypes(groupId?: string): ScanTypes {
         },
 
         {
-            id: "order_parameter" as ParamUid,
-            name: "Order of paramters" as ScanParameterName,
-            description: "Select how to order parameters.",
+            id: "order_samples" as ParamUid,
+            name: "Order of Samples" as ScanParameterName,
+            description: "Select how to order samples.",
             default: "1",
             required: true,
             uniqueInSet: true,
@@ -295,7 +295,7 @@ export function getScanTypes(groupId?: string): ScanTypes {
                 { typeId: "repititions" as ParamUid },
                 { typeId: "temperature" as ParamUid },
                 { typeId: "y_position" as ParamUid },
-                { typeId: "order_parameter" as ParamUid },
+                { typeId: "order_samples" as ParamUid },
             ],
         },
 
@@ -310,7 +310,7 @@ export function getScanTypes(groupId?: string): ScanTypes {
                 { typeId: "element_template" as ParamUid },
                 { typeId: "repitions" as ParamUid },
                 { typeId: "temperature" as ParamUid },
-                { typeId: "order_parameter" as ParamUid },
+                { typeId: "order_of_samples" as ParamUid },
             ],
         },
 

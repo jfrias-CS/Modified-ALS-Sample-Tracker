@@ -16,7 +16,7 @@ export interface ScanParameterType {
   id: ParamUid;
   name: ScanParameterName;
   description: string;
-  // If a choices field is present, we provide a pulldown isntead of a text field and restrict the choices to this array.
+  // If a choices field is present, we provide a pulldown instead of a text field and restrict the choices to this array.
   choices?: ParameterChoice[];
   // If no default is provided the default is assumed to be "".
   default?: string;
