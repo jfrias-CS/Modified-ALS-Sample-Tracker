@@ -23,7 +23,7 @@ export class SampleTableClipboardContent {
 	// Accepts an object of class LevelChanges
 	fromTable(c:SampleConfiguration[], selectedFields:SampleConfigurationField[], selectedParameters:string[]) {
         this.content = c.map((oneConfig) => {
-            return oneConfig.clone();
+            return oneConfig.duplicate();
         });
         this.selectedFields = selectedFields;
         this.selectedParameters = selectedParameters;
