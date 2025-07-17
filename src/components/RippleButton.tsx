@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import "./ripplebutton.css";
+import "./RippleButton.css";
 
 export const RippleButton: React.FC<React.ComponentProps<"a"> & { to: string }> = ({ children, to, ...props }) => {
   const navigate = useNavigate();
