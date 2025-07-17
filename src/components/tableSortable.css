@@ -1,6 +1,6 @@
 /* Sortable table headers */
 
-table th.sortable {
+table tr th.sortable {
 	cursor: pointer;
   padding-right: 1em;
 	text-decoration: none;
@@ -8,24 +8,24 @@ table th.sortable {
 	background-position: center right;
 }
 
-table th.sortable:hover {
+table tr th.sortable:hover {
 	text-decoration: underline;
 }
 
-table th.sortable.sortedup {
+table tr th.sortable.sortedup {
 	background-image: url("/table_sort-light_mode-up.png");
 }
 
-table th.sortable.sorteddown {
+table tr th.sortable.sorteddown {
 	background-image: url("/table_sort-light_mode-down.png");
 }
 
 @media (prefers-color-scheme: dark) {
-  table th.sortable.sortedup {
+  table tr th.sortable.sortedup {
     background-image: url("/table_sort-dark_mode-up.png");
   }
 
-  table th.sortable.sorteddown {
+  table tr th.sortable.sorteddown {
     background-image: url("/table_sort-dark_mode-down.png");
   }
 }

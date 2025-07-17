@@ -1,5 +1,7 @@
-#root { 
+:root { 
     padding: var(--bulma-size-normal);
+    --bulma-link-text: hsl(208, 54%, 50%);
+    --bulma-link-text-active: hsl(208, 54%, 40%);
 }
 
 .modal.has-overflow {
@@ -9,4 +11,33 @@
 
 .modal .modal-content, .modal .modal-card, .modal .modal-card-body {
     overflow: visible ! important;
+}
+
+table.striped tbody tr:nth-child(odd) {
+  background-color: hsla(206, 90%, 50%, 0.07);
+}
+
+table.striped:not(.cellhover) tbody tr:hover {
+  color: rgba(7, 73, 251, 1);
+  background-color: rgba(90, 105, 255, 0.2);
+}
+
+table.striped.cellhover tbody td:not(.unused):hover {
+  color: rgba(7, 73, 251, 1);
+  background-color: rgba(90, 105, 255, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root { 
+    --bulma-link-text: hsl(208, 54%, 40%);
+    --bulma-link-text-active: hsl(208, 54%, 50%);
+  }
+
+  table.striped:not(.cellhover) tbody tr:hover {
+    color: rgba(156, 165, 241, 1);
+  }
+
+  table.striped.cellhover tbody td:not(.unused):hover {
+    color: rgba(156, 165, 241, 1);
+  }
 }
