@@ -20,11 +20,6 @@ table.sampletable td {
   vertical-align: middle;
 }
 
-/* Row highlight (ONLY for shift-selection) Excludes Last Column*/
-tr.is-shift-selected td:not(:last-child) {
-  background-color: #00476986 !important;
-  border: 2px solid #0037ff !important;
-}
 
 /* Default cell highlight (existing behavior) */
 td.samplecell.focused {

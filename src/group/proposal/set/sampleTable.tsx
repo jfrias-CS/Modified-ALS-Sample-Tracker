@@ -51,7 +51,6 @@ import DeleteSample from "./deleteSample.tsx";
 import { DuplicateSample } from "./duplicateSample.tsx";
 
 interface SampleTableProps {
-    // groupId?: string;
     setid: Guid;
 }
 
@@ -129,7 +128,6 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
     const [cellMouseDownY, setCellMouseDownY] = useState<number | null>(null); // Y coordinate of the clicked cell
     const [cellMouseMoveX, setCellMouseMoveX] = useState<number | null>(null); // X coordinate of last cell mouse selected
     const [cellMouseMoveY, setCellMouseMoveY] = useState<number | null>(null); // Y coordinate of last cell mouse selected
-
     //--- For Click & Drag selection --- //
     const [selectedSampleIds, setSelectedSampleIds] = useState<Set<Guid>>(
         new Set()
@@ -310,6 +308,18 @@ const SampleTable: React.FC<SampleTableProps> = (props) => {
         // Attempt to find Cell Coordinates
         const foundCell = findAnEditableCell(event.target as HTMLElement);
         // if no cell is found we reset the mouse states
+        // We can't do this because it creates a reference to the function in a previous
+            // instance of the SampleTable react object, which contains the old useState values,
+            // sowing chaos and confusion.
+            // document.addEventListener("mouseup", tableOnMouseUp, {once: true});
+
+            // We can't do this either because it redirects all subsequent events so their
+            // target is the table itself, obscuring the element that the pointer was originally over,
+            // making the event useless to us.
+            //const foundTable = findEnclosingTable(event.target as HTMLElement);
+            //if (foundTable) {
+            //  foundTable.setPointerCapture(event.pointerId);
+            //}
         if (!foundCell) {
             resetMouseState();
             return;
