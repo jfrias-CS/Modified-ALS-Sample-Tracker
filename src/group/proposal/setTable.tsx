@@ -49,6 +49,7 @@ const SetTable: React.FC = () => {
         metadataContext.changeCounter,
         metadataContext.setsLoadingState,
         metadataContext.loadingState,
+        metadataContext.sets
     ]);
 
     // If we're in any loading state other than success,
@@ -119,7 +120,7 @@ const SetTable: React.FC = () => {
                     <p>( Use the Add button on the right to add Bars. )</p>
                 ) : (
                     <>
-                        <table className="settable">
+                        <table className="settable striped">
                             <thead>
                                 <tr key="headers">
                                     <th key="name" scope="col">
