@@ -13,8 +13,6 @@ const ProposalLayout: React.FC<PropsWithChildren> = () => {
 
   return (
     <>
-    <div style={{padding: ".375rem 1rem"}}>
-
       <div className="block do-not-print">
         <nav className="level">
           <div className="level-item has-text-centered">
@@ -31,7 +29,6 @@ const ProposalLayout: React.FC<PropsWithChildren> = () => {
       <MetadataProvider proposalId={proposalId} groupId={groupContext.group.id}>
         <Outlet />
       </MetadataProvider>
-    </div>
     </>
   )
 }
